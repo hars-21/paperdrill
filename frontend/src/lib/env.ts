@@ -1,8 +1,17 @@
+declare const __API_BASE_URL__: string | undefined;
+declare const __WS_URL__: string | undefined;
+
+function readRuntimeEnv(key: string): string | undefined {
+	if (typeof process === "undefined" || !process.env) return undefined;
+	return process.env[key] ?? process.env[`BUN_PUBLIC_${key}`];
+}
+
 function readEnv(key: string, fallback: string): string {
-	const val =
-		typeof process !== "undefined" && process.env
-			? (process.env[key] ?? process.env[`BUN_PUBLIC_${key}`])
-			: undefined;
+	const val = __API_BASE_URL__ !== undefined && key === "API_BASE_URL"
+		? __API_BASE_URL__
+		: __WS_URL__ !== undefined && key === "WS_URL"
+			? __WS_URL__
+			: readRuntimeEnv(key);
 
 	if (
 		val &&

@@ -1,5 +1,6 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import { pingRedis } from "./redis";
+import { prisma } from "./db";
 import { appRouter } from "./routes";
 import { config } from "./config";
 import { logger } from "./utils/logger";
@@ -20,8 +21,14 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.get("/health", async (_req: Request, res: Response) => {
-	await pingRedis();
-	res.status(200).json({ success: true });
+	try {
+		await pingRedis();
+		await prisma.$queryRaw`SELECT 1`;
+
+		res.status(200).json({ success: true, status: "ok" });
+	} catch {
+		res.status(503).json({ success: false, status: "error" });
+	}
 });
 
 app.use("/", appRouter);
