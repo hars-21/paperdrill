@@ -39,9 +39,11 @@ export function placeOrder(orderInput: CreateOrderInput) {
 
 	return {
 		orderId: order.orderId,
+		symbol: order.symbol,
 		status: order.status,
 		filledQty: order.filledQty,
 		averagePrice,
+		lockedAmount,
 		fills: order.fills,
 	};
 }
@@ -81,6 +83,7 @@ export function cancelOrder(userId: string, orderId: string) {
 
 	return {
 		orderId: order.orderId,
+		symbol: order.symbol,
 		status: order.status,
 		qty: order.qty,
 		filledQty: order.filledQty,

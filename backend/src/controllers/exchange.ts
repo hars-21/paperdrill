@@ -8,6 +8,17 @@ import {
 import { sendToEngine } from "../utils/engineClient";
 import { prisma } from "../db";
 import { sendValidationError } from "../utils/validation";
+import { marketStore } from "../store/market";
+import { toBigInt } from "../utils/convert";
+import {
+	formatOrder,
+	formatOrders,
+	formatTrades,
+	formatDepth,
+	formatCandles,
+	formatBalance,
+	formatCancel,
+} from "../utils/formatter";
 
 const intervalMap = {
 	"15M": "15 minutes",
@@ -34,7 +45,14 @@ export async function createOrder(req: Request, res: Response) {
 	}
 
 	const { side, type, symbol, qty } = parsedBody.data;
-	const price = type === "MARKET" ? null : parsedBody.data.price;
+
+	const market = marketStore.get(symbol);
+
+	if (!market) throw new Error("Unknown market");
+
+	const scaledQty = toBigInt(qty, market.qtyPrecision);
+	const scaledPrice =
+		type === "MARKET" ? null : toBigInt(parsedBody.data.price, market.pricePrecision);
 	const orderId = crypto.randomUUID();
 
 	const engineResponse = await sendToEngine("create_order", {
@@ -43,8 +61,8 @@ export async function createOrder(req: Request, res: Response) {
 		type,
 		side,
 		symbol,
-		price: type === "MARKET" ? null : price,
-		qty,
+		price: scaledPrice?.toString() ?? null,
+		qty: scaledQty.toString(),
 	});
 
 	if (!engineResponse.success) {
@@ -52,7 +70,7 @@ export async function createOrder(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatOrder(engineResponse.data as Record<string, unknown>));
 }
 
 export async function getOpenOrders(req: Request, res: Response) {
@@ -65,7 +83,7 @@ export async function getOpenOrders(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatOrders(engineResponse.data as Record<string, unknown>[]));
 }
 
 export async function getOrder(req: Request, res: Response) {
@@ -86,7 +104,7 @@ export async function getOrder(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatOrder(engineResponse.data as Record<string, unknown>));
 }
 
 export async function cancelOrder(req: Request, res: Response) {
@@ -106,7 +124,7 @@ export async function cancelOrder(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatCancel(engineResponse.data as Record<string, unknown>));
 }
 
 // Markets
@@ -138,7 +156,7 @@ export async function getTrades(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatTrades(engineResponse.data as Record<string, unknown>[]));
 }
 
 export async function getDepth(req: Request, res: Response) {
@@ -158,7 +176,7 @@ export async function getDepth(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res.status(200).json(formatDepth(engineResponse.data as Record<string, unknown>, symbol));
 }
 
 // Candles
@@ -202,7 +220,7 @@ export async function getCandles(req: Request, res: Response) {
 `;
 
 	res.status(200).json({
-		data: candles,
+		data: formatCandles(candles as Record<string, unknown>[]),
 	});
 }
 
@@ -217,5 +235,7 @@ export async function getBalance(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res
+		.status(200)
+		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
 }

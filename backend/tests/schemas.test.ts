@@ -73,8 +73,8 @@ test("order body schema accepts valid LIMIT order", () => {
 		type: "LIMIT",
 		side: "BUY",
 		symbol: "BTC",
-		price: 100,
-		qty: 5,
+		price: "100",
+		qty: "5",
 	});
 	expect(result.success).toBe(true);
 });
@@ -84,7 +84,7 @@ test("order body schema accepts valid MARKET order", () => {
 		type: "MARKET",
 		side: "SELL",
 		symbol: "ETH",
-		qty: 10,
+		qty: "10",
 	});
 	expect(result.success).toBe(true);
 });
@@ -104,8 +104,8 @@ test("order body schema rejects negative qty", () => {
 		type: "LIMIT",
 		side: "BUY",
 		symbol: "BTC",
-		price: 100,
-		qty: -1,
+		price: "100",
+		qty: "-1",
 	});
 	expect(result.success).toBe(false);
 });
@@ -115,8 +115,8 @@ test("order body schema rejects invalid side", () => {
 		type: "LIMIT",
 		side: "INVALID",
 		symbol: "BTC",
-		price: 100,
-		qty: 5,
+		price: "100",
+		qty: "5",
 	});
 	expect(result.success).toBe(false);
 });

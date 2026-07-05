@@ -10,18 +10,36 @@ const prisma = new PrismaClient({ adapter });
 
 async function seed() {
 	const markets = [
-		{ symbol: "BTC_USD", name: "Bitcoin/USD" },
-		{ symbol: "SOL_USD", name: "Solana/USD" },
-		{ symbol: "ETH_USD", name: "Ethereum/USD" },
+		{
+			name: "Bitcoin",
+			symbol: "BTC_USD",
+			baseAsset: "BTC",
+			quoteAsset: "USD",
+			pricePrecision: 2,
+			quantityPrecision: 4,
+		},
+		{
+			name: "Solana",
+			symbol: "SOL_USD",
+			baseAsset: "SOL",
+			quoteAsset: "USD",
+			pricePrecision: 2,
+			quantityPrecision: 2,
+		},
+		{
+			name: "Ethereum",
+			symbol: "ETH_USD",
+			baseAsset: "ETH",
+			quoteAsset: "USD",
+			pricePrecision: 2,
+			quantityPrecision: 3,
+		},
 	];
 
-	for (const market of markets) {
-		await prisma.market.upsert({
-			where: { symbol: market.symbol },
-			update: {},
-			create: market,
-		});
-	}
+	await prisma.market.createMany({
+		data: markets,
+		skipDuplicates: true,
+	});
 
 	const password = await bcrypt.hash("demo123", 10);
 	const users = [
@@ -29,13 +47,10 @@ async function seed() {
 		{ email: "bob@test.com", name: "bob", password },
 	];
 
-	for (const user of users) {
-		await prisma.user.upsert({
-			where: { email: user.email },
-			update: {},
-			create: user,
-		});
-	}
+	await prisma.user.createMany({
+		data: users,
+		skipDuplicates: true,
+	});
 
 	console.log("Seeded: 3 markets, 2 users (alice@test.com, bob@test.com, password: demo123)");
 	process.exit(0);

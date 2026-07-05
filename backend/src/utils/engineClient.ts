@@ -4,6 +4,7 @@ import { activeSubscriptions } from "./websocket";
 import { config } from "../config";
 import { logger } from "./logger";
 import { marketSubscriber, publisher, responsesubscriber } from "../redis";
+import { formatCandle, formatDepth, formatTrade } from "./formatter";
 
 export const engineAbortController = new AbortController();
 
@@ -49,8 +50,19 @@ export async function listenForOrderbookDepth(): Promise<void> {
 		try {
 			const parsedData = JSON.parse(message);
 
+			let formatted: Record<string, unknown>;
+			if (parsedData.event === "depth") {
+				formatted = formatDepth(parsedData, parsedData.symbol);
+			} else if (parsedData.event === "trade") {
+				formatted = formatTrade(parsedData);
+			} else if (parsedData.event === "candle") {
+				formatted = formatCandle(parsedData);
+			} else {
+				formatted = parsedData;
+			}
+
 			activeSubscriptions[channel]?.forEach((ws) => {
-				ws.send(JSON.stringify(parsedData));
+				ws.send(JSON.stringify(formatted));
 			});
 		} catch (err) {
 			logger.error("Invalid depth message", err);

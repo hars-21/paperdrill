@@ -46,7 +46,12 @@ async function processMessages() {
 					const msg = message.message;
 
 					try {
-						const trade: Trade = JSON.parse(msg.data);
+						const raw = JSON.parse(msg.data);
+						const trade: Trade = {
+							...raw,
+							price: BigInt(raw.price),
+							qty: BigInt(raw.qty),
+						};
 						deriveData(trade);
 						await streamReader.set("candle_worker_id", message.id);
 					} catch (err) {
@@ -101,7 +106,9 @@ async function flushCandles() {
 			try {
 				await publisher.publish(
 					`candle:${candle.symbol}`,
-					JSON.stringify({ event: "candle", ...candle }),
+					JSON.stringify({ event: "candle", ...candle }, (_, v) =>
+						typeof v === "bigint" ? v.toString() : v,
+					),
 				);
 
 				await pool.query(

@@ -1,5 +1,10 @@
 import z from "zod";
 
+const decimalString = z
+	.string()
+	.trim()
+	.regex(/^\d+(\.\d+)?$/, "invalid decimal format");
+
 export const symbolParamSchema = z.object({
 	symbol: z.string().trim().min(1, "symbol is required"),
 });
@@ -17,15 +22,14 @@ export const orderBodySchema = z.discriminatedUnion("type", [
 		type: z.literal("LIMIT"),
 		side: z.enum(["BUY", "SELL"]),
 		symbol: z.string().trim().min(1, "symbol is required"),
-		price: z.number().positive("limit orders require a positive price"),
-		qty: z.number().positive("qty must be a positive number"),
+		price: decimalString,
+		qty: decimalString,
 	}),
 	z.object({
 		type: z.literal("MARKET"),
 		side: z.enum(["BUY", "SELL"]),
 		symbol: z.string().trim().min(1, "symbol is required"),
-		price: z.null().optional(),
-		qty: z.number().positive("qty must be a positive number"),
+		qty: decimalString,
 	}),
 ]);
 

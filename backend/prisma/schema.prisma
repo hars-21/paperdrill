@@ -44,11 +44,11 @@ model Order {
   id        String   @id @default(uuid())
   userId    String 
   symbol    String
-  price     Int
-  qty       Int
+  price     BigInt
+  qty       BigInt
   type      MarketType 
   side      Side
-  filledQty Float
+  filledQty BigInt
   status    Status
   createdAt DateTime @default(now())
 
@@ -64,8 +64,8 @@ model Order {
 model Fill {
   id          String   @id @default(uuid())
   symbol      String
-  price       Int
-  qty         Int
+  price       BigInt
+  qty         BigInt
   side        Side
   buyOrderId  String
   sellOrderId String
@@ -83,9 +83,13 @@ model Fill {
 }
 
 model Market {
-  id      String  @id @default(uuid())
-  name    String
-  symbol  String  @unique
+  id                String  @id @default(uuid())
+  name              String
+  symbol            String  @unique
+  baseAsset         String
+  quoteAsset        String
+  pricePrecision    Int
+  quantityPrecision Int
 
   order Order[]
   fills Fill[]
@@ -93,11 +97,11 @@ model Market {
 
 model Candle {
   symbol    String
-  open      Int
-  high      Int
-  low       Int
-  close     Int
-	volume    Int
+  open      BigInt
+  high      BigInt
+  low       BigInt
+  close     BigInt
+	volume    BigInt
 	time      DateTime @db.Timestamptz()
 
 	@@unique([symbol, time])

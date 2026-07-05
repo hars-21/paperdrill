@@ -14,16 +14,16 @@ test("cancel open limit order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 10n,
+		price: 10000n,
+		qty: 100000n,
 	});
 
 	expect(cancelOrder("1", order.orderId)).toMatchObject({
 		orderId: order.orderId,
-		qty: 10n,
+		qty: 100000n,
 		filledQty: 0n,
 		status: "CANCELLED",
-		releasedFunds: 1000n,
+		releasedFunds: 100000n,
 	});
 
 	expect(getDepth("BTC_USD")).toMatchObject({
@@ -40,8 +40,8 @@ test("cancel partially filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 10n,
+		price: 10000n,
+		qty: 100000n,
 	});
 
 	placeOrder({
@@ -50,16 +50,16 @@ test("cancel partially filled order", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 4n,
+		price: 10000n,
+		qty: 40000n,
 	});
 
 	expect(cancelOrder("1", order.orderId)).toMatchObject({
 		orderId: order.orderId,
-		qty: 10n,
-		filledQty: 4n,
+		qty: 100000n,
+		filledQty: 40000n,
 		status: "CANCELLED",
-		releasedFunds: 600n,
+		releasedFunds: 60000n,
 	});
 
 	expect(getDepth("BTC_USD")).toMatchObject({
@@ -76,8 +76,8 @@ test("cancel filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	placeOrder({
@@ -86,8 +86,8 @@ test("cancel filled order", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	expect(() => {
@@ -102,8 +102,8 @@ test("cancel already cancelled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	cancelOrder("1", order.orderId);
@@ -125,8 +125,8 @@ test("user tries to cancel another user's order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	expect(() => {

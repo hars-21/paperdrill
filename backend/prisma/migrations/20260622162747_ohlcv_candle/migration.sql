@@ -4,20 +4,20 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 -- CreateTable
 CREATE TABLE "Candle" (
     "symbol" TEXT NOT NULL,
-    "open" INTEGER NOT NULL,
-    "high" INTEGER NOT NULL,
-    "low" INTEGER NOT NULL,
-    "close" INTEGER NOT NULL,
-    "volume" INTEGER NOT NULL,
-    "timestamp" TIMESTAMPTZ NOT NULL
+    "open" BIGINT NOT NULL,
+    "high" BIGINT NOT NULL,
+    "low" BIGINT NOT NULL,
+    "close" BIGINT NOT NULL,
+    "volume" BIGINT NOT NULL,
+    "time" TIMESTAMPTZ NOT NULL
 );
 
 -- CreateIndex
-CREATE INDEX "Candle_timestamp_idx" ON "Candle"("timestamp");
+CREATE INDEX "Candle_time_idx" ON "Candle"("time");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Candle_symbol_timestamp_key" ON "Candle"("symbol", "timestamp");
+CREATE UNIQUE INDEX "Candle_symbol_time_key" ON "Candle"("symbol", "time");
 
 -- HyperTable
-SELECT create_hypertable('"Candle"', 'timestamp');
+SELECT create_hypertable('"Candle"', 'time');
 

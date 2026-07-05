@@ -1,12 +1,16 @@
 import { BALANCES, ORDERBOOK, ORDERS } from "./store";
 import type { CreateOrderInput, OrderRecord, Fill, UserBalance } from "./types/domain";
 
+function qtyScale(qtyPrecision: number): bigint {
+	return 10n ** BigInt(qtyPrecision);
+}
+
 function initializeBalance(): UserBalance {
 	return {
-		USD: { available: 10000n, locked: 0n },
-		BTC: { available: 100n, locked: 0n },
-		SOL: { available: 100n, locked: 0n },
-		ETH: { available: 100n, locked: 0n },
+		USD: { available: 1000000n, locked: 0n },
+		BTC: { available: 10000n, locked: 0n },
+		SOL: { available: 10000n, locked: 0n },
+		ETH: { available: 10000n, locked: 0n },
 	};
 }
 
@@ -28,15 +32,16 @@ export function lockBalance(order: CreateOrderInput): bigint {
 	const quote = userBalance[market.quoteAsset];
 
 	if (side === "BUY") {
+		const scale = qtyScale(market.qtyPrecision);
 		let lockAmount: bigint;
 
 		if (type === "LIMIT") {
 			if (price == null) throw new Error("LIMIT order must have price");
-			lockAmount = price * qty;
+			lockAmount = (price * qty) / scale;
 		} else {
 			const bestAsk = market.bestAsk;
 			if (bestAsk == null) throw new Error("No liquidity");
-			lockAmount = bestAsk * qty * 11n;
+			lockAmount = (((bestAsk * qty) / scale) * 11n) / 10n;
 		}
 
 		if (quote.available < lockAmount) {
@@ -85,7 +90,8 @@ export function settleFills(fills: Fill[]) {
 		const sellerBase = sellerBalance[market.baseAsset];
 
 		// USD transfer
-		const cost = qty * price;
+		const scale = qtyScale(market.qtyPrecision);
+		const cost = (qty * price) / scale;
 
 		buyerQuote.locked -= cost;
 		sellerQuote.available += cost;
@@ -106,7 +112,8 @@ export function releaseBalance(order: OrderRecord) {
 	const base = userBalance[market.baseAsset];
 
 	if (side === "BUY") {
-		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0n);
+		const scale = qtyScale(market.qtyPrecision);
+		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0n) / scale;
 		const remaining = order.lockedAmount - spent;
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");

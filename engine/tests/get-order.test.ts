@@ -13,8 +13,8 @@ test("open order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	expect(getOrder("1", order.orderId)).toMatchObject({
@@ -22,8 +22,8 @@ test("open order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 		filledQty: 0n,
 		status: "OPEN",
 		fills: [],
@@ -37,8 +37,8 @@ test("partially filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	placeOrder({
@@ -47,8 +47,8 @@ test("partially filled order", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 2n,
+		price: 10000n,
+		qty: 20000n,
 	});
 
 	expect(getOrder("1", order.orderId)).toMatchObject({
@@ -56,9 +56,9 @@ test("partially filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
-		filledQty: 2n,
+		price: 10000n,
+		qty: 50000n,
+		filledQty: 20000n,
 		status: "PARTIALLY_FILLED",
 	});
 });
@@ -70,8 +70,8 @@ test("filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	placeOrder({
@@ -80,8 +80,8 @@ test("filled order", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	expect(getOrder("1", order.orderId)).toMatchObject({
@@ -89,9 +89,9 @@ test("filled order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
-		filledQty: 5n,
+		price: 10000n,
+		qty: 50000n,
+		filledQty: 50000n,
 		status: "FILLED",
 	});
 });
@@ -109,8 +109,8 @@ test("user tries to read another user's order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100n,
-		qty: 5n,
+		price: 10000n,
+		qty: 50000n,
 	});
 
 	expect(() => {
