@@ -1,4 +1,4 @@
-import type { Fill, Market, OrderRecord, UserBalance } from "./types/domain";
+import type { Fill, Market, OrderRecord, Symbol, UserBalance } from "./types/domain";
 
 // --- In-memory state ---
 /*
@@ -61,7 +61,7 @@ export const BALANCES: Record<string, UserBalance> = {};
 		},
 	};
 */
-export const ORDERBOOK: Record<string, Market> = {
+export const ORDERBOOK: Record<Symbol, Market> = {
 	BTC_USD: {
 		baseAsset: "BTC",
 		quoteAsset: "USD",
@@ -110,7 +110,7 @@ export const ORDERBOOK: Record<string, Market> = {
 		},
 	];
 */
-export const ORDERS: OrderRecord[] = [];
+export const ORDERS = new Map<string, OrderRecord>();
 
 /*
 	FILLS = [

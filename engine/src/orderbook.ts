@@ -113,7 +113,7 @@ export function removeOrderFromBook(order: OrderRecord) {
 	}
 }
 
-export function getDepth(symbol: string) {
+export function getDepth(symbol: Symbol) {
 	const market = ORDERBOOK[symbol];
 
 	if (!market) {

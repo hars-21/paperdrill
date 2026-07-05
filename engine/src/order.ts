@@ -16,7 +16,7 @@ export function placeOrder(orderInput: CreateOrderInput) {
 		createdAt: Date.now(),
 	};
 
-	ORDERS.push(order);
+	ORDERS.set(order.orderId, order);
 
 	matchOrder(order);
 
@@ -47,9 +47,9 @@ export function placeOrder(orderInput: CreateOrderInput) {
 }
 
 export function getOrder(userId: string, orderId: string) {
-	const order = ORDERS.find((order) => order.orderId === orderId && order.userId === userId);
+	const order = ORDERS.get(orderId);
 
-	if (order === undefined) {
+	if (order === undefined || order.userId !== userId) {
 		throw new Error("Order not Found");
 	}
 
@@ -57,15 +57,17 @@ export function getOrder(userId: string, orderId: string) {
 }
 
 export function getOpenOrders(userId: string) {
-	const orders = ORDERS.filter((order) => order.status === "OPEN" && order.userId === userId);
+	const orders = [...ORDERS.values()].filter(
+		(order) => order.status === "OPEN" && order.userId === userId,
+	);
 
 	return orders;
 }
 
 export function cancelOrder(userId: string, orderId: string) {
-	const order = ORDERS.find((order) => order.orderId === orderId && order.userId === userId);
+	const order = ORDERS.get(orderId);
 
-	if (!order) throw new Error("Order not Found");
+	if (!order || order.userId !== userId) throw new Error("Order not Found");
 
 	if (order.status === "FILLED") throw new Error("Filled orders cannot be cancelled");
 

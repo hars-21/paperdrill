@@ -21,10 +21,11 @@ export function getUserBalance(userId: string): UserBalance {
 export function lockBalance(order: CreateOrderInput): number {
 	const { userId, side, type, symbol, price, qty } = order;
 
+	const market = ORDERBOOK[symbol];
 	const userBalance = getUserBalance(userId);
 
-	const base = userBalance[ORDERBOOK[symbol]?.baseAsset!];
-	const quote = userBalance[ORDERBOOK[symbol]?.quoteAsset!];
+	const base = userBalance[market.baseAsset];
+	const quote = userBalance[market.quoteAsset];
 
 	if (side === "BUY") {
 		let lockAmount: number;
@@ -33,7 +34,7 @@ export function lockBalance(order: CreateOrderInput): number {
 			if (price == null) throw new Error("LIMIT order must have price");
 			lockAmount = price * qty;
 		} else {
-			const bestAsk = ORDERBOOK[symbol]?.bestAsk;
+			const bestAsk = market.bestAsk;
 			if (bestAsk == null) throw new Error("No liquidity");
 			lockAmount = bestAsk * qty * 1.1;
 		}
@@ -47,7 +48,7 @@ export function lockBalance(order: CreateOrderInput): number {
 
 		return lockAmount;
 	} else {
-		if (type === "MARKET" && ORDERBOOK[symbol]?.bestBid == null) {
+		if (type === "MARKET" && market.bestBid == null) {
 			throw new Error("No liquidity");
 		}
 
@@ -66,21 +67,22 @@ export function settleFills(fills: Fill[]) {
 	for (const fill of fills) {
 		const { buyOrderId, sellOrderId, qty, price } = fill;
 
-		const buyOrder = ORDERS.find((o) => o.orderId === buyOrderId);
-		const sellOrder = ORDERS.find((o) => o.orderId === sellOrderId);
+		const buyOrder = ORDERS.get(buyOrderId);
+		const sellOrder = ORDERS.get(sellOrderId);
 
 		if (!buyOrder || !sellOrder) throw new Error("Invalid trade");
 
 		const symbol = buyOrder.symbol;
+		const market = ORDERBOOK[symbol];
 
 		const buyerBalance = getUserBalance(buyOrder.userId);
 		const sellerBalance = getUserBalance(sellOrder.userId);
 
-		const buyerQuote = buyerBalance[ORDERBOOK[symbol]?.quoteAsset!];
-		const sellerQuote = sellerBalance[ORDERBOOK[symbol]?.quoteAsset!];
+		const buyerQuote = buyerBalance[market.quoteAsset];
+		const sellerQuote = sellerBalance[market.quoteAsset];
 
-		const buyerBase = buyerBalance[ORDERBOOK[symbol]?.baseAsset!];
-		const sellerBase = sellerBalance[ORDERBOOK[symbol]?.baseAsset!];
+		const buyerBase = buyerBalance[market.baseAsset];
+		const sellerBase = sellerBalance[market.baseAsset];
 
 		// USD transfer
 		const cost = qty * price;
@@ -97,10 +99,11 @@ export function settleFills(fills: Fill[]) {
 export function releaseBalance(order: OrderRecord) {
 	const { userId, side, symbol, qty, filledQty, fills } = order;
 
+	const market = ORDERBOOK[symbol];
 	const userBalance = getUserBalance(userId);
 
-	const quote = userBalance[ORDERBOOK[symbol]?.quoteAsset!];
-	const base = userBalance[ORDERBOOK[symbol]?.baseAsset!];
+	const quote = userBalance[market.quoteAsset];
+	const base = userBalance[market.baseAsset];
 
 	if (side === "BUY") {
 		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0);
