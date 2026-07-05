@@ -10,16 +10,16 @@ export type UserData = {
 export type OrderResult = {
 	orderId: string;
 	status: string;
-	filledQty: number;
-	averagePrice: number | null;
+	filledQty: string;
+	averagePrice: string | null;
 	fills: Fill[];
 };
 
 export type Fill = {
 	fillId: string;
 	symbol: string;
-	price: number;
-	qty: number;
+	price: string;
+	qty: string;
 	buyOrderId: string;
 	sellOrderId: string;
 	isBuyerMaker: boolean;
@@ -28,8 +28,8 @@ export type Fill = {
 
 export type DepthSnapshot = {
 	symbol: string;
-	bids: { price: number; qty: number }[];
-	asks: { price: number; qty: number }[];
+	bids: { price: string; qty: string }[];
+	asks: { price: string; qty: string }[];
 	lastUpdateId: number;
 	timestamp: number;
 };
@@ -37,7 +37,7 @@ export type DepthSnapshot = {
 export type CancelResult = {
 	orderId: string;
 	status: string;
-	qty: number;
-	filledQty: number;
-	releasedFunds: number;
+	qty: string;
+	filledQty: string;
+	releasedFunds: string;
 };

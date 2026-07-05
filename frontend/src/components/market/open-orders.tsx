@@ -163,13 +163,13 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 									</td>
 									<td className="px-5 py-3 font-mono text-[11px]">{order.type}</td>
 									<td className="px-5 py-3 font-mono text-[11px] text-right">
-										{order.price?.toFixed(2) ?? "—"}
+										{order.price ?? "—"}
 									</td>
 									<td className="px-5 py-3 font-mono text-[11px] text-right">{order.qty}</td>
 									<td className="px-5 py-3 font-mono text-[11px] text-right">
-										{order.filledQty > 0 ? (
+										{Number(order.filledQty) > 0 ? (
 											<span className="text-orange-500">
-												{((order.filledQty / order.qty) * 100).toFixed(1)}%
+												{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
 											</span>
 										) : (
 											<span className="text-muted-foreground">0%</span>

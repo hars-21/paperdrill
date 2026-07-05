@@ -40,7 +40,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 		);
 	}
 
-	const handlePlaceOrder = async (e: React.FormEvent) => {
+	const handlePlaceOrder = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		if (!quantity || Number(quantity) <= 0) {
 			toast.error("Enter a valid quantity");
@@ -58,13 +58,13 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 				side,
 				orderType,
 				symbol,
-				Number(quantity),
-				orderType === "LIMIT" ? Number(price) : null,
+				quantity,
+				orderType === "LIMIT" ? price : null,
 			);
 
 			const statusMsg =
 				result.status === "FILLED"
-					? `Filled at avg. ${result.averagePrice?.toFixed(2) ?? "—"}`
+					? `Filled at avg. ${result.averagePrice ?? "—"}`
 					: result.status === "PARTIALLY_FILLED"
 						? `Partially filled (${result.filledQty}/${Number(quantity)})`
 						: "Order placed successfully";
@@ -109,17 +109,14 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 				</div>
 
 				<TabsContent value={side} className="flex-1 p-5 flex flex-col justify-between" forceMount>
-					<form
-						onSubmit={handlePlaceOrder}
-						className="space-y-5 flex-1 flex flex-col justify-between"
-					>
+					<form onSubmit={handlePlaceOrder} className="space-y-5 flex-1 flex flex-col">
 						<div className="space-y-4">
 							<div className="flex justify-between items-center text-xs">
 								<span className="text-muted-foreground">Available Balance</span>
 								<span className="font-mono text-foreground font-semibold">
 									{side === "BUY"
-										? `${user?.balance.USD?.available.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? 0} USD`
-										: `${user?.balance[base!]?.available.toLocaleString(undefined, { maximumFractionDigits: 8 }) ?? 0} ${base}`}
+										? `${user?.balance.USD?.available ?? 0} USD`
+										: `${user?.balance[base!]?.available ?? 0} ${base}`}
 								</span>
 							</div>
 
@@ -157,7 +154,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 										<Input
 											id="price"
 											type="number"
-											step="any"
+											step="0.01"
+											min={0}
 											value={price}
 											onChange={(e) => setPrice(e.target.value)}
 											placeholder="0.00"
@@ -196,7 +194,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 									<Input
 										id="quantity"
 										type="number"
-										step="any"
+										step="0.01"
+										min={0}
 										value={quantity}
 										onChange={(e) => setQuantity(e.target.value)}
 										placeholder="0.00"

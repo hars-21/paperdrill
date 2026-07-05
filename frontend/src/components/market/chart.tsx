@@ -84,22 +84,23 @@ export function Chart({ symbol }: ChartProps) {
 
 		api.getCandles(symbol, interval).then(({ data }) => {
 			if (data.length > 0) {
-				setLatestCandle(data[data.length - 1] ?? null);
+				const last = data[data.length - 1]!;
+				setLatestCandle({ ...last, time: last.time });
 			}
 			candleSeries.setData(
 				data.map((c) => ({
 					time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
-					open: c.open,
-					high: c.high,
-					low: c.low,
-					close: c.close,
+					open: Number(c.open),
+					high: Number(c.high),
+					low: Number(c.low),
+					close: Number(c.close),
 				})),
 			);
 			volumeSeries.setData(
 				data.map((c) => ({
 					time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
-					value: c.volume,
-					color: c.close >= c.open ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
+					value: Number(c.volume),
+					color: Number(c.close) >= Number(c.open) ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
 				})),
 			);
 		});
@@ -134,16 +135,16 @@ export function Chart({ symbol }: ChartProps) {
 
 			candleSeries.update({
 				time,
-				open: candle.open,
-				high: candle.high,
-				low: candle.low,
-				close: candle.close,
+				open: Number(candle.open),
+				high: Number(candle.high),
+				low: Number(candle.low),
+				close: Number(candle.close),
 			});
 
 			volumeSeries.update({
 				time,
-				value: candle.volume,
-				color: candle.close >= candle.open ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
+				value: Number(candle.volume),
+				color: Number(candle.close) >= Number(candle.open) ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
 			});
 		});
 
@@ -163,16 +164,19 @@ export function Chart({ symbol }: ChartProps) {
 	}, [symbol, interval]);
 
 	const displayCandle = hoveredCandle || latestCandle;
-	const isUp = displayCandle ? (displayCandle.close ?? 0) >= (displayCandle.open ?? 0) : true;
+	const isUp = displayCandle
+		? Number(displayCandle.close ?? 0) >= Number(displayCandle.open ?? 0)
+		: true;
 	const valueColor = isUp ? "text-success" : "text-destructive";
 
-	const formatPrice = (p?: number) =>
-		p?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "—";
-	const formatVol = (v?: number) => {
+	const formatPrice = (p?: string) =>
+		p ? Number(p).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—";
+	const formatVol = (v?: string) => {
 		if (v === undefined) return "—";
-		if (v >= 1000000) return (v / 1000000).toFixed(2) + "M";
-		if (v >= 1000) return (v / 1000).toFixed(2) + "K";
-		return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+		const n = Number(v);
+		if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
+		if (n >= 1000) return (n / 1000).toFixed(2) + "K";
+		return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 	};
 
 	return (

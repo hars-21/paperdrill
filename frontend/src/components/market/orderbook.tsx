@@ -1,4 +1,3 @@
-import { Info } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 
 export function Orderbook({

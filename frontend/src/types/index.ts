@@ -1,6 +1,6 @@
 export interface DepthLevel {
-	price: number;
-	qty: number;
+	price: string;
+	qty: string;
 }
 
 export interface Depth {
@@ -10,8 +10,8 @@ export interface Depth {
 }
 
 export interface Balance {
-	available: number;
-	locked: number;
+	available: string;
+	locked: string;
 }
 
 export interface UserBalance {
@@ -35,17 +35,17 @@ export interface OrderRecord {
 	side: "BUY" | "SELL";
 	type: "LIMIT" | "MARKET";
 	symbol: string;
-	price: number | null;
-	qty: number;
-	filledQty: number;
+	price: string | null;
+	qty: string;
+	filledQty: string;
 	status: string;
 	createdAt: number;
 }
 
 export interface Trade {
 	id: number;
-	price: number;
-	qty: number;
+	price: string;
+	qty: string;
 	maker: boolean;
 	timestamp: number;
 }
@@ -59,10 +59,10 @@ export interface Market {
 export interface Candle {
 	event?: string;
 	time: number;
-	open: number;
-	high: number;
-	low: number;
-	close: number;
-	volume: number;
+	open: string;
+	high: string;
+	low: string;
+	close: string;
+	volume: string;
 	symbol: string;
 }

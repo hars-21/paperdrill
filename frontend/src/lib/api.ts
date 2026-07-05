@@ -33,11 +33,7 @@ export const api = {
 		});
 	},
 
-	signup(
-		email: string,
-		name: string,
-		password: string,
-	): Promise<{ userId: string; name: string }> {
+	signup(email: string, name: string, password: string): Promise<{ userId: string; name: string }> {
 		return request<{ userId: string; name: string }>("/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
@@ -77,8 +73,8 @@ export const api = {
 		side: "BUY" | "SELL",
 		type: "LIMIT" | "MARKET",
 		symbol: string,
-		qty: number,
-		price?: number | null,
+		qty: string,
+		price?: string | null,
 	): Promise<OrderResult> {
 		return request<OrderResult>("/orders", {
 			method: "POST",
