@@ -3,37 +3,36 @@ import { FILLS, ORDERBOOK } from "./store";
 import type { Fill, OrderRecord } from "./types/domain";
 
 export function matchOrder(order: OrderRecord) {
-	let remainingQty = order.qty - order.filledQty;
+	const { orderId, side, type, symbol, price, qty, filledQty } = order;
+
+	let remainingQty = qty - filledQty;
+	const market = ORDERBOOK[symbol]!;
 
 	while (remainingQty > 0) {
-		const bestPrice =
-			order.side === "BUY" ? ORDERBOOK[order.symbol]?.bestAsk : ORDERBOOK[order.symbol]?.bestBid;
+		const bestPrice = side === "BUY" ? market.bestAsk : market.bestBid;
 		if (bestPrice === null || bestPrice === undefined) break;
 
-		if (order.type === "LIMIT") {
-			if (order.price === null) {
+		if (type === "LIMIT") {
+			if (price === null) {
 				throw new Error("LIMIT order must have price");
 			}
 
-			if (
-				(order.side === "BUY" && bestPrice > order.price) ||
-				(order.side === "SELL" && bestPrice < order.price)
-			) {
+			if ((side === "BUY" && bestPrice > price) || (side === "SELL" && bestPrice < price)) {
 				break;
 			}
 		}
 
-		const matchSide = order.side === "BUY" ? "asks" : "bids";
+		const matchSide = side === "BUY" ? "asks" : "bids";
 
-		const priceLevel = ORDERBOOK[order.symbol]![matchSide][bestPrice];
+		const priceLevel = market[matchSide].get(bestPrice);
 		if (!priceLevel) break;
 
 		while (remainingQty > 0 && priceLevel.orders.length > 0) {
 			const restingOrder = priceLevel.orders[0]!;
 			const availableQty = restingOrder.qty - restingOrder.filledQty;
 
-			const buyOrderId = order.side === "BUY" ? order.orderId : restingOrder.orderId;
-			const sellOrderId = order.side === "BUY" ? restingOrder.orderId : order.orderId;
+			const buyOrderId = side === "BUY" ? orderId : restingOrder.orderId;
+			const sellOrderId = side === "BUY" ? restingOrder.orderId : orderId;
 
 			if (remainingQty >= availableQty) {
 				remainingQty -= availableQty;
@@ -46,12 +45,12 @@ export function matchOrder(order: OrderRecord) {
 
 				const fill: Fill = {
 					fillId: crypto.randomUUID(),
-					symbol: order.symbol,
+					symbol,
 					price: bestPrice,
 					qty: availableQty,
 					buyOrderId,
 					sellOrderId,
-					isBuyerMaker: order.side !== "BUY",
+					isBuyerMaker: side !== "BUY",
 					createdAt: Date.now(),
 				};
 
@@ -63,7 +62,7 @@ export function matchOrder(order: OrderRecord) {
 				priceLevel.orders.shift();
 
 				publishFill({
-					symbol: fill.symbol,
+					symbol,
 					price: fill.price,
 					qty: fill.qty,
 					maker: fill.isBuyerMaker,
@@ -80,7 +79,7 @@ export function matchOrder(order: OrderRecord) {
 
 				const fill: Fill = {
 					fillId: crypto.randomUUID(),
-					symbol: order.symbol,
+					symbol,
 					price: bestPrice,
 					qty: remainingQty,
 					buyOrderId,
@@ -96,7 +95,7 @@ export function matchOrder(order: OrderRecord) {
 				remainingQty = 0;
 
 				publishFill({
-					symbol: fill.symbol,
+					symbol,
 					price: fill.price,
 					qty: fill.qty,
 					maker: fill.isBuyerMaker,
@@ -105,7 +104,7 @@ export function matchOrder(order: OrderRecord) {
 			}
 
 			publishDepth({
-				symbol: order.symbol,
+				symbol,
 				price: bestPrice,
 				qty: priceLevel.totalQty,
 				side: matchSide,
@@ -113,12 +112,12 @@ export function matchOrder(order: OrderRecord) {
 		}
 
 		if (priceLevel.orders.length === 0) {
-			delete ORDERBOOK[order.symbol]![matchSide][bestPrice];
-			recomputeBestPrice(order.symbol, matchSide);
+			market[matchSide].delete(bestPrice);
+			recomputeBestPrice(symbol, matchSide);
 		}
 	}
 
-	if (remainingQty > 0 && order.type === "LIMIT") {
+	if (remainingQty > 0 && type === "LIMIT") {
 		addOrderToBook(order);
 	}
 }

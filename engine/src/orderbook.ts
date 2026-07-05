@@ -1,7 +1,7 @@
 import { publishEvent } from "./redis/publish";
 import { ORDERBOOK } from "./store";
 import { logger } from "./logger";
-import type { Depth, OrderRecord, PriceLevel, RestingOrder, Symbol } from "./types/domain";
+import type { Depth, OrderRecord, RestingOrder, Symbol } from "./types/domain";
 import type { EventMessage } from "./types/event";
 
 let LastUpdateID = 1;
@@ -22,19 +22,19 @@ export function addOrderToBook(order: OrderRecord) {
 		throw new Error("Invalid price");
 	}
 
+	const market = ORDERBOOK[symbol]!;
 	const marketside = side === "BUY" ? "bids" : "asks";
-	const priceLevel = ORDERBOOK[symbol]![marketside][price];
+	const priceLevel = market[marketside].get(price);
 	const remainingQty = qty - filledQty;
 
 	if (priceLevel) {
 		priceLevel.orders.push(order as RestingOrder);
 		priceLevel.totalQty += remainingQty;
 	} else {
-		const market = ORDERBOOK[symbol]!;
-		market[marketside][price] = {
+		market[marketside].set(price, {
 			totalQty: remainingQty,
 			orders: [order as RestingOrder],
-		};
+		});
 		if (marketside === "bids") {
 			if (market.bestBid === null || price > market.bestBid) {
 				market.bestBid = price;
@@ -55,8 +55,7 @@ export function addOrderToBook(order: OrderRecord) {
 
 export function recomputeBestPrice(symbol: Symbol, side: "bids" | "asks") {
 	const market = ORDERBOOK[symbol]!;
-	const levels = market[side];
-	const prices = Object.keys(levels).map(Number);
+	const prices = [...market[side].keys()];
 
 	if (prices.length === 0) {
 		if (side === "bids") market.bestBid = null;
@@ -86,8 +85,9 @@ export function removeOrderFromBook(order: OrderRecord) {
 		throw new Error("Invalid price");
 	}
 
+	const market = ORDERBOOK[symbol]!;
 	const marketside = side === "BUY" ? "bids" : "asks";
-	const priceLevel = ORDERBOOK[symbol]![marketside][price];
+	const priceLevel = market[marketside].get(price);
 
 	if (!priceLevel) {
 		throw new Error("Invalid price");
@@ -106,8 +106,7 @@ export function removeOrderFromBook(order: OrderRecord) {
 	});
 
 	if (priceLevel.orders.length === 0) {
-		delete ORDERBOOK[symbol]![marketside][price];
-		const market = ORDERBOOK[symbol]!;
+		market[marketside].delete(price);
 		if ((marketside === "bids" ? market.bestBid : market.bestAsk) === price) {
 			recomputeBestPrice(symbol, marketside);
 		}
@@ -115,32 +114,28 @@ export function removeOrderFromBook(order: OrderRecord) {
 }
 
 export function getDepth(symbol: string) {
-	const orderbook = ORDERBOOK[symbol];
+	const market = ORDERBOOK[symbol];
 
-	if (!orderbook) {
+	if (!market) {
 		throw new Error("Invalid symbol");
 	}
 
-	const bids: Record<string, PriceLevel> = orderbook.bids;
-
-	const bidsArr = Object.entries(bids).map(([price, level]) => ({
-		price: Number(price),
+	const bids = [...market.bids.entries()].map(([price, level]) => ({
+		price,
 		qty: level.totalQty,
 	}));
-	bidsArr.sort((a, b) => b.price - a.price);
+	bids.sort((a, b) => b.price - a.price);
 
-	const asks: Record<string, PriceLevel> = orderbook.asks;
-
-	const asksArr = Object.entries(asks).map(([price, level]) => ({
-		price: Number(price),
+	const asks = [...market.asks.entries()].map(([price, level]) => ({
+		price,
 		qty: level.totalQty,
 	}));
-	asksArr.sort((a, b) => a.price - b.price);
+	asks.sort((a, b) => a.price - b.price);
 
 	return {
 		symbol,
-		bids: bidsArr,
-		asks: asksArr,
+		bids,
+		asks,
 		lastUpdateId: LastUpdateID,
 		timestamp: Date.now(),
 	};

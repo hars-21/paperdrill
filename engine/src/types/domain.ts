@@ -65,8 +65,8 @@ export interface Market {
 	bestBid: number | null;
 	bestAsk: number | null;
 
-	bids: Record<string, PriceLevel>;
-	asks: Record<string, PriceLevel>;
+	bids: Map<number, PriceLevel>;
+	asks: Map<number, PriceLevel>;
 }
 
 export interface CreateOrderInput {

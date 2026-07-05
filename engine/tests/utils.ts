@@ -8,8 +8,8 @@ export function resetState() {
 		qtyPrecision: 4,
 		bestBid: null,
 		bestAsk: null,
-		bids: {},
-		asks: {},
+		bids: new Map(),
+		asks: new Map(),
 	};
 
 	BALANCES["1"] = {

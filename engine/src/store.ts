@@ -69,8 +69,8 @@ export const ORDERBOOK: Record<string, Market> = {
 		qtyPrecision: 4,
 		bestBid: null,
 		bestAsk: null,
-		bids: {},
-		asks: {},
+		bids: new Map(),
+		asks: new Map(),
 	},
 	SOL_USD: {
 		baseAsset: "SOL",
@@ -79,8 +79,8 @@ export const ORDERBOOK: Record<string, Market> = {
 		qtyPrecision: 2,
 		bestBid: null,
 		bestAsk: null,
-		bids: {},
-		asks: {},
+		bids: new Map(),
+		asks: new Map(),
 	},
 	ETH_USD: {
 		baseAsset: "ETH",
@@ -89,8 +89,8 @@ export const ORDERBOOK: Record<string, Market> = {
 		qtyPrecision: 3,
 		bestBid: null,
 		bestAsk: null,
-		bids: {},
-		asks: {},
+		bids: new Map(),
+		asks: new Map(),
 	},
 };
 
