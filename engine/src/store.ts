@@ -62,9 +62,36 @@ export const BALANCES: Record<string, UserBalance> = {};
 	};
 */
 export const ORDERBOOK: Record<string, Market> = {
-	BTC_USD: { bids: {}, asks: {} },
-	SOL_USD: { bids: {}, asks: {} },
-	ETH_USD: { bids: {}, asks: {} },
+	BTC_USD: {
+		baseAsset: "BTC",
+		quoteAsset: "USD",
+		pricePrecision: 2,
+		qtyPrecision: 4,
+		bestBid: null,
+		bestAsk: null,
+		bids: {},
+		asks: {},
+	},
+	SOL_USD: {
+		baseAsset: "SOL",
+		quoteAsset: "USD",
+		pricePrecision: 2,
+		qtyPrecision: 2,
+		bestBid: null,
+		bestAsk: null,
+		bids: {},
+		asks: {},
+	},
+	ETH_USD: {
+		baseAsset: "ETH",
+		quoteAsset: "USD",
+		pricePrecision: 2,
+		qtyPrecision: 3,
+		bestBid: null,
+		bestAsk: null,
+		bids: {},
+		asks: {},
+	},
 };
 
 /*

@@ -1,4 +1,4 @@
-import { addOrderToBook, getBestAsk, getBestBid, publishDepth, publishFill } from "./orderbook";
+import { addOrderToBook, publishDepth, publishFill, recomputeBestPrice } from "./orderbook";
 import { FILLS, ORDERBOOK } from "./store";
 import type { Fill, OrderRecord } from "./types/domain";
 
@@ -6,8 +6,9 @@ export function matchOrder(order: OrderRecord) {
 	let remainingQty = order.qty - order.filledQty;
 
 	while (remainingQty > 0) {
-		const bestPrice = order.side === "BUY" ? getBestAsk(order.symbol) : getBestBid(order.symbol);
-		if (bestPrice === null) break;
+		const bestPrice =
+			order.side === "BUY" ? ORDERBOOK[order.symbol]?.bestAsk : ORDERBOOK[order.symbol]?.bestBid;
+		if (bestPrice === null || bestPrice === undefined) break;
 
 		if (order.type === "LIMIT") {
 			if (order.price === null) {
@@ -113,6 +114,7 @@ export function matchOrder(order: OrderRecord) {
 
 		if (priceLevel.orders.length === 0) {
 			delete ORDERBOOK[order.symbol]![matchSide][bestPrice];
+			recomputeBestPrice(order.symbol, matchSide);
 		}
 	}
 

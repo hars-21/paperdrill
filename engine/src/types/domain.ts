@@ -1,14 +1,13 @@
 export type Side = "BUY" | "SELL";
 export type OrderType = "LIMIT" | "MARKET";
+export type Symbol = "BTC_USD" | "ETH_USD" | "SOL_USD";
+export type Asset = "BTC" | "SOL" | "ETH" | "USD";
 export type OrderStatus = "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
+export type UserBalance = Record<Asset, Balance>;
 
 export interface Balance {
 	available: number;
 	locked: number;
-}
-
-export interface UserBalance {
-	[asset: string]: Balance;
 }
 
 export interface RestingOrder {
@@ -16,7 +15,7 @@ export interface RestingOrder {
 	userId: string;
 	side: Side;
 	type: "LIMIT";
-	symbol: string;
+	symbol: Symbol;
 	price: number;
 	qty: number;
 	filledQty: number;
@@ -30,7 +29,7 @@ export interface OrderRecord {
 	userId: string;
 	side: Side;
 	type: OrderType;
-	symbol: string;
+	symbol: Symbol;
 	price: number | null;
 	qty: number;
 	filledQty: number;
@@ -42,7 +41,7 @@ export interface OrderRecord {
 
 export interface Fill {
 	fillId: string;
-	symbol: string;
+	symbol: Symbol;
 	price: number;
 	qty: number;
 	buyOrderId: string;
@@ -57,6 +56,15 @@ export interface PriceLevel {
 }
 
 export interface Market {
+	baseAsset: Asset;
+	quoteAsset: Asset;
+
+	pricePrecision: number;
+	qtyPrecision: number;
+
+	bestBid: number | null;
+	bestAsk: number | null;
+
 	bids: Record<string, PriceLevel>;
 	asks: Record<string, PriceLevel>;
 }
@@ -66,7 +74,7 @@ export interface CreateOrderInput {
 	userId: string;
 	side: Side;
 	type: OrderType;
-	symbol: string;
+	symbol: Symbol;
 	price: number | null;
 	qty: number;
 }
@@ -77,7 +85,7 @@ export interface DepthLevel {
 }
 
 export interface Depth {
-	symbol: string;
+	symbol: Symbol;
 	bids: DepthLevel[];
 	asks: DepthLevel[];
 }

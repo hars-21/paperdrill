@@ -1,98 +1,116 @@
 import { publishEvent } from "./redis/publish";
 import { ORDERBOOK } from "./store";
 import { logger } from "./logger";
-import type { Depth, OrderRecord, PriceLevel, RestingOrder, Side } from "./types/domain";
+import type { Depth, OrderRecord, PriceLevel, RestingOrder, Symbol } from "./types/domain";
 import type { EventMessage } from "./types/event";
 
 let LastUpdateID = 1;
 let LastFillID = 1;
 
-export function getBestBid(symbol: string) {
-	const bids = ORDERBOOK[symbol]!.bids;
-	const bidPrices = Object.keys(bids).map(Number);
-
-	const bestBid = bidPrices.length > 0 ? Math.max(...bidPrices) : null;
-	return bestBid;
-}
-
-export function getBestAsk(symbol: string) {
-	const asks = ORDERBOOK[symbol]!.asks;
-	const askPrices = Object.keys(asks).map(Number);
-
-	const bestAsk = askPrices.length > 0 ? Math.min(...askPrices) : null;
-	return bestAsk;
-}
-
 export function addOrderToBook(order: OrderRecord) {
-	if (order.type === "MARKET" || !order.price) {
+	const { side, type, symbol, price, qty, filledQty } = order;
+
+	if (type === "MARKET" || !price) {
 		return;
 	}
 
-	if (order.qty <= 0) {
+	if (qty <= 0) {
 		throw new Error("Invalid qty");
 	}
 
-	if (order.price <= 0) {
+	if (price <= 0) {
 		throw new Error("Invalid price");
 	}
 
-	const orderSide = order.side === "BUY" ? "bids" : "asks";
-	const priceLevel = ORDERBOOK[order.symbol]![orderSide][order.price];
-	const remainingQty = order.qty - order.filledQty;
+	const marketside = side === "BUY" ? "bids" : "asks";
+	const priceLevel = ORDERBOOK[symbol]![marketside][price];
+	const remainingQty = qty - filledQty;
 
 	if (priceLevel) {
 		priceLevel.orders.push(order as RestingOrder);
 		priceLevel.totalQty += remainingQty;
 	} else {
-		ORDERBOOK[order.symbol]![orderSide][order.price] = {
+		const market = ORDERBOOK[symbol]!;
+		market[marketside][price] = {
 			totalQty: remainingQty,
 			orders: [order as RestingOrder],
 		};
+		if (marketside === "bids") {
+			if (market.bestBid === null || price > market.bestBid) {
+				market.bestBid = price;
+			}
+		} else {
+			if (market.bestAsk === null || price < market.bestAsk) {
+				market.bestAsk = price;
+			}
+		}
 	}
 	publishDepth({
-		symbol: order.symbol,
-		price: order.price,
+		symbol,
+		price,
 		qty: priceLevel?.totalQty ?? remainingQty,
-		side: orderSide,
+		side: marketside,
 	});
 }
 
-export function removeOrderFromBook(order: OrderRecord) {
-	if (order.type === "MARKET" || !order.price) {
+export function recomputeBestPrice(symbol: Symbol, side: "bids" | "asks") {
+	const market = ORDERBOOK[symbol]!;
+	const levels = market[side];
+	const prices = Object.keys(levels).map(Number);
+
+	if (prices.length === 0) {
+		if (side === "bids") market.bestBid = null;
+		else market.bestAsk = null;
 		return;
 	}
 
-	if (order.qty <= 0) {
+	if (side === "bids") {
+		market.bestBid = Math.max(...prices);
+	} else {
+		market.bestAsk = Math.min(...prices);
+	}
+}
+
+export function removeOrderFromBook(order: OrderRecord) {
+	const { orderId, side, type, symbol, price, qty, filledQty } = order;
+
+	if (type === "MARKET" || !price) {
+		return;
+	}
+
+	if (qty <= 0) {
 		throw new Error("Invalid qty");
 	}
 
-	if (order.price <= 0) {
+	if (price <= 0) {
 		throw new Error("Invalid price");
 	}
 
-	const orderSide = order.side === "BUY" ? "bids" : "asks";
-	const priceLevel = ORDERBOOK[order.symbol]![orderSide][order.price];
+	const marketside = side === "BUY" ? "bids" : "asks";
+	const priceLevel = ORDERBOOK[symbol]![marketside][price];
 
 	if (!priceLevel) {
 		throw new Error("Invalid price");
 	}
 
 	priceLevel.orders = priceLevel.orders.filter(
-		(restingOrder: RestingOrder) => restingOrder.orderId !== order.orderId,
+		(restingOrder: RestingOrder) => restingOrder.orderId !== orderId,
 	);
-	priceLevel.totalQty -= order.qty - order.filledQty;
-
-	ORDERBOOK[order.symbol]![orderSide][order.price] = priceLevel;
+	priceLevel.totalQty -= qty - filledQty;
 
 	publishDepth({
-		symbol: order.symbol,
-		price: order.price,
+		symbol,
+		price,
 		qty: priceLevel.totalQty,
-		side: orderSide,
+		side: marketside,
 	});
 
 	if (priceLevel.orders.length === 0) {
-		delete ORDERBOOK[order.symbol]![orderSide][order.price];
+		delete ORDERBOOK[symbol]![marketside][price];
+		const market = ORDERBOOK[symbol]!;
+		if ((marketside === "bids" ? market.bestBid : market.bestAsk) === price) {
+			recomputeBestPrice(symbol, marketside);
+		}
 	}
 }
 
@@ -134,7 +152,7 @@ export function publishDepth({
 	qty,
 	side,
 }: {
-	symbol: string;
+	symbol: Symbol;
 	price: number;
 	qty: number;
 	side: "bids" | "asks";
