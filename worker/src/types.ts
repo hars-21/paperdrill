@@ -1,18 +1,18 @@
 export interface Candle {
 	time: number;
-	open: number;
-	high: number;
-	low: number;
-	close: number;
-	volume: number;
+	open: bigint;
+	high: bigint;
+	low: bigint;
+	close: bigint;
+	volume: bigint;
 	symbol: string;
 }
 
 export interface Trade {
 	event: "trade";
 	symbol: string;
-	price: number;
-	qty: number;
+	price: bigint;
+	qty: bigint;
 	maker: boolean;
 	id: number;
 	timestamp: number;

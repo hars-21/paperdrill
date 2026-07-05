@@ -81,8 +81,8 @@ function deriveData(data: Trade) {
 		};
 		openCandles.set(`${symbol}_${bucket}`, candle);
 	} else {
-		currentCandle.high = Math.max(currentCandle.high, price);
-		currentCandle.low = Math.min(currentCandle.low, price);
+		currentCandle.high = price > currentCandle.high ? price : currentCandle.high;
+		currentCandle.low = price < currentCandle.low ? price : currentCandle.low;
 		currentCandle.close = price;
 		currentCandle.volume += qty;
 	}
@@ -99,7 +99,10 @@ async function flushCandles() {
 			const timestamp = new Date(candle.time);
 
 			try {
-				await publisher.publish(`candle:${candle.symbol}`, JSON.stringify({ event: "candle", ...candle }));
+				await publisher.publish(
+					`candle:${candle.symbol}`,
+					JSON.stringify({ event: "candle", ...candle }),
+				);
 
 				await pool.query(
 					`INSERT INTO "Candle" (symbol, open, high, low, close, volume, time) Values ($1, $2, $3, $4, $5, $6, $7)`,

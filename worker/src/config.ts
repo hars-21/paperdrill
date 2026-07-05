@@ -3,8 +3,8 @@ import "dotenv/config";
 
 const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "test", "production"]),
-	REDIS_URL: z.string(),
-	DATABASE_URL: z.string(),
+	REDIS_URL: z.string().trim().min(1, "Redis Url is required"),
+	DATABASE_URL: z.string().trim().min(1, "Database Url is required"),
 	LOG_LEVEL: z.enum(["debug", "info"]),
 });
 
