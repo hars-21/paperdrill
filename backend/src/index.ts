@@ -9,10 +9,12 @@ import { createAppServer } from "./server";
 import { connectRedis, disconnectRedis } from "./redis";
 import { logger } from "./utils/logger";
 import { prisma } from "./db";
+import { loadMarkets } from "./store/market";
 
 const { httpServer, wss } = createAppServer();
 
 async function main() {
+	await loadMarkets();
 	await connectRedis();
 
 	listenForEngineresponses().catch((err) => logger.error("Engine listener error", err));
