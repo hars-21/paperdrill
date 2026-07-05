@@ -7,9 +7,9 @@ function readRuntimeEnv(key: string): string | undefined {
 }
 
 function readEnv(key: string, fallback: string): string {
-	const val = __API_BASE_URL__ !== undefined && key === "API_BASE_URL"
+	const val = typeof __API_BASE_URL__ !== "undefined" && key === "API_BASE_URL"
 		? __API_BASE_URL__
-		: __WS_URL__ !== undefined && key === "WS_URL"
+		: typeof __WS_URL__ !== "undefined" && key === "WS_URL"
 			? __WS_URL__
 			: readRuntimeEnv(key);
 
