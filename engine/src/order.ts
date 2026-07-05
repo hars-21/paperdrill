@@ -9,7 +9,7 @@ export function placeOrder(orderInput: CreateOrderInput) {
 
 	const order: OrderRecord = {
 		...orderInput,
-		filledQty: 0,
+		filledQty: 0n,
 		status: "OPEN",
 		fills: [],
 		lockedAmount,
@@ -34,7 +34,7 @@ export function placeOrder(orderInput: CreateOrderInput) {
 
 	const averagePrice =
 		order.fills.length > 0
-			? order.fills.reduce((total, fill) => total + fill.price * fill.qty, 0) / order.filledQty
+			? order.fills.reduce((total, fill) => total + fill.price * fill.qty, 0n) / order.filledQty
 			: null;
 
 	return {

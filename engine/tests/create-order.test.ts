@@ -14,8 +14,8 @@ test("limit buy order does not match", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 200,
-		qty: 5,
+		price: 200n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -24,15 +24,15 @@ test("limit buy order does not match", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const depth = getDepth("BTC_USD");
 
 	expect(result).toMatchObject({
 		status: "OPEN",
-		filledQty: 0,
+		filledQty: 0n,
 		averagePrice: null,
 		fills: [],
 	});
@@ -41,14 +41,14 @@ test("limit buy order does not match", () => {
 		symbol: "BTC_USD",
 		bids: [
 			{
-				price: 100,
-				qty: 5,
+				price: "100",
+				qty: "5",
 			},
 		],
 		asks: [
 			{
-				price: 200,
-				qty: 5,
+				price: "200",
+				qty: "5",
 			},
 		],
 	});
@@ -61,8 +61,8 @@ test("limit buy order matches best ask", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -71,14 +71,14 @@ test("limit buy order matches best ask", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 5,
-		averagePrice: 100,
+		filledQty: 5n,
+		averagePrice: 100n,
 	});
 });
 
@@ -89,8 +89,8 @@ test("limit buy order has better price than best ask", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -99,14 +99,14 @@ test("limit buy order has better price than best ask", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 200,
-		qty: 5,
+		price: 200n,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 5,
-		averagePrice: 100,
+		filledQty: 5n,
+		averagePrice: 100n,
 	});
 });
 
@@ -117,8 +117,8 @@ test("limit sell order does not match", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -127,13 +127,13 @@ test("limit sell order does not match", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 200,
-		qty: 5,
+		price: 200n,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "OPEN",
-		filledQty: 0,
+		filledQty: 0n,
 		averagePrice: null,
 		fills: [],
 	});
@@ -146,8 +146,8 @@ test("limit sell order has better price than best bid", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 200,
-		qty: 5,
+		price: 200n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -156,14 +156,14 @@ test("limit sell order has better price than best bid", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 5,
-		averagePrice: 200,
+		filledQty: 5n,
+		averagePrice: 200n,
 	});
 });
 
@@ -174,8 +174,8 @@ test("partial fill for limit order", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 3,
+		price: 100n,
+		qty: 3n,
 	});
 
 	const result = placeOrder({
@@ -184,24 +184,24 @@ test("partial fill for limit order", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 10,
+		price: 100n,
+		qty: 10n,
 	});
 
 	const depth = getDepth("BTC_USD");
 
 	expect(result).toMatchObject({
 		status: "PARTIALLY_FILLED",
-		filledQty: 3,
-		averagePrice: 100,
+		filledQty: 3n,
+		averagePrice: 100n,
 	});
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
 		bids: [
 			{
-				price: 100,
-				qty: 7,
+				price: "100",
+				qty: "7",
 			},
 		],
 		asks: [],
@@ -215,8 +215,8 @@ test("match multiple price levels", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 2,
+		price: 100n,
+		qty: 2n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -224,8 +224,8 @@ test("match multiple price levels", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 110,
-		qty: 3,
+		price: 110n,
+		qty: 3n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -233,8 +233,8 @@ test("match multiple price levels", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 120,
-		qty: 5,
+		price: 120n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -243,14 +243,14 @@ test("match multiple price levels", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 120,
-		qty: 10,
+		price: 120n,
+		qty: 10n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 10,
-		averagePrice: 113,
+		filledQty: 10n,
+		averagePrice: 113n,
 	});
 });
 
@@ -261,8 +261,8 @@ test("limit buy orders should not cross above allowed price", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 2,
+		price: 100n,
+		qty: 2n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -270,8 +270,8 @@ test("limit buy orders should not cross above allowed price", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 110,
-		qty: 3,
+		price: 110n,
+		qty: 3n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -279,8 +279,8 @@ test("limit buy orders should not cross above allowed price", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 130,
-		qty: 5,
+		price: 130n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -289,30 +289,30 @@ test("limit buy orders should not cross above allowed price", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 110,
-		qty: 10,
+		price: 110n,
+		qty: 10n,
 	});
 
 	const depth = getDepth("BTC_USD");
 
 	expect(result).toMatchObject({
 		status: "PARTIALLY_FILLED",
-		filledQty: 5,
-		averagePrice: 106,
+		filledQty: 5n,
+		averagePrice: 106n,
 	});
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
 		bids: [
 			{
-				price: 110,
-				qty: 5,
+				price: "110",
+				qty: "5",
 			},
 		],
 		asks: [
 			{
-				price: 130,
-				qty: 5,
+				price: "130",
+				qty: "5",
 			},
 		],
 	});
@@ -325,8 +325,8 @@ test("market buy order fully filled", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -336,13 +336,13 @@ test("market buy order fully filled", () => {
 		type: "MARKET",
 		symbol: "BTC_USD",
 		price: null,
-		qty: 5,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 5,
-		averagePrice: 100,
+		filledQty: 5n,
+		averagePrice: 100n,
 	});
 });
 
@@ -353,8 +353,8 @@ test("market buy order partially filled", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 2,
+		price: 100n,
+		qty: 2n,
 	});
 
 	const result = placeOrder({
@@ -364,13 +364,13 @@ test("market buy order partially filled", () => {
 		type: "MARKET",
 		symbol: "BTC_USD",
 		price: null,
-		qty: 5,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "CANCELLED",
-		filledQty: 2,
-		averagePrice: 100,
+		filledQty: 2n,
+		averagePrice: 100n,
 	});
 });
 
@@ -383,7 +383,7 @@ test("market order with empty book", () => {
 			type: "MARKET",
 			symbol: "BTC_USD",
 			price: null,
-			qty: 5,
+			qty: 5n,
 		});
 	}).toThrow("No liquidity");
 });
@@ -395,8 +395,8 @@ test("market buy order consumes first seller at price level", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -404,8 +404,8 @@ test("market buy order consumes first seller at price level", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const result = placeOrder({
@@ -414,14 +414,14 @@ test("market buy order consumes first seller at price level", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	expect(result).toMatchObject({
 		status: "FILLED",
-		filledQty: 5,
-		averagePrice: 100,
+		filledQty: 5n,
+		averagePrice: 100n,
 	});
 
 	expect(result.fills[0]?.sellOrderId).toBe(firstOrder.orderId);

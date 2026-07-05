@@ -64,9 +64,9 @@ export function recomputeBestPrice(symbol: Symbol, side: "bids" | "asks") {
 	}
 
 	if (side === "bids") {
-		market.bestBid = Math.max(...prices);
+		market.bestBid = prices.length > 0 ? prices.reduce((max, p) => (p > max ? p : max)) : null;
 	} else {
-		market.bestAsk = Math.min(...prices);
+		market.bestAsk = prices.length > 0 ? prices.reduce((min, p) => (p < min ? p : min)) : null;
 	}
 }
 
@@ -120,17 +120,15 @@ export function getDepth(symbol: Symbol) {
 		throw new Error("Invalid symbol");
 	}
 
-	const bids = [...market.bids.entries()].map(([price, level]) => ({
-		price,
-		qty: level.totalQty,
-	}));
-	bids.sort((a, b) => b.price - a.price);
+	const bids = [...market.bids.entries()]
+		.map(([price, level]) => ({ price, qty: level.totalQty }))
+		.sort((a, b) => (a.price > b.price ? -1 : 1))
+		.map(({ price, qty }) => ({ price: price.toString(), qty: qty.toString() }));
 
-	const asks = [...market.asks.entries()].map(([price, level]) => ({
-		price,
-		qty: level.totalQty,
-	}));
-	asks.sort((a, b) => a.price - b.price);
+	const asks = [...market.asks.entries()]
+		.map(([price, level]) => ({ price, qty: level.totalQty }))
+		.sort((a, b) => (a.price < b.price ? -1 : 1))
+		.map(({ price, qty }) => ({ price: price.toString(), qty: qty.toString() }));
 
 	return {
 		symbol,
@@ -148,8 +146,8 @@ export function publishDepth({
 	side,
 }: {
 	symbol: Symbol;
-	price: number;
-	qty: number;
+	price: bigint;
+	qty: bigint;
 	side: "bids" | "asks";
 }) {
 	const depth: Depth = {
@@ -158,7 +156,7 @@ export function publishDepth({
 		asks: [],
 	};
 
-	depth[side].push({ price, qty });
+	depth[side].push({ price: price.toString(), qty: qty.toString() });
 
 	const message: EventMessage = {
 		event: "depth",
@@ -179,17 +177,17 @@ export function publishFill({
 	maker,
 	timestamp,
 }: {
-	symbol: string;
-	price: number;
-	qty: number;
+	symbol: Symbol;
+	price: bigint;
+	qty: bigint;
 	maker: boolean;
 	timestamp: number;
 }) {
 	const message: EventMessage = {
 		event: "trade",
 		symbol,
-		price,
-		qty,
+		price: price.toString(),
+		qty: qty.toString(),
 		maker,
 		id: LastFillID++,
 		timestamp,

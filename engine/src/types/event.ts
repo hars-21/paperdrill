@@ -1,4 +1,4 @@
-import type { DepthLevel } from "./domain";
+import type { DepthLevel, Symbol } from "./domain";
 
 export type EventMessage =
 	| {
@@ -12,9 +12,9 @@ export type EventMessage =
 	| {
 			event: "trade";
 			id: number;
-			symbol: string;
-			price: number;
-			qty: number;
+			symbol: Symbol;
+			price: string;
+			qty: string;
 			maker: boolean;
 			timestamp: number;
 	  };

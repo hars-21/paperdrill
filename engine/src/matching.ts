@@ -39,7 +39,7 @@ export function matchOrder(order: OrderRecord) {
 				restingOrder.filledQty += availableQty;
 
 				order.filledQty += availableQty;
-				order.status = remainingQty === 0 ? "FILLED" : "PARTIALLY_FILLED";
+				order.status = remainingQty === 0n ? "FILLED" : "PARTIALLY_FILLED";
 				restingOrder.status =
 					restingOrder.qty === restingOrder.filledQty ? "FILLED" : "PARTIALLY_FILLED";
 
@@ -92,7 +92,7 @@ export function matchOrder(order: OrderRecord) {
 				order.fills.push(fill);
 				restingOrder.fills.push(fill);
 
-				remainingQty = 0;
+				remainingQty = 0n;
 
 				publishFill({
 					symbol,

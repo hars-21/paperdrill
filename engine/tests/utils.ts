@@ -14,41 +14,41 @@ export function resetState() {
 
 	BALANCES["1"] = {
 		USD: {
-			available: 10000,
-			locked: 0,
+			available: 10000n,
+			locked: 0n,
 		},
 		BTC: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 		SOL: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 		ETH: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 	};
 
 	BALANCES["2"] = {
 		USD: {
-			available: 10000,
-			locked: 0,
+			available: 10000n,
+			locked: 0n,
 		},
 		BTC: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 		SOL: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 		ETH: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 	};
 
-	ORDERS.length = 0;
+	ORDERS.clear();
 }

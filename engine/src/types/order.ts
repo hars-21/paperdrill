@@ -7,8 +7,8 @@ export const orderPayloadSchema = z.discriminatedUnion("type", [
 		type: z.literal("LIMIT"),
 		side: z.enum(["BUY", "SELL"]),
 		symbol: z.enum(["BTC_USD", "ETH_USD", "SOL_USD"]),
-		price: z.number().positive("limit orders require a positive price"),
-		qty: z.number().positive("qty must be a positive number"),
+		price: z.coerce.bigint().positive("limit orders require a positive price"),
+		qty: z.coerce.bigint().positive("qty must be a positive number"),
 	}),
 	z.object({
 		orderId: z.string().trim().min(1, "orderId is required"),
@@ -17,12 +17,12 @@ export const orderPayloadSchema = z.discriminatedUnion("type", [
 		side: z.enum(["BUY", "SELL"]),
 		symbol: z.enum(["BTC_USD", "ETH_USD", "SOL_USD"]),
 		price: z.null(),
-		qty: z.number().positive("qty must be a positive number"),
+		qty: z.coerce.bigint().positive("qty must be a positive number"),
 	}),
 ]);
 
 export const symbolPayloadSchema = z.object({
-	symbol: z.string().trim().min(1, "symbol is required"),
+	symbol: z.enum(["BTC_USD", "ETH_USD", "SOL_USD"]),
 });
 
 export const userPayloadSchema = z.object({

@@ -10,8 +10,12 @@ let lastID = "0-0";
 await connectRedis();
 logger.info(`Engine listening on Redis queue: ${config.incomingStream}`);
 
+function bigintReplacer(_key: string, value: unknown) {
+	return typeof value === "bigint" ? value.toString() : value;
+}
+
 async function sendResponse(responseQueue: string, response: EngineResponse) {
-	await publisher.lPush(responseQueue, JSON.stringify(response));
+	await publisher.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
 }
 
 async function processMessages() {
@@ -49,10 +53,10 @@ async function processMessages() {
 							type: msg.type,
 							payload: JSON.parse(msg.payload),
 						};
-			} catch (err) {
-				logger.error("Skipping invalid broker message");
-				continue;
-			}
+					} catch (err) {
+						logger.error("Skipping invalid broker message");
+						continue;
+					}
 
 					try {
 						const data = handleEngineRequest(request);

@@ -6,8 +6,8 @@ export type OrderStatus = "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
 export type UserBalance = Record<Asset, Balance>;
 
 export interface Balance {
-	available: number;
-	locked: number;
+	available: bigint;
+	locked: bigint;
 }
 
 export interface RestingOrder {
@@ -16,9 +16,9 @@ export interface RestingOrder {
 	side: Side;
 	type: "LIMIT";
 	symbol: Symbol;
-	price: number;
-	qty: number;
-	filledQty: number;
+	price: bigint;
+	qty: bigint;
+	filledQty: bigint;
 	status: OrderStatus;
 	fills: Fill[];
 	createdAt: number;
@@ -30,11 +30,11 @@ export interface OrderRecord {
 	side: Side;
 	type: OrderType;
 	symbol: Symbol;
-	price: number | null;
-	qty: number;
-	filledQty: number;
+	price: bigint | null;
+	qty: bigint;
+	filledQty: bigint;
 	status: OrderStatus;
-	lockedAmount: number;
+	lockedAmount: bigint;
 	fills: Fill[];
 	createdAt: number;
 }
@@ -42,8 +42,8 @@ export interface OrderRecord {
 export interface Fill {
 	fillId: string;
 	symbol: Symbol;
-	price: number;
-	qty: number;
+	price: bigint;
+	qty: bigint;
 	buyOrderId: string;
 	sellOrderId: string;
 	isBuyerMaker: boolean;
@@ -51,7 +51,7 @@ export interface Fill {
 }
 
 export interface PriceLevel {
-	totalQty: number;
+	totalQty: bigint;
 	orders: RestingOrder[];
 }
 
@@ -62,11 +62,11 @@ export interface Market {
 	pricePrecision: number;
 	qtyPrecision: number;
 
-	bestBid: number | null;
-	bestAsk: number | null;
+	bestBid: bigint | null;
+	bestAsk: bigint | null;
 
-	bids: Map<number, PriceLevel>;
-	asks: Map<number, PriceLevel>;
+	bids: Map<bigint, PriceLevel>;
+	asks: Map<bigint, PriceLevel>;
 }
 
 export interface CreateOrderInput {
@@ -75,13 +75,13 @@ export interface CreateOrderInput {
 	side: Side;
 	type: OrderType;
 	symbol: Symbol;
-	price: number | null;
-	qty: number;
+	price: bigint | null;
+	qty: bigint;
 }
 
 export interface DepthLevel {
-	price: number;
-	qty: number;
+	price: string;
+	qty: string;
 }
 
 export interface Depth {

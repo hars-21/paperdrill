@@ -12,12 +12,12 @@ test("new user balance", () => {
 
 	expect(balance).toMatchObject({
 		USD: {
-			available: 10000,
-			locked: 0,
+			available: 10000n,
+			locked: 0n,
 		},
 		BTC: {
-			available: 100,
-			locked: 0,
+			available: 100n,
+			locked: 0n,
 		},
 	});
 });
@@ -29,8 +29,8 @@ test("buyer balance after fill", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -38,20 +38,20 @@ test("buyer balance after fill", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const balance = getUserBalance("2");
 
 	expect(balance).toMatchObject({
 		USD: {
-			available: 9500,
-			locked: 0,
+			available: 9500n,
+			locked: 0n,
 		},
 		BTC: {
-			available: 105,
-			locked: 0,
+			available: 105n,
+			locked: 0n,
 		},
 	});
 });
@@ -63,8 +63,8 @@ test("seller balance after fill", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 	placeOrder({
 		orderId: crypto.randomUUID(),
@@ -72,20 +72,20 @@ test("seller balance after fill", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	const balance = getUserBalance("1");
 
 	expect(balance).toMatchObject({
 		USD: {
-			available: 10500,
-			locked: 0,
+			available: 10500n,
+			locked: 0n,
 		},
 		BTC: {
-			available: 95,
-			locked: 0,
+			available: 95n,
+			locked: 0n,
 		},
 	});
 });
@@ -97,8 +97,8 @@ test("open order should lock balance", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	placeOrder({
@@ -107,8 +107,8 @@ test("open order should lock balance", () => {
 		side: "SELL",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 200,
-		qty: 5,
+		price: 200n,
+		qty: 5n,
 	});
 
 	const buyerBalance = getUserBalance("1");
@@ -116,15 +116,15 @@ test("open order should lock balance", () => {
 
 	expect(buyerBalance).toMatchObject({
 		USD: {
-			available: 9500,
-			locked: 500,
+			available: 9500n,
+			locked: 500n,
 		},
 	});
 
 	expect(sellerBalance).toMatchObject({
 		BTC: {
-			available: 95,
-			locked: 5,
+			available: 95n,
+			locked: 5n,
 		},
 	});
 });
@@ -136,14 +136,14 @@ test("cancelled order should unlock balance", () => {
 		side: "BUY",
 		type: "LIMIT",
 		symbol: "BTC_USD",
-		price: 100,
-		qty: 5,
+		price: 100n,
+		qty: 5n,
 	});
 
 	expect(getUserBalance("1")).toMatchObject({
 		USD: {
-			available: 9500,
-			locked: 500,
+			available: 9500n,
+			locked: 500n,
 		},
 	});
 
@@ -151,8 +151,8 @@ test("cancelled order should unlock balance", () => {
 
 	expect(getUserBalance("1")).toMatchObject({
 		USD: {
-			available: 10000,
-			locked: 0,
+			available: 10000n,
+			locked: 0n,
 		},
 	});
 });

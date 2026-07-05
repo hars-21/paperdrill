@@ -3,10 +3,10 @@ import type { CreateOrderInput, OrderRecord, Fill, UserBalance } from "./types/d
 
 function initializeBalance(): UserBalance {
 	return {
-		USD: { available: 10000, locked: 0 },
-		BTC: { available: 100, locked: 0 },
-		SOL: { available: 100, locked: 0 },
-		ETH: { available: 100, locked: 0 },
+		USD: { available: 10000n, locked: 0n },
+		BTC: { available: 100n, locked: 0n },
+		SOL: { available: 100n, locked: 0n },
+		ETH: { available: 100n, locked: 0n },
 	};
 }
 
@@ -18,7 +18,7 @@ export function getUserBalance(userId: string): UserBalance {
 	return BALANCES[userId];
 }
 
-export function lockBalance(order: CreateOrderInput): number {
+export function lockBalance(order: CreateOrderInput): bigint {
 	const { userId, side, type, symbol, price, qty } = order;
 
 	const market = ORDERBOOK[symbol];
@@ -28,7 +28,7 @@ export function lockBalance(order: CreateOrderInput): number {
 	const quote = userBalance[market.quoteAsset];
 
 	if (side === "BUY") {
-		let lockAmount: number;
+		let lockAmount: bigint;
 
 		if (type === "LIMIT") {
 			if (price == null) throw new Error("LIMIT order must have price");
@@ -36,7 +36,7 @@ export function lockBalance(order: CreateOrderInput): number {
 		} else {
 			const bestAsk = market.bestAsk;
 			if (bestAsk == null) throw new Error("No liquidity");
-			lockAmount = bestAsk * qty * 1.1;
+			lockAmount = bestAsk * qty * 11n;
 		}
 
 		if (quote.available < lockAmount) {
@@ -106,7 +106,7 @@ export function releaseBalance(order: OrderRecord) {
 	const base = userBalance[market.baseAsset];
 
 	if (side === "BUY") {
-		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0);
+		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0n);
 		const remaining = order.lockedAmount - spent;
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");
