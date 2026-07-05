@@ -66,8 +66,8 @@ export function MarketPage() {
 	}, [symbol]);
 
 	const initializeOrderbook = (bids: DepthLevel[], asks: DepthLevel[]) => {
-		const bidsMap: Record<number, number> = {};
-		const asksMap: Record<number, number> = {};
+		const bidsMap: Record<string, string> = {};
+		const asksMap: Record<string, string> = {};
 		bids.forEach(({ price, qty }) => {
 			bidsMap[price] = qty;
 		});
@@ -82,11 +82,11 @@ export function MarketPage() {
 			const bids = { ...prev.bids };
 			const asks = { ...prev.asks };
 			updatedBids.forEach(({ price, qty }) => {
-				if (qty === 0) delete bids[price];
+				if (qty === "0") delete bids[price];
 				else bids[price] = qty;
 			});
 			updatedAsks.forEach(({ price, qty }) => {
-				if (qty === 0) delete asks[price];
+				if (qty === "0") delete asks[price];
 				else asks[price] = qty;
 			});
 			return { bids, asks };

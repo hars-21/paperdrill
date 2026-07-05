@@ -6,8 +6,8 @@ export function Orderbook({
 	loading,
 	symbol,
 }: {
-	bids: Record<number, number>;
-	asks: Record<number, number>;
+	bids: Record<string, string>;
+	asks: Record<string, string>;
 	loading?: boolean;
 	symbol: string;
 }) {
@@ -63,13 +63,13 @@ export function Orderbook({
 
 	const sortedAsks = !showMockAsks
 		? Object.entries(asks)
-				.map(([price, qty]) => ({ price: Number(price), qty }))
+				.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
 				.sort((a, b) => a.price - b.price)
 		: [];
 
 	const sortedBids = !showMockBids
 		? Object.entries(bids)
-				.map(([price, qty]) => ({ price: Number(price), qty }))
+				.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
 				.sort((a, b) => b.price - a.price)
 		: [];
 

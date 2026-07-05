@@ -25,8 +25,8 @@ export interface StreamResponse {
 }
 
 export type OrderBook = {
-	bids: Record<number, number>;
-	asks: Record<number, number>;
+	bids: Record<string, string>;
+	asks: Record<string, string>;
 };
 
 export interface OrderRecord {

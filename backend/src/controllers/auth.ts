@@ -6,6 +6,7 @@ import { createToken } from "../utils/auth";
 import { sendValidationError } from "../utils/validation";
 import { getUserId } from "./exchange";
 import { sendToEngine } from "../utils/engineClient";
+import { formatBalance } from "../utils/formatter";
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -107,7 +108,7 @@ export async function getUserData(req: Request, res: Response) {
 			userId: user.id,
 			email: user.email,
 			name: user.name,
-			balance: engineResponse.data,
+			balance: formatBalance(engineResponse.data as Record<string, Record<string, unknown>>),
 		});
 	} catch (e) {
 		res.status(409).json({ error: "name does not exist" });

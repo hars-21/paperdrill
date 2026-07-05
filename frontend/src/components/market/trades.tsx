@@ -31,7 +31,18 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 
 		const handleTrade = (msg: any) => {
 			if (msg.event === "trade") {
-				setTrades((prev) => [{ ...msg, maker: msg.maker }, ...prev].slice(0, 50));
+				setTrades((prev) =>
+					[
+						{
+							id: msg.id,
+							price: msg.price,
+							qty: msg.qty,
+							maker: msg.maker,
+							timestamp: msg.timestamp,
+						},
+						...prev,
+					].slice(0, 50),
+				);
 			}
 		};
 

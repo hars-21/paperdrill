@@ -108,15 +108,11 @@ export function ProfilePage() {
 										</div>
 										<div className="text-right">
 											<span className="font-mono text-foreground font-semibold block">
-												{bal.available.toLocaleString(undefined, {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 8,
-												})}
+												{bal.available}
 											</span>
-											{bal.locked > 0 && (
+											{Number(bal.locked) > 0 && (
 												<span className="font-mono text-[10px] text-muted-foreground">
-													{bal.locked.toLocaleString(undefined, { maximumFractionDigits: 8 })}{" "}
-													locked
+													{bal.locked} locked
 												</span>
 											)}
 										</div>
@@ -173,13 +169,13 @@ export function ProfilePage() {
 														{order.type}
 													</td>
 													<td className="px-6 py-3 font-mono text-right">
-														{order.price?.toFixed(2) ?? "Market"}
+														{order.price ?? "Market"}
 													</td>
 													<td className="px-6 py-3 font-mono text-right">{order.qty}</td>
 													<td className="px-6 py-3 font-mono text-right">
-														{order.filledQty > 0 ? (
+														{Number(order.filledQty) > 0 ? (
 															<span className="text-orange-500">
-																{((order.filledQty / order.qty) * 100).toFixed(1)}%
+																{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
 															</span>
 														) : (
 															<span className="text-muted-foreground">0%</span>
