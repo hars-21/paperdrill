@@ -40,6 +40,12 @@ export const api = {
 		});
 	},
 
+	signout(): Promise<{ success: boolean; message: string }> {
+		return request<{ success: boolean; message: string }>("/signout", {
+			method: "POST",
+		});
+	},
+
 	getMarkets(): Promise<{ data: Market[] }> {
 		return request<{ data: Market[] }>("/markets");
 	},

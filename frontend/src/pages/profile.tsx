@@ -37,7 +37,10 @@ export function ProfilePage() {
 	if (loading) return <Loader />;
 	if (!user) return <Navigate to="/" replace />;
 
-	const handleLogout = () => {
+	const handleLogout = async () => {
+		try {
+			await api.signout();
+		} catch {}
 		setUser(null);
 		toast.success("Logged out successfully");
 	};

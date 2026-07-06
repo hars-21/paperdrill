@@ -82,6 +82,17 @@ export async function signin(req: Request, res: Response) {
 	}
 }
 
+export async function signout(_req: Request, res: Response) {
+	res
+		.status(200)
+		.clearCookie("token", {
+			httpOnly: true,
+			secure: false,
+			sameSite: "lax",
+		})
+		.json({ success: true, message: "Signed out successfully" });
+}
+
 export async function getUserData(req: Request, res: Response) {
 	const userId = getUserId(req);
 

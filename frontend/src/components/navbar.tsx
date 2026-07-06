@@ -4,6 +4,7 @@ import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } f
 import { useState } from "react";
 import { useTheme } from "../lib/theme-provider";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import {
 	DropdownMenu,
@@ -20,7 +21,10 @@ export function Navbar() {
 	const { user, setUser } = useAuth();
 	const navigate = useNavigate();
 
-	const handleLogout = () => {
+	const handleLogout = async () => {
+		try {
+			await api.signout();
+		} catch {}
 		setUser(null);
 		toast.success("Logged out successfully");
 		navigate("/");
