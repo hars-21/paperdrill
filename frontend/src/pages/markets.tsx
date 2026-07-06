@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AppLayout } from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
@@ -15,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { Page, PageHeader, PageContent } from "@/components/ui/page";
 
 export function MarketsPage() {
 	const [markets, setMarkets] = useState<Market[]>([]);
@@ -29,14 +29,17 @@ export function MarketsPage() {
 	}, []);
 
 	return (
-		<AppLayout>
-			<div className="max-w-6xl mx-auto p-6 select-none animate-fade-in">
-				<div className="mb-8">
+		<Page>
+			<PageHeader>
+				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Spot Markets</h1>
 					<p className="text-xs text-muted-foreground mt-1">
 						Zero-fee sandbox paper trading playground on digital assets
 					</p>
 				</div>
+			</PageHeader>
+
+			<PageContent className="animate-fade-in">
 				{loading ? (
 					<div className="bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden">
 						<Table>
@@ -157,7 +160,7 @@ export function MarketsPage() {
 						</p>
 					</>
 				)}
-			</div>
-		</AppLayout>
+			</PageContent>
+		</Page>
 	);
 }

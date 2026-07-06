@@ -64,8 +64,8 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 	}
 
 	return (
-		<div className="flex h-full flex-col select-none">
-			<div className="flex border-b border-border/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 bg-muted/5">
+		<div className="flex h-full flex-col select-none relative overflow-hidden">
+			<div className="sticky top-0 z-10 flex border-b border-border/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 bg-card/90 backdrop-blur-xs shrink-0">
 				<span className="flex-1">Price (USD)</span>
 				<span className="flex-1 text-right">Size ({symbol.split("_")[0]})</span>
 				<span className="flex-1 text-right"></span>

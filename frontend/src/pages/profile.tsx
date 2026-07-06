@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { AppLayout } from "@/components/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -18,6 +17,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { Page, PageHeader, PageContent } from "@/components/ui/page";
 
 export function ProfilePage() {
 	const { user, setUser, loading, refreshUser } = useAuth();
@@ -43,26 +43,26 @@ export function ProfilePage() {
 	};
 
 	return (
-		<AppLayout>
-			<div className="mx-auto max-w-3xl px-6 py-10 select-none animate-fade-in">
-				<div className="mb-8 flex items-center justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
-						<p className="text-xs text-muted-foreground mt-1">
-							Manage sandbox balances and review recent trade execution activity.
-						</p>
-					</div>
-					<Button
-						onClick={handleLogout}
-						variant="secondary"
-						size="sm"
-						className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0"
-					>
-						<LogOut className="mr-1.5 h-3.5 w-3.5" />
-						Log out
-					</Button>
+		<Page>
+			<PageHeader>
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
+					<p className="text-xs text-muted-foreground mt-1">
+						Manage sandbox balances and review recent trade execution activity.
+					</p>
 				</div>
+				<Button
+					onClick={handleLogout}
+					variant="secondary"
+					size="sm"
+					className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0"
+				>
+					<LogOut className="mr-1.5 h-3.5 w-3.5" />
+					Log out
+				</Button>
+			</PageHeader>
 
+			<PageContent className="max-w-3xl animate-fade-in">
 				<div className="space-y-5">
 					<Card className="border-border/40 shadow-xs">
 						<CardHeader className="pb-3">
@@ -166,7 +166,9 @@ export function ProfilePage() {
 									<TableBody>
 										{orders.map((order) => (
 											<TableRow key={order.orderId}>
-												<TableCell className="px-6 py-3">{order.symbol.replace("_", "/")}</TableCell>
+												<TableCell className="px-6 py-3">
+													{order.symbol.replace("_", "/")}
+												</TableCell>
 												<TableCell
 													className={`px-6 py-3 font-semibold ${order.side === "BUY" ? "text-success" : "text-destructive"}`}
 												>
@@ -196,7 +198,7 @@ export function ProfilePage() {
 						</CardContent>
 					</Card>
 				</div>
-			</div>
-		</AppLayout>
+			</PageContent>
+		</Page>
 	);
 }

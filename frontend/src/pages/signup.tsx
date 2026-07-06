@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthLayout } from "@/components/auth-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,76 +44,74 @@ export function SignupPage() {
 	};
 
 	return (
-		<AuthLayout>
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-center text-lg">Create your account</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleSignup} className="space-y-4">
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-center text-lg">Create your account</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<form onSubmit={handleSignup} className="space-y-4">
+					<div className="space-y-2">
 						<div className="space-y-2">
-							<div className="space-y-2">
-								<Label htmlFor="name">Name</Label>
-								<Input
-									id="name"
-									type="text"
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									placeholder="Choose a name"
-								/>
-							</div>
-							<Label htmlFor="email">Email</Label>
+							<Label htmlFor="name">Name</Label>
 							<Input
-								id="email"
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								placeholder="Enter your email"
+								id="name"
+								type="text"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								placeholder="Choose a name"
 							/>
 						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								placeholder="Create a password"
-							/>
-						</div>
-						<div className="flex items-start gap-2 pt-1">
-							<Checkbox
-								id="terms"
-								checked={acceptedTerms}
-								onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-								className="mt-0.5"
-							/>
-							<Label
-								htmlFor="terms"
-								className="text-xs text-muted-foreground font-normal leading-relaxed"
-							>
-								I accept the{" "}
-								<Link to="/terms" className="text-primary hover:underline">
-									Terms of Service
-								</Link>{" "}
-								and{" "}
-								<Link to="/privacy" className="text-primary hover:underline">
-									Privacy Policy
-								</Link>
-							</Label>
-						</div>
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Creating account..." : "Create Account"}
-						</Button>
-					</form>
-					<p className="mt-4 text-center text-sm text-muted-foreground">
-						Already have an account?{" "}
-						<Link to="/login" className="text-primary hover:underline">
-							Log in
-						</Link>
-					</p>
-				</CardContent>
-			</Card>
-		</AuthLayout>
+						<Label htmlFor="email">Email</Label>
+						<Input
+							id="email"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="Enter your email"
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="password">Password</Label>
+						<Input
+							id="password"
+							type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							placeholder="Create a password"
+						/>
+					</div>
+					<div className="flex items-start gap-2 pt-1">
+						<Checkbox
+							id="terms"
+							checked={acceptedTerms}
+							onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+							className="mt-0.5"
+						/>
+						<Label
+							htmlFor="terms"
+							className="text-xs text-muted-foreground font-normal leading-relaxed"
+						>
+							I accept the{" "}
+							<Link to="/terms" className="text-primary hover:underline">
+								Terms of Service
+							</Link>{" "}
+							and{" "}
+							<Link to="/privacy" className="text-primary hover:underline">
+								Privacy Policy
+							</Link>
+						</Label>
+					</div>
+					<Button type="submit" className="w-full" disabled={isLoading}>
+						{isLoading ? "Creating account..." : "Create Account"}
+					</Button>
+				</form>
+				<p className="mt-4 text-center text-sm text-muted-foreground">
+					Already have an account?{" "}
+					<Link to="/login" className="text-primary hover:underline">
+						Log in
+					</Link>
+				</p>
+			</CardContent>
+		</Card>
 	);
 }

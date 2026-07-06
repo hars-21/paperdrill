@@ -1,5 +1,4 @@
 import { useParams, Link } from "react-router-dom";
-import { AppLayout } from "../components/app-layout";
 import { MarketHeader } from "../components/market/market-header";
 import { Orderbook } from "../components/market/orderbook";
 import { Trades } from "../components/market/trades";
@@ -13,6 +12,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import type { DepthLevel, OrderBook, StreamResponse } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
+import { Page } from "@/components/ui/page";
 
 export function MarketPage() {
 	const { symbol = "BTC_USD" } = useParams();
@@ -100,37 +100,37 @@ export function MarketPage() {
 	const isDataLoading = loading || authLoading;
 
 	return (
-		<AppLayout>
-			<div className="flex flex-col h-[calc(100vh-48px)] p-4 gap-4 bg-background/40 overflow-hidden">
-				<MarketHeader market={symbol} />
+		<Page fixed className="p-4 gap-4 bg-background/40">
+			<MarketHeader market={symbol} />
 
-				<div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
-					<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs lg:w-72 xl:w-80 shrink-0 h-full overflow-hidden">
-						<div className="flex border-b border-border/40">
-							<Button
-								onClick={() => setLeftTab("book")}
-								variant="ghost"
-								className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
-									leftTab === "book"
-										? "text-high-emphasis border-b-2 border-primary"
-										: "text-muted-foreground/60 hover:text-high-emphasis"
-								}`}
-							>
-								Orderbook
-							</Button>
-							<Button
-								onClick={() => setLeftTab("trades")}
-								variant="ghost"
-								className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
-									leftTab === "trades"
-										? "text-high-emphasis border-b-2 border-primary"
-										: "text-muted-foreground/60 hover:text-high-emphasis"
-								}`}
-							>
-								Trades
-							</Button>
-						</div>
+			<div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 -mr-1">
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs w-full lg:w-72 xl:w-80 shrink-0 h-[450px] lg:h-full overflow-hidden">
+					<div className="flex border-b border-border/40 shrink-0">
+						<Button
+							onClick={() => setLeftTab("book")}
+							variant="ghost"
+							className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
+								leftTab === "book"
+									? "text-high-emphasis border-b-2 border-primary"
+									: "text-muted-foreground/60 hover:text-high-emphasis"
+							}`}
+						>
+							Orderbook
+						</Button>
+						<Button
+							onClick={() => setLeftTab("trades")}
+							variant="ghost"
+							className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
+								leftTab === "trades"
+									? "text-high-emphasis border-b-2 border-primary"
+									: "text-muted-foreground/60 hover:text-high-emphasis"
+							}`}
+						>
+							Trades
+						</Button>
+					</div>
 
+					<div className="flex-1 min-h-0">
 						{leftTab === "book" ? (
 							<Orderbook
 								bids={orderbook.bids}
@@ -142,50 +142,50 @@ export function MarketPage() {
 							<Trades symbol={symbol} loading={isDataLoading} />
 						)}
 					</div>
+				</div>
 
-					<div className="flex flex-1 flex-col gap-4 h-full min-w-0">
-						{isDataLoading ? (
-							<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-xs p-6 flex flex-col justify-between min-h-50 animate-pulse">
-								<div className="flex justify-between items-center">
-									<Skeleton className="h-4 w-32" />
-									<Skeleton className="h-4 w-12" />
-								</div>
-								<div className="flex-1 flex flex-col justify-end gap-2.5 py-6">
-									<Skeleton className="h-3 w-full" />
-									<Skeleton className="h-5 w-5/6" />
-									<Skeleton className="h-3.5 w-full" />
-								</div>
-								<div className="flex justify-between">
-									<Skeleton className="h-3 w-8" />
-									<Skeleton className="h-3 w-8" />
-									<Skeleton className="h-3 w-8" />
-								</div>
+				<div className="flex flex-col gap-4 w-full lg:flex-1 h-auto lg:h-full min-h-0 min-w-0 overflow-visible lg:overflow-hidden shrink-0 lg:shrink-1">
+					{isDataLoading ? (
+						<div className="h-[400px] lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-xs p-6 flex flex-col justify-between min-h-50 animate-pulse shrink-0">
+							<div className="flex justify-between items-center">
+								<Skeleton className="h-4 w-32" />
+								<Skeleton className="h-4 w-12" />
 							</div>
-						) : (
-							<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-xs min-h-50 overflow-hidden p-1">
-								<Chart symbol={symbol} />
+							<div className="flex-1 flex flex-col justify-end gap-2.5 py-6">
+								<Skeleton className="h-3 w-full" />
+								<Skeleton className="h-5 w-5/6" />
+								<Skeleton className="h-3.5 w-full" />
 							</div>
-						)}
-
-						<div className="bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden h-55 shrink-0">
-							<OpenOrders loading={isDataLoading} refreshKey={orderbookRefreshKey} />
+							<div className="flex justify-between">
+								<Skeleton className="h-3 w-8" />
+								<Skeleton className="h-3 w-8" />
+								<Skeleton className="h-3 w-8" />
+							</div>
 						</div>
-					</div>
+					) : (
+						<div className="h-[400px] lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden p-1 shrink-0">
+							<Chart symbol={symbol} />
+						</div>
+					)}
 
-					<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs lg:w-72 xl:w-80 shrink-0 h-full overflow-hidden">
-						{user ? (
-							<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
-						) : (
-							<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-								<p className="text-sm text-muted-foreground">Sign in to start trading</p>
-								<Link to="/login">
-									<Button size="sm">Sign in</Button>
-								</Link>
-							</div>
-						)}
+					<div className="bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden h-55 shrink-0">
+						<OpenOrders loading={isDataLoading} refreshKey={orderbookRefreshKey} />
 					</div>
 				</div>
+
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs w-full lg:w-72 xl:w-80 shrink-0 h-auto lg:h-full overflow-hidden">
+					{user ? (
+						<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
+					) : (
+						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center min-h-[200px]">
+							<p className="text-sm text-muted-foreground">Sign in to start trading</p>
+							<Link to="/login">
+								<Button size="sm">Sign in</Button>
+							</Link>
+						</div>
+					)}
+				</div>
 			</div>
-		</AppLayout>
+		</Page>
 	);
 }

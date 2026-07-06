@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthLayout } from "../components/auth-layout";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -38,45 +37,43 @@ export function LoginPage() {
 	};
 
 	return (
-		<AuthLayout>
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-center text-lg">Log in to Atlas</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleLogin} className="space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								placeholder="Enter your email"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								placeholder="Enter your password"
-							/>
-						</div>
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Logging in..." : "Log in"}
-						</Button>
-					</form>
-					<p className="mt-4 text-center text-sm text-muted-foreground">
-						Don&apos;t have an account?{" "}
-						<Link to="/signup" className="text-primary hover:underline">
-							Sign up
-						</Link>
-					</p>
-				</CardContent>
-			</Card>
-		</AuthLayout>
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-center text-lg">Log in to Atlas</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<form onSubmit={handleLogin} className="space-y-4">
+					<div className="space-y-2">
+						<Label htmlFor="email">Email</Label>
+						<Input
+							id="email"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="Enter your email"
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="password">Password</Label>
+						<Input
+							id="password"
+							type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							placeholder="Enter your password"
+						/>
+					</div>
+					<Button type="submit" className="w-full" disabled={isLoading}>
+						{isLoading ? "Logging in..." : "Log in"}
+					</Button>
+				</form>
+				<p className="mt-4 text-center text-sm text-muted-foreground">
+					Don&apos;t have an account?{" "}
+					<Link to="/signup" className="text-primary hover:underline">
+						Sign up
+					</Link>
+				</p>
+			</CardContent>
+		</Card>
 	);
 }
