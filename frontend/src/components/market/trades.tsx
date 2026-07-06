@@ -73,7 +73,7 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 
 			<div className="flex-1 overflow-y-auto py-1.5">
 				{trades.length === 0 ? (
-					<div className="flex items-center justify-center h-full text-xs text-muted-foreground/50">
+					<div className="flex items-center justify-center h-full text-xs text-low-emphasis">
 						No trades yet
 					</div>
 				) : (
@@ -85,7 +85,7 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 							<span
 								className={`flex-1 font-medium ${
 									t.maker === null
-										? "text-foreground/80"
+										? "text-high-emphasis/80"
 										: t.maker
 											? "text-destructive/80"
 											: "text-success/80"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Search } from "lucide-react";
 import type { Market } from "@/types";
+import { Button } from "../ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -45,7 +46,10 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 					}}
 				>
 					<DropdownMenuTrigger asChild>
-						<button className="flex items-center gap-3 rounded-xl bg-muted/30 hover:bg-muted/65 border border-border/50 hover:border-primary/40 px-3.5 py-1.5 text-left cursor-pointer transition-all shadow-xs outline-hidden focus:ring-0">
+						<Button
+							variant="ghost"
+							className="flex items-center gap-3 rounded-xl bg-l2 hover:bg-muted/65 border border-border/50 hover:border-primary/40 px-3.5 py-1.5 text-left shadow-xs"
+						>
 							{COIN_LOGOS[base] ? (
 								<img
 									src={COIN_LOGOS[base]}
@@ -58,7 +62,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 								</div>
 							)}
 							<div className="flex flex-col">
-								<span className="text-sm font-bold text-foreground tracking-tight leading-none mb-0.5">
+								<span className="text-sm font-bold text-high-emphasis tracking-tight leading-none mb-0.5">
 									{base}/{quote}
 								</span>
 								<span className="text-[9px] text-muted-foreground font-semibold leading-none uppercase tracking-wider">
@@ -66,7 +70,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 								</span>
 							</div>
 							<ChevronDown className="h-4 w-4 text-muted-foreground/80 ml-1 shrink-0" />
-						</button>
+						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
 						align="start"
@@ -82,7 +86,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 								placeholder="Search markets"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="flex-1 bg-transparent text-xs outline-none text-foreground placeholder:text-muted-foreground/40 border-0 p-0 focus:ring-0 focus:outline-none"
+								className="flex-1 bg-transparent text-xs outline-none text-high-emphasis placeholder:text-muted-foreground/40 border-0 p-0 focus:ring-0 focus:outline-none"
 							/>
 						</div>
 
@@ -115,10 +119,10 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 													<img
 														src={COIN_LOGOS[b]}
 														alt={b}
-														className="h-5.5 w-5.5 object-contain shrink-0"
+														className="h-5 w-5 object-contain shrink-0"
 													/>
 												) : (
-													<div className="h-5.5 w-5.5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px] uppercase shrink-0">
+													<div className="h-5 w-5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px] uppercase shrink-0">
 														{b[0]}
 													</div>
 												)}
@@ -133,7 +137,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 											</div>
 
 											<div className="text-right flex flex-col font-mono text-[10px]">
-												<span className="font-semibold text-foreground leading-tight">—</span>
+												<span className="font-semibold text-high-emphasis leading-tight">—</span>
 												<span className="text-[9px] font-semibold leading-none">—</span>
 											</div>
 										</DropdownMenuItem>
@@ -148,33 +152,33 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 				<div className="flex items-center gap-5 text-xs">
 					<div>
 						<span className="text-muted-foreground">Mark Price</span>
-						<span className="font-mono font-bold text-foreground ml-1.5">—</span>
+						<span className="font-mono font-bold text-high-emphasis ml-1.5">—</span>
 					</div>
 					<div>
 						<span className="text-muted-foreground">Index Price</span>
-						<span className="font-mono font-medium text-foreground/80 ml-1.5">—</span>
+						<span className="font-mono font-medium text-high-emphasis/80 ml-1.5">—</span>
 					</div>
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
+			{/* <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
 				<div>
 					<span className="text-muted-foreground">24h Change</span>
 					<span className="font-mono font-bold ml-1.5">—</span>
 				</div>
 				<div>
 					<span className="text-muted-foreground">24h High</span>
-					<span className="font-mono font-medium text-foreground ml-1.5">—</span>
+					<span className="font-mono font-medium text-high-emphasis ml-1.5">—</span>
 				</div>
 				<div>
 					<span className="text-muted-foreground">24h Low</span>
-					<span className="font-mono font-medium text-foreground ml-1.5">—</span>
+					<span className="font-mono font-medium text-high-emphasis ml-1.5">—</span>
 				</div>
 				<div className="hidden sm:block">
 					<span className="text-muted-foreground">24h Volume</span>
-					<span className="font-mono font-medium text-foreground/80 ml-1.5">—</span>
+					<span className="font-mono font-medium text-high-emphasis/80 ml-1.5">—</span>
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 }

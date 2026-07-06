@@ -12,13 +12,13 @@ export function Footer() {
 						</p>
 					</div>
 					<div className="flex gap-8 text-sm text-muted-foreground">
-						<a href="#" className="transition-colors hover:text-foreground">
+						<a href="#" className="transition-colors hover:text-high-emphasis">
 							Docs
 						</a>
-						<a href="#" className="transition-colors hover:text-foreground">
+						<a href="#" className="transition-colors hover:text-high-emphasis">
 							GitHub
 						</a>
-						<a href="#" className="transition-colors hover:text-foreground">
+						<a href="#" className="transition-colors hover:text-high-emphasis">
 							Status
 						</a>
 					</div>

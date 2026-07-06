@@ -28,20 +28,20 @@ export function Navbar() {
 	};
 
 	return (
-		<header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
+		<header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
 			<div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
 				<Link to="/" className="text-lg font-semibold tracking-tight">
 					Atlas
 				</Link>
 
 				<nav className="hidden items-center gap-8 text-sm text-muted-foreground sm:flex">
-					<Link to="/#features" className="transition-colors hover:text-foreground">
+					<Link to="/#features" className="transition-colors hover:text-high-emphasis">
 						Features
 					</Link>
-					<Link to="/markets" className="transition-colors hover:text-foreground">
+					<Link to="/markets" className="transition-colors hover:text-high-emphasis">
 						Markets
 					</Link>
-					<Link to="/market/BTC_USD" className="transition-colors hover:text-foreground">
+					<Link to="/market/BTC_USD" className="transition-colors hover:text-high-emphasis">
 						Trading
 					</Link>
 				</nav>
@@ -60,7 +60,7 @@ export function Navbar() {
 					{user ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="sm" className="gap-2 px-2.5 cursor-pointer">
+								<Button variant="ghost" size="sm" className="gap-2 px-2.5">
 									<div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs uppercase">
 										{user.name[0]}
 									</div>
@@ -120,9 +120,9 @@ export function Navbar() {
 					)}
 				</div>
 
-				<button className="sm:hidden text-muted-foreground" onClick={() => setOpen(!open)}>
+				<Button variant="ghost" size="icon-sm" className="sm:hidden" onClick={() => setOpen(!open)}>
 					{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-				</button>
+				</Button>
 			</div>
 
 			{open && (
@@ -130,21 +130,21 @@ export function Navbar() {
 					<nav className="flex flex-col gap-3 text-sm">
 						<Link
 							to="/#features"
-							className="text-muted-foreground hover:text-foreground"
+							className="text-muted-foreground hover:text-high-emphasis"
 							onClick={() => setOpen(false)}
 						>
 							Features
 						</Link>
 						<Link
 							to="/markets"
-							className="text-muted-foreground hover:text-foreground"
+							className="text-muted-foreground hover:text-high-emphasis"
 							onClick={() => setOpen(false)}
 						>
 							Markets
 						</Link>
 						<Link
 							to="/market/BTC_USD"
-							className="text-muted-foreground hover:text-foreground"
+							className="text-muted-foreground hover:text-high-emphasis"
 							onClick={() => setOpen(false)}
 						>
 							Trading
@@ -209,5 +209,3 @@ export function Navbar() {
 		</header>
 	);
 }
-
-export default Navbar;

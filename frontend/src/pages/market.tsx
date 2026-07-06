@@ -107,26 +107,28 @@ export function MarketPage() {
 				<div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
 					<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs lg:w-72 xl:w-80 shrink-0 h-full overflow-hidden">
 						<div className="flex border-b border-border/40">
-							<button
+							<Button
 								onClick={() => setLeftTab("book")}
-								className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+								variant="ghost"
+								className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
 									leftTab === "book"
-										? "text-foreground border-b-2 border-primary"
-										: "text-muted-foreground/60 hover:text-foreground"
+										? "text-high-emphasis border-b-2 border-primary"
+										: "text-muted-foreground/60 hover:text-high-emphasis"
 								}`}
 							>
 								Orderbook
-							</button>
-							<button
+							</Button>
+							<Button
 								onClick={() => setLeftTab("trades")}
-								className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+								variant="ghost"
+								className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
 									leftTab === "trades"
-										? "text-foreground border-b-2 border-primary"
-										: "text-muted-foreground/60 hover:text-foreground"
+										? "text-high-emphasis border-b-2 border-primary"
+										: "text-muted-foreground/60 hover:text-high-emphasis"
 								}`}
 							>
 								Trades
-							</button>
+							</Button>
 						</div>
 
 						{leftTab === "book" ? (

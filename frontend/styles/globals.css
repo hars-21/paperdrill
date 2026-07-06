@@ -91,6 +91,35 @@
   --chart-5: #0EA5E9;
 }
 
+@utility text-high-emphasis {
+  @apply text-foreground;
+}
+
+@utility text-medium-emphasis {
+  @apply text-muted-foreground;
+}
+
+@utility text-low-emphasis {
+  @apply text-muted-foreground/50;
+}
+
+@utility bg-l0 {
+  @apply bg-background;
+}
+
+@utility bg-l1 {
+  @apply bg-card;
+}
+
+@utility bg-l2 {
+  @apply bg-muted/30;
+}
+
+@utility bg-l3 {
+  @apply bg-muted;
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -100,12 +129,12 @@
     @apply bg-background text-foreground;
   }
 
-  /* Remove number input spin buttons */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
+
   input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;

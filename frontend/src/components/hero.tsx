@@ -6,7 +6,7 @@ export function Hero() {
 	return (
 		<section className="relative flex min-h-[95vh] items-center justify-center px-6 pt-24 overflow-hidden bg-background">
 			<div className="mx-auto max-w-4xl text-center relative z-10">
-				<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-foreground">
+				<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-high-emphasis">
 					Build, Test and Understand{" "}
 					<span className="text-primary bg-clip-text">Trading Systems</span>
 				</h1>
@@ -18,12 +18,12 @@ export function Hero() {
 
 				<div className="flex flex-wrap items-center justify-center gap-4">
 					<Link to="/signup">
-						<Button size="lg" className="shadow-md shadow-primary/15 cursor-pointer">
+						<Button size="lg" className="shadow-md shadow-primary/15">
 							Get Started <ArrowRight className="ml-1.5 h-4 w-4" />
 						</Button>
 					</Link>
 					<Link to="/market/BTC_USD">
-						<Button size="lg" variant="outline" className="cursor-pointer">
+						<Button size="lg" variant="secondary">
 							Open Playground
 						</Button>
 					</Link>
@@ -52,9 +52,7 @@ export function Hero() {
 									{[65430, 65428, 65426].map((price, i) => (
 										<div key={i} className="flex justify-between text-[11px]">
 											<span className="text-destructive font-medium">{price}.50</span>
-											<span className="text-muted-foreground/50">
-												{(0.12 * (i + 1)).toFixed(2)}
-											</span>
+											<span className="text-low-emphasis">{(0.12 * (i + 1)).toFixed(2)}</span>
 										</div>
 									))}
 								</div>
@@ -68,7 +66,7 @@ export function Hero() {
 								{[65423, 65421, 65419].map((price, i) => (
 									<div key={i} className="flex justify-between text-[11px]">
 										<span className="text-success font-medium">{price}.00</span>
-										<span className="text-muted-foreground/50">{(0.35 * (i + 1)).toFixed(2)}</span>
+										<span className="text-low-emphasis">{(0.35 * (i + 1)).toFixed(2)}</span>
 									</div>
 								))}
 							</div>
@@ -118,7 +116,7 @@ export function Hero() {
 									<div className="bg-success text-white text-center py-1 rounded-sm text-[10px] font-bold">
 										Buy
 									</div>
-									<div className="text-muted-foreground hover:text-foreground text-center py-1 rounded-sm text-[10px] font-medium cursor-pointer">
+									<div className="text-muted-foreground hover:text-high-emphasis text-center py-1 rounded-sm text-[10px] font-medium cursor-pointer">
 										Sell
 									</div>
 								</div>
@@ -128,7 +126,7 @@ export function Hero() {
 										<span>Price</span>
 										<span className="font-mono">USD</span>
 									</div>
-									<div className="border border-border rounded-md px-2 py-1 bg-muted/20 font-mono text-[11px] text-foreground">
+									<div className="border border-border rounded-md px-2 py-1 bg-muted/20 font-mono text-[11px] text-high-emphasis">
 										65,425.50
 									</div>
 								</div>
@@ -138,15 +136,15 @@ export function Hero() {
 										<span>Quantity</span>
 										<span className="font-mono">BTC</span>
 									</div>
-									<div className="border border-border rounded-md px-2 py-1 bg-muted/20 font-mono text-[11px] text-foreground">
+									<div className="border border-border rounded-md px-2 py-1 bg-muted/20 font-mono text-[11px] text-high-emphasis">
 										0.50
 									</div>
 								</div>
 							</div>
 
-							<button className="w-full bg-success text-white py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider hover:opacity-90 shadow-sm shadow-success/15 cursor-pointer">
+							<Button variant="buy" className="py-1.5 text-[10px]">
 								Buy BTC
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>

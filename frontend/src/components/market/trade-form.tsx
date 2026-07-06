@@ -92,7 +92,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 				className="flex flex-1 flex-col"
 			>
 				<div className="border-b border-border/40 p-4 bg-muted/15">
-					<TabsList className="grid w-full grid-cols-2 p-1 bg-muted/30 border border-border/10">
+					<TabsList className="grid w-full grid-cols-2 p-1 bg-l2 border border-border/10">
 						<TabsTrigger
 							value="BUY"
 							className="data-[state=active]:bg-success data-[state=active]:text-white text-xs font-semibold transition-all py-1.5 dark:data-[state=active]:bg-success"
@@ -113,7 +113,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 						<div className="space-y-4">
 							<div className="flex justify-between items-center text-xs">
 								<span className="text-muted-foreground">Available Balance</span>
-								<span className="font-mono text-foreground font-semibold">
+								<span className="font-mono text-high-emphasis font-semibold">
 									{side === "BUY"
 										? `${user?.balance.USD?.available ?? 0} USD`
 										: `${user?.balance[base!]?.available ?? 0} ${base}`}
@@ -126,8 +126,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 									onClick={() => setOrderType("LIMIT")}
 									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
 										orderType === "LIMIT"
-											? "bg-card text-foreground shadow-xs border border-border/10"
-											: "text-muted-foreground hover:text-foreground"
+											? "bg-card text-high-emphasis shadow-xs border border-border/10"
+											: "text-muted-foreground hover:text-high-emphasis"
 									}`}
 								>
 									Limit
@@ -137,8 +137,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 									onClick={() => setOrderType("MARKET")}
 									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
 										orderType === "MARKET"
-											? "bg-card text-foreground shadow-xs border border-border/10"
-											: "text-muted-foreground hover:text-foreground"
+											? "bg-card text-high-emphasis shadow-xs border border-border/10"
+											: "text-muted-foreground hover:text-high-emphasis"
 									}`}
 								>
 									Market
@@ -159,7 +159,9 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 											value={price}
 											onChange={(e) => setPrice(e.target.value)}
 											placeholder="0.00"
-											className="font-mono pr-12 text-sm h-10"
+											mono
+											size="lg"
+											className="pr-12"
 										/>
 										<div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground/80 tracking-wider">
 											USD
@@ -180,7 +182,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 											type="text"
 											disabled
 											value="Market Price"
-											className="font-sans text-sm h-10 bg-muted/40 border-dashed text-muted-foreground/80"
+											size="lg"
+											className="font-sans bg-muted/40 border-dashed text-muted-foreground/80"
 										/>
 									</div>
 								</div>
@@ -199,7 +202,9 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 										value={quantity}
 										onChange={(e) => setQuantity(e.target.value)}
 										placeholder="0.00"
-										className="font-mono pr-12 text-sm h-10"
+										mono
+										size="lg"
+										className="pr-12"
 									/>
 									<div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground/80 tracking-wider">
 										{base}
@@ -212,7 +217,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 							{orderType === "LIMIT" && price && quantity && (
 								<div className="flex justify-between items-center text-xs">
 									<span className="text-muted-foreground">Est. Total</span>
-									<span className="font-mono font-bold text-foreground">
+									<span className="font-mono font-bold text-high-emphasis">
 										{(parseFloat(price) * parseFloat(quantity) || 0).toLocaleString(undefined, {
 											minimumFractionDigits: 2,
 											maximumFractionDigits: 2,
@@ -225,11 +230,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 							<Button
 								type="submit"
 								disabled={submitting}
-								className={`w-full py-5 text-xs font-semibold uppercase tracking-wider transition-all rounded-lg cursor-pointer ${
-									side === "BUY"
-										? "bg-success hover:bg-success/90 text-white shadow-sm shadow-success/15"
-										: "bg-destructive hover:bg-destructive/90 text-white shadow-sm shadow-destructive/15"
-								}`}
+								variant={side === "BUY" ? "buy" : "sell"}
+								className="py-5"
 							>
 								{submitting
 									? "Placing..."

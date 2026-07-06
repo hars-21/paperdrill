@@ -7,6 +7,7 @@ import {
 	type Time,
 	ColorType,
 } from "lightweight-charts";
+import { Button } from "../ui/button";
 import type { Candle } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
@@ -186,17 +187,18 @@ export function Chart({ symbol }: ChartProps) {
 					<div className="flex items-center gap-3 pointer-events-auto">
 						<div className="flex items-center bg-card/60 backdrop-blur-md border border-border/30 rounded-md p-0.5 shadow-sm">
 							{INTERVALS.map((int) => (
-								<button
+								<Button
 									key={int}
 									onClick={() => setInterval(int)}
-									className={`px-2.5 py-1 text-[10px] font-semibold rounded-sm transition-colors cursor-pointer ${
+									variant="ghost"
+									className={`px-2.5 py-1 text-[10px] font-semibold rounded-sm ${
 										interval === int
-											? "bg-muted text-foreground shadow-xs"
-											: "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+											? "bg-muted text-high-emphasis shadow-xs"
+											: "text-muted-foreground hover:text-high-emphasis hover:bg-muted/50"
 									}`}
 								>
 									{int}
-								</button>
+								</Button>
 							))}
 						</div>
 
@@ -223,7 +225,7 @@ export function Chart({ symbol }: ChartProps) {
 								C <span className={valueColor}>{formatPrice(displayCandle.close)}</span>
 							</span>
 							<span className="text-muted-foreground">
-								V <span className="text-foreground">{formatVol(displayCandle.volume)}</span>
+								V <span className="text-high-emphasis">{formatVol(displayCandle.volume)}</span>
 							</span>
 						</div>
 					)}

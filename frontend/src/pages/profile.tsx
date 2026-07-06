@@ -10,6 +10,14 @@ import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
 import type { OrderRecord } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 
 export function ProfilePage() {
 	const { user, setUser, loading, refreshUser } = useAuth();
@@ -46,7 +54,7 @@ export function ProfilePage() {
 					</div>
 					<Button
 						onClick={handleLogout}
-						variant="outline"
+						variant="secondary"
 						size="sm"
 						className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0"
 					>
@@ -65,11 +73,11 @@ export function ProfilePage() {
 						<CardContent>
 							<div className="text-sm flex items-center justify-between">
 								<span className="text-muted-foreground">Email</span>
-								<span className="font-mono font-medium text-foreground">{user.email}</span>
+								<span className="font-mono font-medium text-high-emphasis">{user.email}</span>
 							</div>
 							<div className="text-sm flex items-center justify-between mt-2 pt-2 border-t border-border/20">
 								<span className="text-muted-foreground">Name</span>
-								<span className="font-mono font-medium text-foreground">{user.name}</span>
+								<span className="font-mono font-medium text-high-emphasis">{user.name}</span>
 							</div>
 						</CardContent>
 					</Card>
@@ -100,14 +108,14 @@ export function ProfilePage() {
 												</div>
 											)}
 											<div className="flex flex-col">
-												<span className="font-semibold text-foreground">{currency}</span>
+												<span className="font-semibold text-high-emphasis">{currency}</span>
 												<span className="text-[10px] text-muted-foreground font-medium">
 													{ASSET_NAMES[currency] || currency}
 												</span>
 											</div>
 										</div>
 										<div className="text-right">
-											<span className="font-mono text-foreground font-semibold block">
+											<span className="font-mono text-high-emphasis font-semibold block">
 												{bal.available}
 											</span>
 											{Number(bal.locked) > 0 && (
@@ -144,48 +152,46 @@ export function ProfilePage() {
 									No open orders in this sandbox session
 								</p>
 							) : (
-								<div className="overflow-x-auto">
-									<table className="w-full text-xs">
-										<thead>
-											<tr className="border-b border-border/30 text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
-												<th className="px-6 py-3 font-semibold text-left">Market</th>
-												<th className="px-6 py-3 font-semibold text-left">Side</th>
-												<th className="px-6 py-3 font-semibold text-left">Type</th>
-												<th className="px-6 py-3 font-semibold text-right">Price</th>
-												<th className="px-6 py-3 font-semibold text-right">Qty</th>
-												<th className="px-6 py-3 font-semibold text-right">Filled</th>
-											</tr>
-										</thead>
-										<tbody className="divide-y divide-border/20">
-											{orders.map((order) => (
-												<tr key={order.orderId} className="hover:bg-muted/10 transition-colors">
-													<td className="px-6 py-3 font-mono">{order.symbol.replace("_", "/")}</td>
-													<td
-														className={`px-6 py-3 font-mono font-semibold ${order.side === "BUY" ? "text-success" : "text-destructive"}`}
-													>
-														{order.side}
-													</td>
-													<td className="px-6 py-3 font-mono text-muted-foreground">
-														{order.type}
-													</td>
-													<td className="px-6 py-3 font-mono text-right">
-														{order.price ?? "Market"}
-													</td>
-													<td className="px-6 py-3 font-mono text-right">{order.qty}</td>
-													<td className="px-6 py-3 font-mono text-right">
-														{Number(order.filledQty) > 0 ? (
-															<span className="text-orange-500">
-																{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
-															</span>
-														) : (
-															<span className="text-muted-foreground">0%</span>
-														)}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
+								<Table>
+									<TableHeader>
+										<TableRow>
+											<TableHead className="px-6 py-3 text-left">Market</TableHead>
+											<TableHead className="px-6 py-3 text-left">Side</TableHead>
+											<TableHead className="px-6 py-3 text-left">Type</TableHead>
+											<TableHead className="px-6 py-3 text-right">Price</TableHead>
+											<TableHead className="px-6 py-3 text-right">Qty</TableHead>
+											<TableHead className="px-6 py-3 text-right">Filled</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{orders.map((order) => (
+											<TableRow key={order.orderId}>
+												<TableCell className="px-6 py-3">{order.symbol.replace("_", "/")}</TableCell>
+												<TableCell
+													className={`px-6 py-3 font-semibold ${order.side === "BUY" ? "text-success" : "text-destructive"}`}
+												>
+													{order.side}
+												</TableCell>
+												<TableCell className="px-6 py-3 text-muted-foreground">
+													{order.type}
+												</TableCell>
+												<TableCell className="px-6 py-3 text-right">
+													{order.price ?? "Market"}
+												</TableCell>
+												<TableCell className="px-6 py-3 text-right">{order.qty}</TableCell>
+												<TableCell className="px-6 py-3 text-right">
+													{Number(order.filledQty) > 0 ? (
+														<span className="text-orange-500">
+															{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
+														</span>
+													) : (
+														<span className="text-muted-foreground">0%</span>
+													)}
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
 							)}
 						</CardContent>
 					</Card>

@@ -1,9 +1,11 @@
 import { Inbox, X } from "lucide-react";
+import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
 import type { OrderRecord } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 
 interface OpenOrdersProps {
 	loading?: boolean;
@@ -44,62 +46,46 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 				<div className="flex items-center justify-between border-b border-border/40 px-5 py-3 bg-muted/15">
 					<Skeleton className="h-4 w-28" />
 				</div>
-				<div className="overflow-auto flex-1 min-h-0">
-					<table className="w-full text-xs">
-						<thead>
-							<tr className="border-b border-border/30 text-left text-muted-foreground bg-muted/5 font-mono">
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-									Market
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-									Side
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-									Type
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-									Price
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-									Size
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-									Filled
-								</th>
-								<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-									Action
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{Array.from({ length: 3 }).map((_, i) => (
-								<tr key={i} className="border-b border-border/20">
-									<td className="px-5 py-3">
-										<Skeleton className="h-3.5 w-12" />
-									</td>
-									<td className="px-5 py-3">
-										<Skeleton className="h-3.5 w-8" />
-									</td>
-									<td className="px-5 py-3">
-										<Skeleton className="h-3.5 w-10" />
-									</td>
-									<td className="px-5 py-3 text-right">
-										<Skeleton className="h-3.5 w-16 ml-auto" />
-									</td>
-									<td className="px-5 py-3 text-right">
-										<Skeleton className="h-3.5 w-12 ml-auto" />
-									</td>
-									<td className="px-5 py-3 text-right">
-										<Skeleton className="h-3.5 w-12 ml-auto" />
-									</td>
-									<td className="px-5 py-3 text-right">
-										<Skeleton className="h-3.5 w-14 ml-auto" />
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Market</TableHead>
+							<TableHead>Side</TableHead>
+							<TableHead>Type</TableHead>
+							<TableHead className="text-right">Price</TableHead>
+							<TableHead className="text-right">Size</TableHead>
+							<TableHead className="text-right">Filled</TableHead>
+							<TableHead className="text-right">Action</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{Array.from({ length: 3 }).map((_, i) => (
+							<TableRow key={i}>
+								<TableCell>
+									<Skeleton className="h-3.5 w-12" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-3.5 w-8" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-3.5 w-10" />
+								</TableCell>
+								<TableCell className="text-right">
+									<Skeleton className="h-3.5 w-16 ml-auto" />
+								</TableCell>
+								<TableCell className="text-right">
+									<Skeleton className="h-3.5 w-12 ml-auto" />
+								</TableCell>
+								<TableCell className="text-right">
+									<Skeleton className="h-3.5 w-12 ml-auto" />
+								</TableCell>
+								<TableCell className="text-right">
+									<Skeleton className="h-3.5 w-14 ml-auto" />
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
 			</div>
 		);
 	}
@@ -117,88 +103,63 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 				)}
 			</div>
 
-			<div className="overflow-auto flex-1 min-h-0">
-				<table className="w-full text-xs">
-					<thead>
-						<tr className="border-b border-border/30 text-left text-muted-foreground bg-muted/5 font-mono">
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-								Market
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-								Side
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px]">
-								Type
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-								Price
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-								Size
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-								Filled
-							</th>
-							<th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-[10px] text-right">
-								Action
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{orders?.length > 0 ? (
-							orders.map((order) => (
-								<tr
-									key={order.orderId}
-									className="border-b border-border/20 hover:bg-muted/10 transition-colors"
-								>
-									<td className="px-5 py-3 font-mono text-[11px]">
-										{order.symbol.replace("_", "/")}
-									</td>
-									<td
-										className={`px-5 py-3 font-mono text-[11px] font-medium ${
-											order.side === "BUY" ? "text-success" : "text-destructive"
-										}`}
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead>Market</TableHead>
+						<TableHead>Side</TableHead>
+						<TableHead>Type</TableHead>
+						<TableHead className="text-right">Price</TableHead>
+						<TableHead className="text-right">Size</TableHead>
+						<TableHead className="text-right">Filled</TableHead>
+						<TableHead className="text-right">Action</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{orders?.length > 0 ? (
+						orders.map((order) => (
+							<TableRow key={order.orderId}>
+								<TableCell>{order.symbol.replace("_", "/")}</TableCell>
+								<TableCell className={order.side === "BUY" ? "text-success" : "text-destructive"}>
+									{order.side}
+								</TableCell>
+								<TableCell>{order.type}</TableCell>
+								<TableCell className="text-right">{order.price ?? "—"}</TableCell>
+								<TableCell className="text-right">{order.qty}</TableCell>
+								<TableCell className="text-right">
+									{Number(order.filledQty) > 0 ? (
+										<span className="text-orange-500">
+											{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
+										</span>
+									) : (
+										<span className="text-muted-foreground">0%</span>
+									)}
+								</TableCell>
+								<TableCell className="text-right">
+									<Button
+										onClick={() => handleCancel(order.orderId)}
+										disabled={cancelling === order.orderId}
+										variant="ghost"
+										size="icon-sm"
+										className="text-low-emphasis hover:text-destructive hover:bg-destructive/10"
 									>
-										{order.side}
-									</td>
-									<td className="px-5 py-3 font-mono text-[11px]">{order.type}</td>
-									<td className="px-5 py-3 font-mono text-[11px] text-right">
-										{order.price ?? "—"}
-									</td>
-									<td className="px-5 py-3 font-mono text-[11px] text-right">{order.qty}</td>
-									<td className="px-5 py-3 font-mono text-[11px] text-right">
-										{Number(order.filledQty) > 0 ? (
-											<span className="text-orange-500">
-												{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
-											</span>
-										) : (
-											<span className="text-muted-foreground">0%</span>
-										)}
-									</td>
-									<td className="px-5 py-3 text-right">
-										<button
-											onClick={() => handleCancel(order.orderId)}
-											disabled={cancelling === order.orderId}
-											className="inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
-										>
-											<X className="h-3.5 w-3.5" />
-										</button>
-									</td>
-								</tr>
-							))
-						) : (
-							<tr>
-								<td colSpan={7} className="px-5 py-10 text-center">
-									<div className="flex flex-col items-center justify-center text-muted-foreground/60 gap-2 py-4">
-										<Inbox className="h-6 w-6 stroke-[1.5] text-muted-foreground/40" />
-										<p className="text-xs font-medium">No open orders</p>
-									</div>
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+										<X className="h-3.5 w-3.5" />
+									</Button>
+								</TableCell>
+							</TableRow>
+						))
+					) : (
+						<TableRow>
+							<TableCell colSpan={7} className="py-10 text-center font-sans">
+								<div className="flex flex-col items-center justify-center text-muted-foreground/60 gap-2 py-4">
+									<Inbox className="h-6 w-6 stroke-[1.5] text-muted-foreground/40" />
+									<p className="text-xs font-medium">No open orders</p>
+								</div>
+							</TableCell>
+						</TableRow>
+					)}
+				</TableBody>
+			</Table>
 		</div>
 	);
 }

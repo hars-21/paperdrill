@@ -114,7 +114,7 @@ export function Orderbook({
 
 				<div className="border-y border-border/40 bg-muted/10 px-4 py-2 flex items-center justify-between">
 					<div className="flex items-center gap-1.5">
-						<span className="font-mono text-sm font-semibold tracking-tight text-foreground">
+						<span className="font-mono text-sm font-semibold tracking-tight text-high-emphasis">
 							{midPrice ?? "—"}
 						</span>
 						<span className="text-[10px] text-muted-foreground font-medium uppercase">USD</span>
