@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
 import cookie from "cookie";
+import { logger } from "./logger";
 
 interface TokenPayload {
 	id: string;
@@ -25,6 +26,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 		req.userId = payload.id;
 		next();
 	} catch (e) {
+		logger.warn("Auth token verification failed", { error: (e as Error).message });
 		res.status(401).json({ error: "Invalid auth token" });
 	}
 }

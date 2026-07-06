@@ -5,20 +5,35 @@ import type { Candle, Market, OrderRecord, UserBalance } from "@/types";
 const BASE = config.apiBaseUrl;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-	const res = await fetch(`${BASE}${path}`, {
-		credentials: "include",
-		headers: { "Content-Type": "application/json", ...options.headers },
-		...options,
-	});
+	try {
+		const res = await fetch(`${BASE}${path}`, {
+			credentials: "include",
+			headers: { "Content-Type": "application/json", ...options.headers },
+			...options,
+		});
 
-	const data = await res.json();
+		let data: Record<string, unknown>;
+		try {
+			data = await res.json();
+		} catch {
+			throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+		}
 
-	if (!res.ok) {
-		const message = data?.error || data?.message || `Request failed: ${res.status}`;
-		throw new Error(message);
+		if (!res.ok) {
+			const message =
+				(typeof data?.error === "string" ? data.error : undefined) ??
+				(typeof data?.message === "string" ? data.message : undefined) ??
+				`Request failed: ${res.status}`;
+			throw new Error(message);
+		}
+
+		return data as T;
+	} catch (err) {
+		if (err instanceof TypeError && err.message === "Failed to fetch") {
+			throw new Error("Network error: unable to reach the server");
+		}
+		throw err;
 	}
-
-	return data as T;
 }
 
 export const api = {

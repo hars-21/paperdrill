@@ -24,10 +24,13 @@ export function Navbar() {
 	const handleLogout = async () => {
 		try {
 			await api.signout();
-		} catch {}
-		setUser(null);
-		toast.success("Logged out successfully");
-		navigate("/");
+		} catch (err) {
+			console.error("Signout failed:", err);
+		} finally {
+			setUser(null);
+			toast.success("Logged out successfully");
+			navigate("/");
+		}
 	};
 
 	return (

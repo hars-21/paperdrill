@@ -7,6 +7,7 @@ import { sendValidationError } from "../utils/validation";
 import { getUserId } from "./exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { formatBalance } from "../utils/formatter";
+import { logger } from "../utils/logger";
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -20,6 +21,12 @@ export async function signup(req: Request, res: Response) {
 	const hashedPassword = await bcrypt.hash(password, 10);
 
 	try {
+		const existingUser = await prisma.user.findUnique({ where: { email } });
+
+		if (existingUser) {
+			res.status(400).json({ error: "User already exists" });
+		}
+
 		const user = await prisma.user.create({
 			data: { email, name, password: hashedPassword },
 		});
@@ -36,7 +43,8 @@ export async function signup(req: Request, res: Response) {
 				name: user.name,
 			});
 	} catch (e) {
-		res.status(409).json({ error: "name already exists" });
+		logger.error("Signup failed", e);
+		res.status(500).json({ error: "Internal server error" });
 	}
 }
 
@@ -78,7 +86,8 @@ export async function signin(req: Request, res: Response) {
 				name: user.name,
 			});
 	} catch (e) {
-		res.status(409).json({ error: "Invalid email or password" });
+		logger.error("Signin failed", e);
+		res.status(500).json({ error: "Internal server error" });
 	}
 }
 
@@ -122,6 +131,7 @@ export async function getUserData(req: Request, res: Response) {
 			balance: formatBalance(engineResponse.data as Record<string, Record<string, unknown>>),
 		});
 	} catch (e) {
-		res.status(409).json({ error: "name does not exist" });
+		logger.error("getUserData failed", e);
+		res.status(500).json({ error: "Internal server error" });
 	}
 }

@@ -1,30 +1,36 @@
 import WebSocket, { WebSocketServer } from "ws";
+import { logger } from "./logger";
 
 export const activeSubscriptions: Record<string, WebSocket[]> = {};
 
 export function subscriptionHandler(server: WebSocketServer) {
 	server.on("connection", (socket) => {
 		socket.on("message", (data) => {
-			const parsedData = JSON.parse(data.toString());
+			try {
+				const parsedData = JSON.parse(data.toString());
 
-			if (parsedData.method === "SUBSCRIBE") {
-				parsedData.params.forEach((param: string) => {
-					if (!activeSubscriptions[param]) {
-						activeSubscriptions[param] = [];
-					}
+				if (parsedData.method === "SUBSCRIBE") {
+					parsedData.params.forEach((param: string) => {
+						if (!activeSubscriptions[param]) {
+							activeSubscriptions[param] = [];
+						}
 
-					activeSubscriptions[param].push(socket);
-				});
-			}
+						activeSubscriptions[param].push(socket);
+					});
+				}
 
-			if (parsedData.method === "UNSUBSCRIBE") {
-				parsedData.params.forEach((param: string) => {
-					if (!activeSubscriptions[param]) {
-						activeSubscriptions[param] = [];
-					}
+				if (parsedData.method === "UNSUBSCRIBE") {
+					parsedData.params.forEach((param: string) => {
+						if (!activeSubscriptions[param]) {
+							activeSubscriptions[param] = [];
+						}
 
-					activeSubscriptions[param] = activeSubscriptions[param].filter((x) => x !== socket);
-				});
+						activeSubscriptions[param] = activeSubscriptions[param].filter((x) => x !== socket);
+					});
+				}
+			} catch (err) {
+				logger.warn("Invalid WebSocket message", { error: (err as Error).message });
+				socket.send(JSON.stringify({ error: "Invalid JSON" }));
 			}
 		});
 
@@ -39,6 +45,10 @@ export function subscriptionHandler(server: WebSocketServer) {
 					delete activeSubscriptions[key];
 				}
 			}
+		});
+
+		socket.on("error", (err) => {
+			logger.error("WebSocket connection error", err);
 		});
 	});
 }

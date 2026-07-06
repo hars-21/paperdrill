@@ -11,6 +11,7 @@ import { Button } from "../ui/button";
 import type { Candle } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
+import { toast } from "sonner";
 
 interface ChartProps {
 	symbol: string;
@@ -119,6 +120,7 @@ export function Chart({ symbol }: ChartProps) {
 			})
 			.catch((err) => {
 				console.error("Failed to load candles:", err);
+				toast.error("Failed to load chart data");
 			});
 
 		chart.subscribeCrosshairMove((param) => {

@@ -26,7 +26,8 @@ app.get("/health", async (_req: Request, res: Response) => {
 		await prisma.$queryRaw`SELECT 1`;
 
 		res.status(200).json({ success: true, status: "ok" });
-	} catch {
+	} catch (err) {
+		logger.error("Health check failed", err);
 		res.status(503).json({ success: false, status: "error" });
 	}
 });
@@ -35,7 +36,11 @@ app.use("/", appRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 	logger.error("Unhandled error", err);
-	res.status(500).json({
-		error: err instanceof Error ? err.message : "internal server error",
-	});
+	const message =
+		config.app.env === "production"
+			? "Internal server error"
+			: err instanceof Error
+				? err.message
+				: "Internal server error";
+	res.status(500).json({ error: message });
 });

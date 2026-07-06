@@ -27,12 +27,16 @@ const MARKET_STATS: Record<string, { price: string; change: string; isUp: boolea
 export function MarketsPage() {
 	const [markets, setMarkets] = useState<Market[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		api
 			.getMarkets()
 			.then((res) => setMarkets(res.data ?? []))
-			.catch(() => {})
+			.catch((err) => {
+				console.error("Failed to load markets:", err);
+				setError(err instanceof Error ? err.message : "Failed to load markets");
+			})
 			.finally(() => setLoading(false));
 	}, []);
 
@@ -102,7 +106,12 @@ export function MarketsPage() {
 					</div>
 				</div>
 
-				{loading ? (
+				{error ? (
+					<div className="bg-card rounded-xl border border-border/40 shadow-sm p-8 text-center">
+						<p className="text-sm text-destructive font-medium">Failed to load markets</p>
+						<p className="text-xs text-muted-foreground mt-1">{error}</p>
+					</div>
+				) : loading ? (
 					<div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
 						<Table>
 							<TableHeader>

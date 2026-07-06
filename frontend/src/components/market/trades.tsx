@@ -3,6 +3,7 @@ import { Skeleton } from "../ui/skeleton";
 import type { Trade } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
+import { toast } from "sonner";
 
 function formatTime(ts: number) {
 	const d = new Date(ts);
@@ -27,7 +28,10 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 				}));
 				setTrades(mapped);
 			})
-			.catch(() => {});
+			.catch((err) => {
+				console.error("Failed to load trades:", err);
+				toast.error("Failed to load trades");
+			});
 
 		const handleTrade = (msg: any) => {
 			if (msg.event === "trade") {

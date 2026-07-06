@@ -19,6 +19,7 @@ import {
 	formatBalance,
 	formatCancel,
 } from "../utils/formatter";
+import { logger } from "../utils/logger";
 
 const intervalMap = {
 	"15M": "15 minutes",
@@ -48,7 +49,7 @@ export async function createOrder(req: Request, res: Response) {
 
 	const market = marketStore.get(symbol);
 
-	if (!market) throw new Error("Unknown market");
+	if (!market) throw new Error(`Unknown market: ${symbol}`);
 
 	const scaledQty = toBigInt(qty, market.qtyPrecision);
 	const scaledPrice =
@@ -134,7 +135,8 @@ export async function getMarkets(_req: Request, res: Response) {
 
 		res.status(200).json({ data: markets });
 	} catch (e) {
-		res.status(500).json({ error: "error fetching markets" });
+		logger.error("Failed to fetch markets", e);
+		res.status(500).json({ error: "Internal server error" });
 	}
 }
 
@@ -198,30 +200,35 @@ export async function getCandles(req: Request, res: Response) {
 	const { interval = "15M" } = parsedQueries.data;
 	const bucket = intervalMap[interval];
 
-	const candles = await prisma.$queryRaw`
-  SELECT
-    (EXTRACT(EPOCH FROM bucket) * 1000)::float8 AS "time",
-    symbol, open, high, low, close,
-    volume::float8
-  FROM (
-    SELECT
-      time_bucket(${bucket}, "time") AS bucket,
-      symbol,
-	  FIRST(open, "time") AS open,
-      MAX(high) AS high,
-      MIN(low) AS low,
-	  LAST(close, "time") AS close,
-      SUM(volume)::float8 AS volume
-    FROM "Candle"
-    WHERE symbol = ${symbol}
-    GROUP BY bucket, symbol
-  ) sub
-  ORDER BY "time";
-`;
+	try {
+		const candles = await prisma.$queryRaw`
+	  SELECT
+	    (EXTRACT(EPOCH FROM bucket) * 1000)::float8 AS "time",
+	    symbol, open, high, low, close,
+	    volume::float8
+	  FROM (
+	    SELECT
+	      time_bucket(${bucket}, "time") AS bucket,
+	      symbol,
+		  FIRST(open, "time") AS open,
+	      MAX(high) AS high,
+	      MIN(low) AS low,
+		  LAST(close, "time") AS close,
+	      SUM(volume)::float8 AS volume
+	    FROM "Candle"
+	    WHERE symbol = ${symbol}
+	    GROUP BY bucket, symbol
+	  ) sub
+	  ORDER BY "time";
+	`;
 
-	res.status(200).json({
-		data: formatCandles(candles as Record<string, unknown>[]),
-	});
+		res.status(200).json({
+			data: formatCandles(candles as Record<string, unknown>[]),
+		});
+	} catch (err) {
+		logger.error("Failed to fetch candles", err);
+		res.status(500).json({ error: "Internal server error" });
+	}
 }
 
 // Balances

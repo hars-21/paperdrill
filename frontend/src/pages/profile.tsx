@@ -26,12 +26,20 @@ export function ProfilePage() {
 
 	useEffect(() => {
 		if (!user) return;
-		refreshUser();
-		api
-			.getOpenOrders()
-			.then((data) => setOrders(data))
-			.catch(() => {})
-			.finally(() => setOrdersLoading(false));
+
+		const init = async () => {
+			await refreshUser();
+			try {
+				const data = await api.getOpenOrders();
+				setOrders(data);
+			} catch (err) {
+				console.error("Failed to load open orders:", err);
+				toast.error("Failed to load open orders");
+			} finally {
+				setOrdersLoading(false);
+			}
+		};
+		init();
 	}, []);
 
 	if (loading) return <Loader />;
@@ -40,7 +48,9 @@ export function ProfilePage() {
 	const handleLogout = async () => {
 		try {
 			await api.signout();
-		} catch {}
+		} catch (err) {
+			console.error("Signout failed:", err);
+		}
 		setUser(null);
 		toast.success("Logged out successfully");
 	};

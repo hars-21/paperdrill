@@ -13,6 +13,7 @@ import type { DepthLevel, OrderBook, StreamResponse } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 import { Page } from "@/components/ui/page";
+import { toast } from "sonner";
 
 export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
@@ -57,7 +58,10 @@ export function TradePage() {
 				});
 				bufferRef.current = [];
 			})
-			.catch(() => {})
+			.catch((err) => {
+				console.error("Failed to load depth:", err);
+				toast.error("Failed to load orderbook");
+			})
 			.finally(() => setLoading(false));
 
 		return () => {

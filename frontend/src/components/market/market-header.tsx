@@ -27,7 +27,9 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 		api
 			.getMarkets()
 			.then((res) => setMarkets(res.data ?? []))
-			.catch(() => {});
+			.catch((err) => {
+				console.error("Failed to load markets for header:", err);
+			});
 	}, []);
 
 	const filteredMarkets = markets.filter((m) => {

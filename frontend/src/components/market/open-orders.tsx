@@ -20,7 +20,10 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 		try {
 			const data = await api.getOpenOrders();
 			setOrders(data);
-		} catch {}
+		} catch (err) {
+			console.error("Failed to fetch open orders:", err);
+			toast.error("Failed to fetch open orders");
+		}
 	};
 
 	const handleCancel = async (orderId: string) => {

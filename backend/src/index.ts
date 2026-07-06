@@ -35,11 +35,29 @@ async function gracefulShutdown(signal: string) {
 
 	engineAbortController.abort();
 
-	httpServer.close();
-	wss.close();
+	try {
+		await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+	} catch (err) {
+		logger.error("Error closing HTTP server", err);
+	}
 
-	await disconnectRedis();
-	await prisma.$disconnect();
+	try {
+		wss.close();
+	} catch (err) {
+		logger.error("Error closing WebSocket server", err);
+	}
+
+	try {
+		await disconnectRedis();
+	} catch (err) {
+		logger.error("Error disconnecting Redis", err);
+	}
+
+	try {
+		await prisma.$disconnect();
+	} catch (err) {
+		logger.error("Error disconnecting Prisma", err);
+	}
 
 	clearTimeout(forceExit);
 	process.exit(0);
@@ -48,4 +66,16 @@ async function gracefulShutdown(signal: string) {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-main();
+process.on("unhandledRejection", (reason) => {
+	logger.error("Unhandled promise rejection", reason);
+});
+
+process.on("uncaughtException", (err) => {
+	logger.error("Uncaught exception", err);
+	gracefulShutdown("uncaughtException").then(() => process.exit(1));
+});
+
+main().catch((err) => {
+	logger.error("Fatal startup error", err);
+	process.exit(1);
+});

@@ -31,7 +31,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 				name: data.name,
 				balance: data.balance,
 			});
-		} catch {
+		} catch (err) {
+			console.error("Failed to refresh user:", err);
 			setUser(null);
 		}
 	}, []);
