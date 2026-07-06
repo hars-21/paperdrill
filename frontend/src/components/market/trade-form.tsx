@@ -4,9 +4,9 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAuth } from "@/context/AuthContext";
-import { Skeleton } from "../ui/skeleton";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { TradeFormSkeleton } from "./skeletons";
 
 interface TradeFormProps {
 	symbol: string;
@@ -22,22 +22,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 	const { user, loading, refreshUser } = useAuth();
 
 	if (loading) {
-		return (
-			<div className="flex h-full flex-col select-none p-5 space-y-6 animate-pulse">
-				<Skeleton className="h-9 w-full" />
-				<div className="space-y-4">
-					<div className="space-y-2">
-						<Skeleton className="h-3 w-12" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-					<div className="space-y-2">
-						<Skeleton className="h-3.5 w-16" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-				</div>
-				<Skeleton className="h-10 w-full mt-auto" />
-			</div>
-		);
+		return <TradeFormSkeleton />;
 	}
 
 	const handlePlaceOrder = async (e: React.SubmitEvent) => {
@@ -126,7 +111,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 									onClick={() => setOrderType("LIMIT")}
 									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
 										orderType === "LIMIT"
-											? "bg-card text-high-emphasis shadow-xs border border-border/10"
+											? "bg-card text-high-emphasis shadow-sm border border-border/10"
 											: "text-muted-foreground hover:text-high-emphasis"
 									}`}
 								>
@@ -137,7 +122,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 									onClick={() => setOrderType("MARKET")}
 									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
 										orderType === "MARKET"
-											? "bg-card text-high-emphasis shadow-xs border border-border/10"
+											? "bg-card text-high-emphasis shadow-sm border border-border/10"
 											: "text-muted-foreground hover:text-high-emphasis"
 									}`}
 								>
@@ -218,10 +203,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 								<div className="flex justify-between items-center text-xs">
 									<span className="text-muted-foreground">Est. Total</span>
 									<span className="font-mono font-bold text-high-emphasis">
-										{(parseFloat(price) * parseFloat(quantity) || 0).toLocaleString(undefined, {
-											minimumFractionDigits: 2,
-											maximumFractionDigits: 2,
-										})}{" "}
+										{(parseFloat(price) * parseFloat(quantity) || 0).toFixed(2)}{" "}
 										USD
 									</span>
 								</div>
@@ -231,7 +213,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 								type="submit"
 								disabled={submitting}
 								variant={side === "BUY" ? "buy" : "sell"}
-								className="py-5"
+								className="h-10"
 							>
 								{submitting
 									? "Placing..."

@@ -89,8 +89,8 @@ export function Features() {
 						</div>
 
 						<div className="w-full lg:w-1/2 space-y-5 order-1 lg:order-2">
-							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-xs">
-								<Database className="h-4.5 w-4.5" />
+							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-sm">
+								<Database className="size-4" />
 							</div>
 							<h3 className="text-xl font-bold tracking-tight sm:text-2xl text-high-emphasis">
 								Observe Microstructure
@@ -102,11 +102,11 @@ export function Features() {
 							</p>
 							<ul className="space-y-2.5 text-xs text-muted-foreground">
 								<li className="flex items-center gap-2">
-									<CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+									<CheckCircle2 className="size-4 text-success shrink-0" />
 									<span>Visualized orderbook queues and matching execution lines.</span>
 								</li>
 								<li className="flex items-center gap-2">
-									<CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+									<CheckCircle2 className="size-4 text-success shrink-0" />
 									<span>Step-through execution debugging for custom algorithms.</span>
 								</li>
 							</ul>
@@ -115,8 +115,8 @@ export function Features() {
 
 					<div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 						<div className="w-full lg:w-1/2 space-y-5">
-							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-xs">
-								<Terminal className="h-4.5 w-4.5" />
+							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-sm">
+								<Terminal className="size-4" />
 							</div>
 							<h3 className="text-xl font-bold tracking-tight sm:text-2xl text-high-emphasis">
 								Developer-First Infrastructure
@@ -235,8 +235,8 @@ export function Features() {
 						</div>
 
 						<div className="w-full lg:w-1/2 space-y-5 order-1 lg:order-2">
-							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-xs">
-								<ShieldAlert className="h-4.5 w-4.5" />
+							<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary shadow-sm">
+								<ShieldAlert className="size-4" />
 							</div>
 							<h3 className="text-xl font-bold tracking-tight sm:text-2xl text-high-emphasis">
 								Safe sandbox environment
@@ -248,11 +248,11 @@ export function Features() {
 							</p>
 							<ul className="space-y-2.5 text-xs text-muted-foreground">
 								<li className="flex items-center gap-2">
-									<CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+									<CheckCircle2 className="size-4 text-success shrink-0" />
 									<span>Pre-funded sandbox with $10,000 mock USD.</span>
 								</li>
 								<li className="flex items-center gap-2">
-									<CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+									<CheckCircle2 className="size-4 text-success shrink-0" />
 									<span>Instant resets to restore baseline balances at any time.</span>
 								</li>
 							</ul>

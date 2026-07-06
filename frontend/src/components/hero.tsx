@@ -18,11 +18,11 @@ export function Hero() {
 
 				<div className="flex flex-wrap items-center justify-center gap-4">
 					<Link to="/signup">
-						<Button size="lg" className="shadow-md shadow-primary/15">
-							Get Started <ArrowRight className="ml-1.5 h-4 w-4" />
+						<Button size="lg" className="shadow-md shadow-primary/15 gap-1.5">
+							Get Started <ArrowRight className="size-4" />
 						</Button>
 					</Link>
-					<Link to="/market/BTC_USD">
+					<Link to="/trade/BTC_USD">
 						<Button size="lg" variant="secondary">
 							Open Playground
 						</Button>
@@ -142,7 +142,7 @@ export function Hero() {
 								</div>
 							</div>
 
-							<Button variant="buy" className="py-1.5 text-[10px]">
+							<Button variant="buy" className="h-8 text-xs">
 								Buy BTC
 							</Button>
 						</div>

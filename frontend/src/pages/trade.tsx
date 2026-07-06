@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 import { Page } from "@/components/ui/page";
 
-export function MarketPage() {
+export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
 	const { user, loading: authLoading } = useAuth();
 	const [loading, setLoading] = useState(true);
@@ -100,11 +100,11 @@ export function MarketPage() {
 	const isDataLoading = loading || authLoading;
 
 	return (
-		<Page fixed className="p-4 gap-4 bg-background/40">
+		<Page fixed className="px-4 gap-4">
 			<MarketHeader market={symbol} />
 
 			<div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 -mr-1">
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs w-full lg:w-72 xl:w-80 shrink-0 h-[450px] lg:h-full overflow-hidden">
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-full lg:w-72 xl:w-80 shrink-0 h-112.5 lg:h-full overflow-hidden">
 					<div className="flex border-b border-border/40 shrink-0">
 						<Button
 							onClick={() => setLeftTab("book")}
@@ -144,9 +144,9 @@ export function MarketPage() {
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-4 w-full lg:flex-1 h-auto lg:h-full min-h-0 min-w-0 overflow-visible lg:overflow-hidden shrink-0 lg:shrink-1">
+				<div className="flex flex-col gap-4 w-full lg:flex-1 h-auto lg:h-full min-h-0 min-w-0 overflow-visible lg:overflow-hidden shrink-0 lg:shrink">
 					{isDataLoading ? (
-						<div className="h-[400px] lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-xs p-6 flex flex-col justify-between min-h-50 animate-pulse shrink-0">
+						<div className="h-100 lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-sm p-6 flex flex-col justify-between min-h-50 animate-pulse shrink-0">
 							<div className="flex justify-between items-center">
 								<Skeleton className="h-4 w-32" />
 								<Skeleton className="h-4 w-12" />
@@ -163,21 +163,21 @@ export function MarketPage() {
 							</div>
 						</div>
 					) : (
-						<div className="h-[400px] lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden p-1 shrink-0">
+						<div className="h-100 lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden p-1 shrink-0">
 							<Chart symbol={symbol} />
 						</div>
 					)}
 
-					<div className="bg-card rounded-xl border border-border/40 shadow-xs overflow-hidden h-55 shrink-0">
+					<div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden h-55 shrink-0">
 						<OpenOrders loading={isDataLoading} refreshKey={orderbookRefreshKey} />
 					</div>
 				</div>
 
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-xs w-full lg:w-72 xl:w-80 shrink-0 h-auto lg:h-full overflow-hidden">
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-full lg:w-72 xl:w-80 shrink-0 h-auto lg:h-full overflow-hidden">
 					{user ? (
 						<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
 					) : (
-						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center min-h-[200px]">
+						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center min-h-50">
 							<p className="text-sm text-muted-foreground">Sign in to start trading</p>
 							<Link to="/login">
 								<Button size="sm">Sign in</Button>

@@ -12,8 +12,8 @@ export function CtaSection() {
 				</p>
 				<div className="flex flex-wrap items-center justify-center gap-4">
 					<Link to="/signup">
-						<Button size="lg">
-							Create Account <ArrowRight className="ml-1.5 h-4 w-4" />
+						<Button size="lg" className="gap-1.5">
+							Create Account <ArrowRight className="size-4" />
 						</Button>
 					</Link>
 				</div>

@@ -10,10 +10,10 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				primary: "bg-primary text-primary-foreground hover:bg-primary/90",
-				secondary: "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+				secondary: "border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
 				ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-				buy: "w-full py-2.5 text-xs font-semibold uppercase tracking-wider bg-success hover:bg-success/90 text-white shadow-sm shadow-success/15 rounded-lg",
-				sell: "w-full py-2.5 text-xs font-semibold uppercase tracking-wider bg-destructive hover:bg-destructive/90 text-white shadow-sm shadow-destructive/15 rounded-lg",
+				buy: "w-full text-xs font-bold uppercase tracking-wider bg-success hover:bg-success/90 text-white shadow-sm shadow-success/15 rounded-lg",
+				sell: "w-full text-xs font-bold uppercase tracking-wider bg-destructive hover:bg-destructive/90 text-white shadow-sm shadow-destructive/15 rounded-lg",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity } from "lucide-react";
+import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../lib/theme-provider";
 import { useAuth } from "@/context/AuthContext";
@@ -10,7 +10,6 @@ import {
 	DropdownMenuContent,
 	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
@@ -28,184 +27,232 @@ export function Navbar() {
 	};
 
 	return (
-		<header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-			<div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-				<Link to="/" className="text-lg font-semibold tracking-tight">
-					Atlas
-				</Link>
-
-				<nav className="hidden items-center gap-8 text-sm text-muted-foreground sm:flex">
-					<Link to="/#features" className="transition-colors hover:text-high-emphasis">
-						Features
-					</Link>
-					<Link to="/markets" className="transition-colors hover:text-high-emphasis">
-						Markets
-					</Link>
-					<Link to="/market/BTC_USD" className="transition-colors hover:text-high-emphasis">
-						Trading
-					</Link>
-				</nav>
-
-				<div className="hidden items-center gap-3 sm:flex">
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onClick={toggleTheme}
-						aria-label="Toggle Theme"
-						className="mr-1"
-					>
-						{theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-					</Button>
-
-					{user ? (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="sm" className="gap-2 px-2.5">
-									<div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs uppercase">
-										{user.name[0]}
-									</div>
-									<span className="max-w-20 truncate text-xs font-medium">{user.name}</span>
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56 border-border/40">
-								<DropdownMenuLabel className="flex flex-col">
-									<span className="text-[10px] text-muted-foreground font-normal uppercase tracking-wider">
-										Signed in as
-									</span>
-									<span className="font-semibold text-sm truncate mt-0.5">{user.name}</span>
-								</DropdownMenuLabel>
-								<DropdownMenuSeparator className="border-border/30" />
-								<DropdownMenuGroup>
-									<DropdownMenuItem asChild>
-										<Link to="/profile" className="w-full flex items-center cursor-pointer">
-											<User className="mr-2 h-4 w-4 text-muted-foreground" />
-											<span>Profile & Balances</span>
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link to="/markets" className="w-full flex items-center cursor-pointer">
-											<TrendingUp className="mr-2 h-4 w-4 text-muted-foreground" />
-											<span>Spot Markets</span>
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link to="/market/BTC_USD" className="w-full flex items-center cursor-pointer">
-											<Activity className="mr-2 h-4 w-4 text-muted-foreground" />
-											<span>Trading Console</span>
-										</Link>
-									</DropdownMenuItem>
-								</DropdownMenuGroup>
-								<DropdownMenuSeparator className="border-border/30" />
-								<DropdownMenuItem
-									onClick={handleLogout}
-									variant="destructive"
-									className="cursor-pointer text-destructive"
-								>
-									<LogOut className="mr-2 h-4 w-4" />
-									<span>Log out</span>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					) : (
-						<>
-							<Link to="/login">
-								<Button variant="ghost" size="sm">
-									Log in
-								</Button>
+		<header className="sticky top-0 z-50 w-full bg-l0">
+			<div>
+				<div className="relative flex h-14 w-full flex-col justify-center">
+					<div className="grid grid-cols-[1fr_auto_1fr] items-center">
+						<div className="flex items-center flex-row">
+							<Link to="/markets" className="text-lg font-semibold tracking-tight px-4">
+								Atlas
 							</Link>
-							<Link to="/signup">
-								<Button size="sm">Sign up</Button>
-							</Link>
-						</>
-					)}
-				</div>
 
-				<Button variant="ghost" size="icon-sm" className="sm:hidden" onClick={() => setOpen(!open)}>
-					{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-				</Button>
-			</div>
-
-			{open && (
-				<div className="border-t bg-background px-6 py-4 sm:hidden">
-					<nav className="flex flex-col gap-3 text-sm">
-						<Link
-							to="/#features"
-							className="text-muted-foreground hover:text-high-emphasis"
-							onClick={() => setOpen(false)}
-						>
-							Features
-						</Link>
-						<Link
-							to="/markets"
-							className="text-muted-foreground hover:text-high-emphasis"
-							onClick={() => setOpen(false)}
-						>
-							Markets
-						</Link>
-						<Link
-							to="/market/BTC_USD"
-							className="text-muted-foreground hover:text-high-emphasis"
-							onClick={() => setOpen(false)}
-						>
-							Trading
-						</Link>
-
-						<div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">
-							<span className="text-xs text-muted-foreground">Theme</span>
 							<Button
 								variant="ghost"
 								size="icon-sm"
-								onClick={toggleTheme}
-								aria-label="Toggle Theme"
+								className="md:hidden"
+								onClick={() => setOpen(!open)}
 							>
-								{theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+								{open ? <X className="size-5" /> : <Menu className="size-5" />}
 							</Button>
+
+							<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-4 md:flex lg:gap-7 xl:gap-8">
+								<Link to="/#features" className="transition-colors hover:text-high-emphasis">
+									Features
+								</Link>
+								<Link to="/markets" className="transition-colors hover:text-high-emphasis">
+									Markets
+								</Link>
+								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
+									Trading
+								</Link>
+							</nav>
 						</div>
 
-						<div className="flex flex-col gap-2 pt-2 border-t border-border/40">
-							{user ? (
-								<>
-									<div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
-										<div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold uppercase">
-											{user.name[0]}
-										</div>
-										<span>{user.name}</span>
-									</div>
-									<Link to="/profile" className="w-full" onClick={() => setOpen(false)}>
-										<Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-											<User className="h-4 w-4" /> Profile & Balances
-										</Button>
-									</Link>
+						<div className="col-start-3 flex justify-end">
+							<div className="animate-in fade-in col-span-2 flex flex-row justify-self-end xl:col-span-1">
+								<div className="flex items-center flex-row gap-3 pr-4">
 									<Button
-										onClick={() => {
-											handleLogout();
-											setOpen(false);
-										}}
 										variant="ghost"
-										size="sm"
-										className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+										size="icon-sm"
+										onClick={toggleTheme}
+										aria-label="Toggle Theme"
 									>
-										<LogOut className="h-4 w-4" /> Log out
+										{theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
 									</Button>
-								</>
-							) : (
-								<div className="flex gap-3">
-									<Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
-										<Button variant="ghost" size="sm" className="w-full">
-											Log in
-										</Button>
-									</Link>
-									<Link to="/signup" className="flex-1" onClick={() => setOpen(false)}>
-										<Button size="sm" className="w-full">
-											Sign up
-										</Button>
-									</Link>
+
+									{user ? (
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-9 gap-2 rounded-full border border-transparent bg-l1 px-2 pr-3 transition-colors hover:bg-l2 hover:border-border"
+												>
+													<div className="flex size-6 items-center justify-center rounded-full bg-l3 text-xs font-semibold uppercase text-high-emphasis">
+														<User />
+													</div>
+
+													<span className="max-w-24 truncate text-sm font-medium text-high-emphasis">
+														{user.name}
+													</span>
+
+													<ChevronDown className="size-3.5 text-low-emphasis" />
+												</Button>
+											</DropdownMenuTrigger>
+
+											<DropdownMenuContent
+												align="end"
+												className="w-64 rounded-xl border border-border bg-l1 p-1.5 shadow-lg"
+											>
+												<div className="flex items-center gap-3 rounded-lg px-2 py-2">
+													<div className="flex size-10 items-center justify-center rounded-full bg-l3 text-sm font-semibold uppercase text-high-emphasis">
+														<User />
+													</div>
+
+													<div className="min-w-0 flex-1">
+														<p className="truncate text-sm font-semibold text-high-emphasis">
+															{user.name}
+														</p>
+														<p className="truncate text-xs text-medium-emphasis">{user.email}</p>
+													</div>
+												</div>
+
+												<DropdownMenuSeparator className="my-1" />
+
+												<DropdownMenuGroup>
+													<DropdownMenuItem asChild>
+														<Link
+															to="/profile"
+															className="flex w-full items-center gap-3 rounded-lg"
+														>
+															<User className="size-4 text-medium-emphasis" />
+															<span>Profile & Balances</span>
+														</Link>
+													</DropdownMenuItem>
+
+													<DropdownMenuItem asChild>
+														<Link
+															to="/markets"
+															className="flex w-full items-center gap-3 rounded-lg"
+														>
+															<TrendingUp className="size-4 text-medium-emphasis" />
+															<span>Spot Markets</span>
+														</Link>
+													</DropdownMenuItem>
+
+													<DropdownMenuItem asChild>
+														<Link
+															to="/trade/BTC_USD"
+															className="flex w-full items-center gap-3 rounded-lg"
+														>
+															<Activity className="size-4 text-medium-emphasis" />
+															<span>Trading Console</span>
+														</Link>
+													</DropdownMenuItem>
+												</DropdownMenuGroup>
+
+												<DropdownMenuSeparator className="my-1" />
+
+												<DropdownMenuItem
+													onClick={handleLogout}
+													variant="destructive"
+													className="gap-3 rounded-lg"
+												>
+													<LogOut className="size-4" />
+													<span>Log out</span>
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									) : (
+										<>
+											<Link to="/login">
+												<Button variant="ghost" size="sm" className="bg-l3">
+													Log in
+												</Button>
+											</Link>
+											<Link to="/signup">
+												<Button size="sm">Sign up</Button>
+											</Link>
+										</>
+									)}
 								</div>
-							)}
+							</div>
 						</div>
-					</nav>
+
+						{open && (
+							<div className="border-t bg-background px-6 py-4 sm:hidden">
+								<nav className="flex flex-col gap-3 text-sm">
+									<Link
+										to="/#features"
+										className="text-muted-foreground hover:text-high-emphasis"
+										onClick={() => setOpen(false)}
+									>
+										Features
+									</Link>
+									<Link
+										to="/markets"
+										className="text-muted-foreground hover:text-high-emphasis"
+										onClick={() => setOpen(false)}
+									>
+										Markets
+									</Link>
+									<Link
+										to="/trade/BTC_USD"
+										className="text-muted-foreground hover:text-high-emphasis"
+										onClick={() => setOpen(false)}
+									>
+										Trading
+									</Link>
+
+									<div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">
+										<span className="text-xs text-muted-foreground">Theme</span>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											onClick={toggleTheme}
+											aria-label="Toggle Theme"
+										>
+											{theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+										</Button>
+									</div>
+
+									<div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+										{user ? (
+											<>
+												<div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
+													<div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold uppercase">
+														{user.name[0]}
+													</div>
+													<span>{user.name}</span>
+												</div>
+												<Link to="/profile" className="w-full" onClick={() => setOpen(false)}>
+													<Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+														<User className="size-4" /> Profile & Balances
+													</Button>
+												</Link>
+												<Button
+													onClick={() => {
+														handleLogout();
+														setOpen(false);
+													}}
+													variant="ghost"
+													size="sm"
+													className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+												>
+													<LogOut className="size-4" /> Log out
+												</Button>
+											</>
+										) : (
+											<div className="flex gap-3">
+												<Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
+													<Button variant="ghost" size="sm" className="w-full">
+														Log in
+													</Button>
+												</Link>
+												<Link to="/signup" className="flex-1" onClick={() => setOpen(false)}>
+													<Button size="sm" className="w-full">
+														Sign up
+													</Button>
+												</Link>
+											</div>
+										)}
+									</div>
+								</nav>
+							</div>
+						)}
+					</div>
 				</div>
-			)}
+			</div>
 		</header>
 	);
 }

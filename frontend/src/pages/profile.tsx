@@ -55,16 +55,16 @@ export function ProfilePage() {
 					onClick={handleLogout}
 					variant="secondary"
 					size="sm"
-					className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0"
+					className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0 gap-1.5"
 				>
-					<LogOut className="mr-1.5 h-3.5 w-3.5" />
+					<LogOut className="size-3.5" />
 					Log out
 				</Button>
 			</PageHeader>
 
 			<PageContent className="max-w-3xl animate-fade-in">
 				<div className="space-y-5">
-					<Card className="border-border/40 shadow-xs">
+					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
 							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 								User Account
@@ -82,7 +82,7 @@ export function ProfilePage() {
 						</CardContent>
 					</Card>
 
-					<Card className="border-border/40 shadow-xs">
+					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
 							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 								Sandbox Asset Balances
@@ -130,7 +130,7 @@ export function ProfilePage() {
 						</CardContent>
 					</Card>
 
-					<Card className="border-border/40 shadow-xs">
+					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
 							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 								Open Orders

@@ -22,6 +22,7 @@ export function Chart({ symbol }: ChartProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [hoveredCandle, setHoveredCandle] = useState<Partial<Candle> | null>(null);
 	const [latestCandle, setLatestCandle] = useState<Partial<Candle> | null>(null);
+	const [hasData, setHasData] = useState(false);
 	const [interval, setInterval] = useState("1H");
 	const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -32,6 +33,9 @@ export function Chart({ symbol }: ChartProps) {
 
 	useEffect(() => {
 		if (!containerRef.current) return;
+
+		const initialWidth = containerRef.current.clientWidth || 600;
+		const initialHeight = containerRef.current.clientHeight || 350;
 
 		const chart = createChart(containerRef.current, {
 			layout: {
@@ -61,8 +65,8 @@ export function Chart({ symbol }: ChartProps) {
 			},
 			handleScroll: true,
 			handleScale: true,
-			width: containerRef.current.clientWidth,
-			height: containerRef.current.clientHeight,
+			width: initialWidth,
+			height: initialHeight,
 		});
 
 		const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -83,28 +87,39 @@ export function Chart({ symbol }: ChartProps) {
 			scaleMargins: { top: 0.8, bottom: 0 },
 		});
 
-		api.getCandles(symbol, interval).then(({ data }) => {
-			if (data.length > 0) {
-				const last = data[data.length - 1]!;
-				setLatestCandle({ ...last, time: last.time });
-			}
-			candleSeries.setData(
-				data.map((c) => ({
-					time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
-					open: Number(c.open),
-					high: Number(c.high),
-					low: Number(c.low),
-					close: Number(c.close),
-				})),
-			);
-			volumeSeries.setData(
-				data.map((c) => ({
-					time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
-					value: Number(c.volume),
-					color: Number(c.close) >= Number(c.open) ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
-				})),
-			);
-		});
+		api
+			.getCandles(symbol, interval)
+			.then((res) => {
+				const data = res?.data ?? [];
+				if (data.length > 0) {
+					const last = data[data.length - 1]!;
+					setLatestCandle({ ...last, time: last.time });
+					setHasData(true);
+
+					candleSeries.setData(
+						data.map((c) => ({
+							time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
+							open: Number(c.open),
+							high: Number(c.high),
+							low: Number(c.low),
+							close: Number(c.close),
+						})),
+					);
+					volumeSeries.setData(
+						data.map((c) => ({
+							time: Math.floor(new Date(c.time).getTime() / 1000) as Time,
+							value: Number(c.volume),
+							color:
+								Number(c.close) >= Number(c.open)
+									? "rgba(0, 192, 135, 0.15)"
+									: "rgba(255, 59, 48, 0.15)",
+						})),
+					);
+				}
+			})
+			.catch((err) => {
+				console.error("Failed to load candles:", err);
+			});
 
 		chart.subscribeCrosshairMove((param) => {
 			if (param.point === undefined || !param.time || param.point.x < 0 || param.point.y < 0) {
@@ -129,7 +144,10 @@ export function Chart({ symbol }: ChartProps) {
 		});
 
 		const unsub = wsManager.subscribe(`candle:${symbol}`, (raw: unknown) => {
+			if (!raw) return;
 			const candle = raw as Candle;
+			if (!candle.time || candle.open === undefined || candle.close === undefined) return;
+
 			setLatestCandle(candle);
 
 			const time = Math.floor(new Date(candle.time).getTime() / 1000) as Time;
@@ -145,14 +163,19 @@ export function Chart({ symbol }: ChartProps) {
 			volumeSeries.update({
 				time,
 				value: Number(candle.volume),
-				color: Number(candle.close) >= Number(candle.open) ? "rgba(0, 192, 135, 0.15)" : "rgba(255, 59, 48, 0.15)",
+				color:
+					Number(candle.close) >= Number(candle.open)
+						? "rgba(0, 192, 135, 0.15)"
+						: "rgba(255, 59, 48, 0.15)",
 			});
 		});
 
 		const observer = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
-				chart.applyOptions({ width, height });
+				if (width > 0 && height > 0) {
+					chart.resize(width, height);
+				}
 			}
 		});
 		observer.observe(containerRef.current);
@@ -170,19 +193,19 @@ export function Chart({ symbol }: ChartProps) {
 		: true;
 	const valueColor = isUp ? "text-success" : "text-destructive";
 
-	const formatPrice = (p?: string) =>
-		p ? Number(p).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—";
-	const formatVol = (v?: string) => {
+	const formatPrice = (p?: string | number) =>
+		p !== undefined ? String(Number(p).toFixed(2)) : "—";
+	const formatVol = (v?: string | number) => {
 		if (v === undefined) return "—";
 		const n = Number(v);
 		if (n >= 1000000) return (n / 1000000).toFixed(2) + "M";
 		if (n >= 1000) return (n / 1000).toFixed(2) + "K";
-		return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+		return n.toFixed(2);
 	};
 
 	return (
 		<div className="relative w-full h-full flex flex-col bg-transparent p-3 pl-5 pr-3 pb-3">
-			<div className="relative flex-1 w-full h-full min-h-100 z-0">
+			<div className="relative flex-1 w-full h-full min-h-75 z-0">
 				<div className="absolute top-3 left-3 z-10 flex flex-col gap-2.5 pointer-events-none select-none">
 					<div className="flex items-center gap-3 pointer-events-auto">
 						<div className="flex items-center bg-card/60 backdrop-blur-md border border-border/30 rounded-md p-0.5 shadow-sm">
@@ -193,7 +216,7 @@ export function Chart({ symbol }: ChartProps) {
 									variant="ghost"
 									className={`px-2.5 py-1 text-[10px] font-semibold rounded-sm ${
 										interval === int
-											? "bg-muted text-high-emphasis shadow-xs"
+											? "bg-muted text-high-emphasis shadow-sm"
 											: "text-muted-foreground hover:text-high-emphasis hover:bg-muted/50"
 									}`}
 								>
@@ -202,8 +225,8 @@ export function Chart({ symbol }: ChartProps) {
 							))}
 						</div>
 
-						<div className="flex items-center bg-card/60 backdrop-blur-md border border-border/30 rounded-md px-2.5 py-1 shadow-sm">
-							<span className="w-1.5 h-1.5 rounded-full bg-success mr-2 animate-pulse shadow-[0_0_8px_rgba(0,192,135,0.6)]" />
+						<div className="flex items-center gap-2 bg-card/60 backdrop-blur-md border border-border/30 rounded-md px-2.5 py-1 shadow-sm">
+							<span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(0,192,135,0.6)]" />
 							<span className="text-[10px] font-mono font-medium text-muted-foreground tracking-wide">
 								{currentTime.toLocaleTimeString([], { hour12: false })}
 							</span>
@@ -211,7 +234,7 @@ export function Chart({ symbol }: ChartProps) {
 					</div>
 
 					{displayCandle && (
-						<div className="flex items-center gap-3.5 text-[10px] font-mono px-1">
+						<div className="flex items-center gap-3.5 text-xs font-mono px-1">
 							<span className="text-muted-foreground">
 								O <span className={valueColor}>{formatPrice(displayCandle.open)}</span>
 							</span>
@@ -231,9 +254,18 @@ export function Chart({ symbol }: ChartProps) {
 					)}
 				</div>
 
+				{!hasData && !latestCandle && (
+					<div className="absolute inset-0 flex items-center justify-center z-10">
+						<div className="flex flex-col items-center gap-2 select-none">
+							<span className="text-xs text-medium-emphasis">No chart data available</span>
+							<span className="text-[10px] text-low-emphasis">Waiting for market data...</span>
+						</div>
+					</div>
+				)}
+
 				<div ref={containerRef} className="w-full h-full" />
 
-				<div className="absolute left-0 top-0 bottom-6.5 w-px bg-[#1E1E24]" />
+				<div className="absolute left-0 top-0 bottom-6 w-px bg-[#1E1E24]" />
 			</div>
 		</div>
 	);

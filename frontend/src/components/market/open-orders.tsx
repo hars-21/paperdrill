@@ -1,11 +1,11 @@
 import { Inbox, X } from "lucide-react";
 import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
 import type { OrderRecord } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { OpenOrderSkeleton } from "./skeletons";
 
 interface OpenOrdersProps {
 	loading?: boolean;
@@ -41,55 +41,7 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 	}, [refreshKey]);
 
 	if (loading) {
-		return (
-			<div className="flex flex-col h-full select-none animate-pulse">
-				<div className="flex items-center justify-between border-b border-border/40 px-5 py-3 bg-muted/15">
-					<Skeleton className="h-4 w-28" />
-				</div>
-				<div className="overflow-auto flex-1 min-h-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Market</TableHead>
-								<TableHead>Side</TableHead>
-								<TableHead>Type</TableHead>
-								<TableHead className="text-right">Price</TableHead>
-								<TableHead className="text-right">Size</TableHead>
-								<TableHead className="text-right">Filled</TableHead>
-								<TableHead className="text-right">Action</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{Array.from({ length: 3 }).map((_, i) => (
-								<TableRow key={i}>
-									<TableCell>
-										<Skeleton className="h-3.5 w-12" />
-									</TableCell>
-									<TableCell>
-										<Skeleton className="h-3.5 w-8" />
-									</TableCell>
-									<TableCell>
-										<Skeleton className="h-3.5 w-10" />
-									</TableCell>
-									<TableCell className="text-right">
-										<Skeleton className="h-3.5 w-16 ml-auto" />
-									</TableCell>
-									<TableCell className="text-right">
-										<Skeleton className="h-3.5 w-12 ml-auto" />
-									</TableCell>
-									<TableCell className="text-right">
-										<Skeleton className="h-3.5 w-12 ml-auto" />
-									</TableCell>
-									<TableCell className="text-right">
-										<Skeleton className="h-3.5 w-14 ml-auto" />
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-			</div>
-		);
+		return <OpenOrderSkeleton />;
 	}
 
 	return (
@@ -146,7 +98,7 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 											size="icon-sm"
 											className="text-low-emphasis hover:text-destructive hover:bg-destructive/10"
 										>
-											<X className="h-3.5 w-3.5" />
+											<X className="size-3.5" />
 										</Button>
 									</TableCell>
 								</TableRow>
@@ -155,7 +107,7 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 							<TableRow>
 								<TableCell colSpan={7} className="py-10 text-center font-sans">
 									<div className="flex flex-col items-center justify-center text-muted-foreground/60 gap-2 py-4">
-										<Inbox className="h-6 w-6 stroke-[1.5] text-muted-foreground/40" />
+										<Inbox className="size-6 stroke-[1.5] text-muted-foreground/40" />
 										<p className="text-xs font-medium">No open orders</p>
 									</div>
 								</TableCell>
