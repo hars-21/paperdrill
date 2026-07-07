@@ -199,15 +199,12 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 						</div>
 
 						<div className="space-y-4 pt-4 border-t border-border/40">
-							{orderType === "LIMIT" && price && quantity && (
-								<div className="flex justify-between items-center text-xs">
-									<span className="text-muted-foreground">Est. Total</span>
-									<span className="font-mono font-bold text-high-emphasis">
-										{(parseFloat(price) * parseFloat(quantity) || 0).toFixed(2)}{" "}
-										USD
-									</span>
-								</div>
-							)}
+							<div className="flex justify-between items-center text-xs">
+								<span className="text-muted-foreground">Est. Total</span>
+								<span className="font-mono font-bold text-high-emphasis">
+									{(parseFloat(price) * parseFloat(quantity) || 0).toFixed(2)} USD
+								</span>
+							</div>
 
 							<Button
 								type="submit"

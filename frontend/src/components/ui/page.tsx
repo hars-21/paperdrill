@@ -10,7 +10,7 @@ function Page({ className, fixed = false, ...props }: PageProps) {
 		<div
 			data-slot="page"
 			className={cn(
-				"w-full bg-background/40 flex-1 flex flex-col min-h-0",
+				"w-full flex-1 flex flex-col min-h-0",
 				fixed ? "overflow-hidden h-full max-h-full" : "overflow-y-auto h-full",
 				className,
 			)}

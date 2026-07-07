@@ -54,7 +54,7 @@ export const OpenOrderSkeleton = () => {
 };
 
 export const OrderbookSkeleton = () => {
-	const DISPLAY_ROWS = 8;
+	const DISPLAY_ROWS = 14;
 
 	return (
 		<div className="flex h-full flex-col select-none">

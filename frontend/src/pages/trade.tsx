@@ -107,8 +107,8 @@ export function TradePage() {
 		<Page fixed className="px-4 gap-4">
 			<MarketHeader market={symbol} />
 
-			<div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 -mr-1">
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-full lg:w-72 xl:w-80 shrink-0 h-112.5 lg:h-full overflow-hidden">
+			<div className="flex flex-row gap-4 flex-1 overflow-y-auto">
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-72 shrink-0 h-full overflow-hidden">
 					<div className="flex border-b border-border/40 shrink-0">
 						<Button
 							onClick={() => setLeftTab("book")}
@@ -148,9 +148,9 @@ export function TradePage() {
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-4 w-full lg:flex-1 h-auto lg:h-full min-h-0 min-w-0 overflow-visible lg:overflow-hidden shrink-0 lg:shrink">
+				<div className="flex flex-col gap-4 flex-1 h-full min-w-0">
 					{isDataLoading ? (
-						<div className="h-100 lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-sm p-6 flex flex-col justify-between min-h-50 animate-pulse shrink-0">
+						<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-sm p-6 flex flex-col justify-between animate-pulse">
 							<div className="flex justify-between items-center">
 								<Skeleton className="h-4 w-32" />
 								<Skeleton className="h-4 w-12" />
@@ -167,21 +167,21 @@ export function TradePage() {
 							</div>
 						</div>
 					) : (
-						<div className="h-100 lg:flex-1 lg:min-h-0 bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden p-1 shrink-0">
+						<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden relative">
 							<Chart symbol={symbol} />
 						</div>
 					)}
 
-					<div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden h-55 shrink-0">
+					<div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden max-h-97 shrink-0">
 						<OpenOrders loading={isDataLoading} refreshKey={orderbookRefreshKey} />
 					</div>
 				</div>
 
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-full lg:w-72 xl:w-80 shrink-0 h-auto lg:h-full overflow-hidden">
+				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-80 shrink-0 h-full overflow-hidden">
 					{user ? (
 						<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
 					) : (
-						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center min-h-50">
+						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
 							<p className="text-sm text-muted-foreground">Sign in to start trading</p>
 							<Link to="/login">
 								<Button size="sm">Sign in</Button>

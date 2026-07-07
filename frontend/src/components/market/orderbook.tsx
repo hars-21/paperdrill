@@ -7,7 +7,7 @@ interface OrderbookProps {
 	symbol: string;
 }
 
-const DISPLAY_ROWS = 8;
+const DISPLAY_ROWS = 20;
 
 export function Orderbook({ bids, asks, loading, symbol }: OrderbookProps) {
 	if (loading) {
@@ -43,78 +43,119 @@ export function Orderbook({ bids, asks, loading, symbol }: OrderbookProps) {
 		})
 		.slice(0, DISPLAY_ROWS);
 
+	const askMaxTotal = asksSliced.at(-1)?.total ?? 0;
+	const bidMaxTotal = bidsSliced.at(-1)?.total ?? 0;
+
 	return (
-		<div className="flex h-full flex-col select-none relative">
-			<div className="sticky top-0 z-10 flex border-b border-border/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 bg-card/90 backdrop-blur-xs shrink-0">
-				<span className="flex-1">Price (USD)</span>
-				<span className="flex-1 text-right">Size ({symbol.split("_")[0]})</span>
-				<span className="flex-1 text-right">Total</span>
+		<div className="flex h-full flex-col select-none">
+			<div className="sticky top-0 z-10 flex border-b border-border/30 px-3 py-2 text-[10px] font-semibold tracking-wider text-muted-foreground/80 bg-card/90 backdrop-blur-xs shrink-0">
+				<span className="w-[30%]">Price (USD)</span>
+				<span className="w-[35%] text-right">Size ({symbol.split("_")[0]})</span>
+				<span className="w-[35%] pr-2 text-right">Total</span>
 			</div>
 
-			<div className="flex flex-1 flex-col justify-between min-h-0 py-1.5 overflow-hidden">
-				<div className="flex flex-col-reverse justify-start flex-1 min-h-0">
-					{asksSliced.length > 0 ? (
-						asksSliced.map((ask, i) => (
+			<div className="flex flex-1 flex-col min-h-0 overflow-y-auto">
+				<div className="flex flex-col-reverse justify-start flex-1 min-h-84 max-h-84 overflow-hidden">
+					{asksSliced.map((ask, i) => {
+						const depth = askMaxTotal > 0 ? ask.total / askMaxTotal : 0;
+						return (
 							<div
 								key={`ask-${i}`}
-								className="flex py-1.5 px-4 text-xs font-mono hover:bg-muted/10 transition-colors"
+								className="relative flex h-6 items-center cursor-pointer overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors shrink-0"
 							>
-								<span className="flex-1 text-destructive/80 font-medium">
-									{ask.price}
-								</span>
-								<span className="flex-1 text-right text-muted-foreground/80">
-									{ask.qty}
-								</span>
-								<span className="flex-1 text-right text-muted-foreground/40">
-									{ask.total.toFixed(4)}
-								</span>
+								<div
+									className="absolute top-px right-3 bottom-px w-full pointer-events-none"
+									style={{
+										background: "rgba(255, 59, 48, 0.32)",
+										transformOrigin: "right center",
+										transform: `scaleX(${depth})`,
+										transition: "transform 0.5s",
+									}}
+								/>
+								<div
+									className="absolute top-px right-3 bottom-px w-full pointer-events-none"
+									style={{
+										background: "rgba(255, 59, 48, 0.16)",
+										transformOrigin: "right center",
+										transform: `scaleX(${ask.qty / askMaxTotal})`,
+										transition: "transform 0.5s",
+									}}
+								/>
+								<div className="flex h-full w-[30%] items-center z-1">
+									<span className="text-left text-xs font-normal tabular-nums text-destructive">
+										{ask.price}
+									</span>
+								</div>
+								<div className="flex h-full w-[35%] items-center justify-end z-1">
+									<span className="text-right text-xs font-normal tabular-nums text-high-emphasis">
+										{ask.qty}
+									</span>
+								</div>
+								<div className="flex h-full w-[35%] items-center justify-end z-1">
+									<span className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis">
+										{ask.total.toFixed(4)}
+									</span>
+								</div>
 							</div>
-						))
-					) : (
-						<div className="flex items-center justify-center flex-1 text-xs text-muted-foreground/40">
-							No asks
-						</div>
-					)}
+						);
+					})}
 				</div>
 
-				<div className="border-y border-border/40 bg-muted/10 px-4 py-2 flex items-center justify-between shrink-0">
+				<div className="px-3 py-2 flex items-center justify-between shrink-0">
 					<div className="flex items-center gap-1.5">
-						<span className="font-mono text-sm font-semibold tracking-tight text-high-emphasis">
+						<span className="tabular-nums text-md font-bold tracking-tight text-high-emphasis">
 							{midPrice > 0 ? midPrice.toFixed(2) : "—"}
 						</span>
-						<span className="text-[10px] text-muted-foreground font-medium uppercase">USD</span>
 					</div>
-					<div className="text-[10px] text-muted-foreground font-medium">
-						Spread:{" "}
-						<span className="font-mono">
-							{spread > 0 ? spread.toFixed(2) : "—"}
-						</span>
+					<div className="text-[10px] text-medium-emphasis font-medium">
+						Spread: <span className="tabular-nums">{spread > 0 ? spread.toFixed(2) : "—"}</span>
 					</div>
 				</div>
 
-				<div className="flex flex-col justify-start flex-1 min-h-0">
-					{bidsSliced.length > 0 ? (
-						bidsSliced.map((bid, i) => (
+				<div className="flex flex-col justify-start flex-1 min-h-84 max-h-84 overflow-hidden">
+					{bidsSliced.map((bid, i) => {
+						const depth = bidMaxTotal > 0 ? bid.total / bidMaxTotal : 0;
+						return (
 							<div
 								key={`bid-${i}`}
-								className="flex py-1.5 px-4 text-xs font-mono hover:bg-muted/10 transition-colors"
+								className="relative flex h-6 items-center cursor-pointer overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors shrink-0"
 							>
-								<span className="flex-1 text-success/80 font-medium">
-									{bid.price}
-								</span>
-								<span className="flex-1 text-right text-muted-foreground/80">
-									{bid.qty}
-								</span>
-								<span className="flex-1 text-right text-muted-foreground/40">
-									{bid.total.toFixed(4)}
-								</span>
+								<div
+									className="absolute top-px right-3 bottom-px w-full pointer-events-none"
+									style={{
+										background: "rgba(0, 194, 120, 0.32)",
+										transformOrigin: "right center",
+										transform: `scaleX(${depth})`,
+										transition: "transform 0.5s",
+									}}
+								/>
+								<div
+									className="absolute top-px right-3 bottom-px w-full pointer-events-none"
+									style={{
+										background: "rgba(0, 194, 120, 0.16)",
+										transformOrigin: "right center",
+										transform: `scaleX(${bid.qty / bidMaxTotal})`,
+										transition: "transform 0.5s",
+									}}
+								/>
+								<div className="flex h-full w-[30%] items-center z-1">
+									<span className="text-left text-xs font-normal tabular-nums text-success">
+										{bid.price}
+									</span>
+								</div>
+								<div className="flex h-full w-[35%] items-center justify-end z-1">
+									<span className="text-right text-xs font-normal tabular-nums text-high-emphasis">
+										{bid.qty}
+									</span>
+								</div>
+								<div className="flex h-full w-[35%] items-center justify-end z-1">
+									<span className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis">
+										{bid.total.toFixed(2)}
+									</span>
+								</div>
 							</div>
-						))
-					) : (
-						<div className="flex items-center justify-center flex-1 text-xs text-muted-foreground/40">
-							No bids
-						</div>
-					)}
+						);
+					})}
 				</div>
 			</div>
 		</div>
