@@ -7,17 +7,19 @@ function readRuntimeEnv(key: string): string | undefined {
 }
 
 function readEnv(key: string, fallback: string): string {
-	const val = typeof __API_BASE_URL__ !== "undefined" && key === "API_BASE_URL"
-		? __API_BASE_URL__
-		: typeof __WS_URL__ !== "undefined" && key === "WS_URL"
-			? __WS_URL__
-			: readRuntimeEnv(key);
+	const val =
+		typeof __API_BASE_URL__ !== "undefined" && key === "API_BASE_URL"
+			? __API_BASE_URL__
+			: typeof __WS_URL__ !== "undefined" && key === "WS_URL"
+				? __WS_URL__
+				: readRuntimeEnv(key);
 
 	if (
 		val &&
 		!val.startsWith("http://") &&
 		!val.startsWith("ws://") &&
-		!val.startsWith("https://")
+		!val.startsWith("https://") &&
+		!val.startsWith("wss://")
 	) {
 		throw new Error(`Invalid ${key}: must be a valid URL`);
 	}
