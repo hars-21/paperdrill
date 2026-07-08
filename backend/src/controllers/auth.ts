@@ -8,6 +8,7 @@ import { getUserId } from "./exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { formatBalance } from "../utils/formatter";
 import { logger } from "../utils/logger";
+import { config } from "../config";
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -33,11 +34,7 @@ export async function signup(req: Request, res: Response) {
 
 		res
 			.status(201)
-			.cookie("token", createToken({ id: user.id }), {
-				httpOnly: true,
-				secure: false,
-				sameSite: "lax",
-			})
+			.cookie("token", createToken({ id: user.id }), config.cookie)
 			.json({
 				userId: user.id,
 				name: user.name,
@@ -76,11 +73,7 @@ export async function signin(req: Request, res: Response) {
 
 		res
 			.status(200)
-			.cookie("token", createToken({ id: user.id }), {
-				httpOnly: true,
-				secure: false,
-				sameSite: "lax",
-			})
+			.cookie("token", createToken({ id: user.id }), config.cookie)
 			.json({
 				userId: user.id,
 				name: user.name,
@@ -94,11 +87,7 @@ export async function signin(req: Request, res: Response) {
 export async function signout(_req: Request, res: Response) {
 	res
 		.status(200)
-		.clearCookie("token", {
-			httpOnly: true,
-			secure: false,
-			sameSite: "lax",
-		})
+		.clearCookie("token", config.cookie)
 		.json({ success: true, message: "Signed out successfully" });
 }
 

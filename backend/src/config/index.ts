@@ -1,4 +1,5 @@
 import "dotenv/config";
+import type { CookieOptions } from "express";
 import z from "zod";
 
 const envSchema = z.object({
@@ -19,6 +20,8 @@ const envSchema = z.object({
 });
 
 const env = envSchema.parse(process.env);
+
+const isProduction = env.NODE_ENV === "production";
 
 export const config = {
 	app: {
@@ -51,4 +54,11 @@ export const config = {
 		optionsSuccessStatus: 200,
 		credentials: true,
 	},
+
+	cookie: {
+		httpOnly: true,
+		secure: isProduction,
+		sameSite: isProduction ? "none" : "lax",
+		path: "/",
+	} satisfies CookieOptions,
 };
