@@ -1,11 +1,16 @@
 import { handleEngineRequest } from "./handler";
 import type { EngineRequest, EngineResponse } from "./types/request";
-import { connectRedis, disconnectRedis, publisher, subscriber } from "./redis/client";
+import {
+	cacheClient,
+	connectRedis,
+	disconnectRedis,
+	streamConsumer,
+	streamProducer,
+} from "./redis/client";
 import { config } from "./config";
 import { logger } from "./logger";
 
 const abortController = new AbortController();
-let lastID = "0-0";
 
 await connectRedis();
 logger.info(`Engine listening on Redis queue: ${config.incomingStream}`);
@@ -15,20 +20,21 @@ function bigintReplacer(_key: string, value: unknown) {
 }
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
-	await publisher.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
+	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
 }
 
 async function processMessages() {
 	const signal = abortController.signal;
+	let jobsLastId = (await cacheClient.get("engine:jobs:last_id")) ?? "0-0";
 
 	for (;;) {
 		if (signal.aborted) break;
 
 		try {
-			const streams = await subscriber.xRead(
+			const streams = await streamConsumer.xRead(
 				{
 					key: config.incomingStream,
-					id: lastID,
+					id: jobsLastId,
 				},
 				{
 					BLOCK: 5000,
@@ -42,24 +48,26 @@ async function processMessages() {
 				const responses: { queue: string; payload: EngineResponse }[] = [];
 
 				for (const message of stream.messages) {
-					const msg = message.message;
 					let request: EngineRequest;
-					lastID = message.id;
 
 					try {
 						request = {
-							correlationId: msg.correlationId,
-							responseQueue: msg.responseQueue,
-							type: msg.type,
-							payload: JSON.parse(msg.payload),
+							correlationId: message.message.correlationId,
+							responseQueue: message.message.responseQueue,
+							type: message.message.type,
+							payload: JSON.parse(message.message.payload),
 						};
-					} catch (err) {
+					} catch {
 						logger.error("Skipping invalid broker message");
+
+						jobsLastId = message.id;
+						await cacheClient.set("engine:jobs:last_id", message.id);
 						continue;
 					}
 
 					try {
-						const data = handleEngineRequest(request);
+						const data = await handleEngineRequest(request);
+
 						responses.push({
 							queue: request.responseQueue,
 							payload: {
@@ -78,6 +86,9 @@ async function processMessages() {
 							},
 						});
 					}
+
+					jobsLastId = message.id;
+					await cacheClient.set("engine:jobs:last_id", message.id);
 				}
 
 				for (const response of responses) {

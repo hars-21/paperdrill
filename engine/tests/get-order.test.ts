@@ -6,8 +6,8 @@ beforeEach(() => {
 	resetState();
 });
 
-test("open order", () => {
-	const order = placeOrder({
+test("open order", async () => {
+	const order = await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -30,8 +30,8 @@ test("open order", () => {
 	});
 });
 
-test("partially filled order", () => {
-	const order = placeOrder({
+test("partially filled order", async () => {
+	const order = await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -41,7 +41,7 @@ test("partially filled order", () => {
 		qty: 50000n,
 	});
 
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
@@ -63,8 +63,8 @@ test("partially filled order", () => {
 	});
 });
 
-test("filled order", () => {
-	const order = placeOrder({
+test("filled order", async () => {
+	const order = await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -74,7 +74,7 @@ test("filled order", () => {
 		qty: 50000n,
 	});
 
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
@@ -102,8 +102,8 @@ test("unknown order", () => {
 	}).toThrow("Order not Found");
 });
 
-test("user tries to read another user's order", () => {
-	const order = placeOrder({
+test("user tries to read another user's order", async () => {
+	const order = await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",

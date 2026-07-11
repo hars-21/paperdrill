@@ -1,8 +1,9 @@
-import { addOrderToBook, publishDepth, publishFill, recomputeBestPrice } from "./orderbook";
+import { addOrderToBook, recomputeBestPrice } from "./orderbook";
+import { publishDepth, publishFill } from "./redis/publish";
 import { FILLS, ORDERBOOK } from "./store";
 import type { Fill, OrderRecord } from "./types/domain";
 
-export function matchOrder(order: OrderRecord) {
+export async function matchOrder(order: OrderRecord) {
 	const { orderId, side, type, symbol, price, qty, filledQty } = order;
 
 	let remainingQty = qty - filledQty;
@@ -61,7 +62,7 @@ export function matchOrder(order: OrderRecord) {
 				priceLevel.totalQty -= availableQty;
 				priceLevel.orders.shift();
 
-				publishFill({
+				await publishFill({
 					symbol,
 					price: fill.price,
 					qty: fill.qty,
@@ -94,7 +95,7 @@ export function matchOrder(order: OrderRecord) {
 
 				remainingQty = 0n;
 
-				publishFill({
+				await publishFill({
 					symbol,
 					price: fill.price,
 					qty: fill.qty,
@@ -103,7 +104,7 @@ export function matchOrder(order: OrderRecord) {
 				});
 			}
 
-			publishDepth({
+			await publishDepth({
 				symbol,
 				price: bestPrice,
 				qty: priceLevel.totalQty,
@@ -118,6 +119,6 @@ export function matchOrder(order: OrderRecord) {
 	}
 
 	if (remainingQty > 0 && type === "LIMIT") {
-		addOrderToBook(order);
+		await addOrderToBook(order);
 	}
 }

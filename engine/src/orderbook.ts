@@ -1,13 +1,8 @@
-import { publishEvent } from "./redis/publish";
+import { getLastUpdateId, publishDepth } from "./redis/publish";
 import { ORDERBOOK } from "./store";
-import { logger } from "./logger";
-import type { Depth, OrderRecord, RestingOrder, Symbol } from "./types/domain";
-import type { EventMessage } from "./types/event";
+import type { OrderRecord, RestingOrder, Symbol } from "./types/domain";
 
-let LastUpdateID = 1;
-let LastFillID = 1;
-
-export function addOrderToBook(order: OrderRecord) {
+export async function addOrderToBook(order: OrderRecord) {
 	const { side, type, symbol, price, qty, filledQty } = order;
 
 	if (type === "MARKET" || !price) {
@@ -45,7 +40,7 @@ export function addOrderToBook(order: OrderRecord) {
 			}
 		}
 	}
-	publishDepth({
+	await publishDepth({
 		symbol,
 		price,
 		qty: priceLevel?.totalQty ?? remainingQty,
@@ -70,7 +65,7 @@ export function recomputeBestPrice(symbol: Symbol, side: "bids" | "asks") {
 	}
 }
 
-export function removeOrderFromBook(order: OrderRecord) {
+export async function removeOrderFromBook(order: OrderRecord) {
 	const { orderId, side, type, symbol, price, qty, filledQty } = order;
 
 	if (type === "MARKET" || !price) {
@@ -98,7 +93,7 @@ export function removeOrderFromBook(order: OrderRecord) {
 	);
 	priceLevel.totalQty -= qty - filledQty;
 
-	publishDepth({
+	await publishDepth({
 		symbol,
 		price,
 		qty: priceLevel.totalQty,
@@ -113,7 +108,7 @@ export function removeOrderFromBook(order: OrderRecord) {
 	}
 }
 
-export function getDepth(symbol: Symbol) {
+export async function getDepth(symbol: Symbol) {
 	const market = ORDERBOOK[symbol];
 
 	if (!market) {
@@ -134,66 +129,7 @@ export function getDepth(symbol: Symbol) {
 		symbol,
 		bids,
 		asks,
-		lastUpdateId: LastUpdateID,
+		lastUpdateId: await getLastUpdateId(),
 		timestamp: Date.now(),
 	};
-}
-
-export function publishDepth({
-	symbol,
-	price,
-	qty,
-	side,
-}: {
-	symbol: Symbol;
-	price: bigint;
-	qty: bigint;
-	side: "bids" | "asks";
-}) {
-	const depth: Depth = {
-		symbol,
-		bids: [],
-		asks: [],
-	};
-
-	depth[side].push({ price: price.toString(), qty: qty.toString() });
-
-	const message: EventMessage = {
-		event: "depth",
-		lastUpdateId: LastUpdateID++,
-		timestamp: Date.now(),
-		...depth,
-	};
-
-	publishEvent(message).catch((err) => {
-		logger.error("Failed to publish depth", err);
-	});
-}
-
-export function publishFill({
-	symbol,
-	price,
-	qty,
-	maker,
-	timestamp,
-}: {
-	symbol: Symbol;
-	price: bigint;
-	qty: bigint;
-	maker: boolean;
-	timestamp: number;
-}) {
-	const message: EventMessage = {
-		event: "trade",
-		symbol,
-		price: price.toString(),
-		qty: qty.toString(),
-		maker,
-		id: LastFillID++,
-		timestamp,
-	};
-
-	publishEvent(message).catch((err) => {
-		logger.error("Failed to publish trade", err);
-	});
 }

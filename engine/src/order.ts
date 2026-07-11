@@ -4,7 +4,7 @@ import { FILLS, ORDERS } from "./store";
 import type { CreateOrderInput, OrderRecord } from "./types/domain";
 import { matchOrder } from "./matching";
 
-export function placeOrder(orderInput: CreateOrderInput) {
+export async function placeOrder(orderInput: CreateOrderInput) {
 	const lockedAmount = lockBalance(orderInput);
 
 	const order: OrderRecord = {
@@ -18,7 +18,7 @@ export function placeOrder(orderInput: CreateOrderInput) {
 
 	ORDERS.set(order.orderId, order);
 
-	matchOrder(order);
+	await matchOrder(order);
 
 	if (order.fills.length > 0) {
 		settleFills(order.fills);
@@ -66,7 +66,7 @@ export function getOpenOrders(userId: string) {
 	return orders;
 }
 
-export function cancelOrder(userId: string, orderId: string) {
+export async function cancelOrder(userId: string, orderId: string) {
 	const order = ORDERS.get(orderId);
 
 	if (!order || order.userId !== userId) throw new Error("Order not Found");
@@ -75,7 +75,7 @@ export function cancelOrder(userId: string, orderId: string) {
 
 	if (order.status === "CANCELLED") return { message: "Order already cancelled" };
 
-	removeOrderFromBook(order);
+	await removeOrderFromBook(order);
 
 	const releasedFunds = releaseBalance(order);
 

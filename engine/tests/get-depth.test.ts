@@ -7,8 +7,8 @@ beforeEach(() => {
 	resetState();
 });
 
-test("empty orderbook", () => {
-	const depth = getDepth("BTC_USD");
+test("empty orderbook", async () => {
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
@@ -17,8 +17,8 @@ test("empty orderbook", () => {
 	});
 });
 
-test("bids sorted highest first", () => {
-	placeOrder({
+test("bids sorted highest first", async () => {
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -27,7 +27,7 @@ test("bids sorted highest first", () => {
 		price: 10000n,
 		qty: 50000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -36,7 +36,7 @@ test("bids sorted highest first", () => {
 		price: 12000n,
 		qty: 30000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -46,7 +46,7 @@ test("bids sorted highest first", () => {
 		qty: 20000n,
 	});
 
-	const depth = getDepth("BTC_USD");
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
@@ -68,8 +68,8 @@ test("bids sorted highest first", () => {
 	});
 });
 
-test("asks sorted lowest first", () => {
-	placeOrder({
+test("asks sorted lowest first", async () => {
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
@@ -78,7 +78,7 @@ test("asks sorted lowest first", () => {
 		price: 12000n,
 		qty: 30000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
@@ -87,7 +87,7 @@ test("asks sorted lowest first", () => {
 		price: 10000n,
 		qty: 50000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
@@ -97,7 +97,7 @@ test("asks sorted lowest first", () => {
 		qty: 20000n,
 	});
 
-	const depth = getDepth("BTC_USD");
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
@@ -119,8 +119,8 @@ test("asks sorted lowest first", () => {
 	});
 });
 
-test("same price orders should be grouped", () => {
-	placeOrder({
+test("same price orders should be grouped", async () => {
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -129,7 +129,7 @@ test("same price orders should be grouped", () => {
 		price: 10000n,
 		qty: 30000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
@@ -139,7 +139,7 @@ test("same price orders should be grouped", () => {
 		qty: 50000n,
 	});
 
-	const depth = getDepth("BTC_USD");
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
@@ -153,8 +153,8 @@ test("same price orders should be grouped", () => {
 	});
 });
 
-test("filled orders should not appear", () => {
-	placeOrder({
+test("filled orders should not appear", async () => {
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
@@ -163,7 +163,7 @@ test("filled orders should not appear", () => {
 		price: 10000n,
 		qty: 50000n,
 	});
-	placeOrder({
+	await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
@@ -173,7 +173,7 @@ test("filled orders should not appear", () => {
 		qty: 50000n,
 	});
 
-	const depth = getDepth("BTC_USD");
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",
@@ -182,8 +182,8 @@ test("filled orders should not appear", () => {
 	});
 });
 
-test("cancelled orders should not appear", () => {
-	const order = placeOrder({
+test("cancelled orders should not appear", async () => {
+	const order = await placeOrder({
 		orderId: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
@@ -192,9 +192,9 @@ test("cancelled orders should not appear", () => {
 		price: 10000n,
 		qty: 50000n,
 	});
-	cancelOrder("1", order.orderId);
+	await cancelOrder("1", order.orderId);
 
-	const depth = getDepth("BTC_USD");
+	const depth = await getDepth("BTC_USD");
 
 	expect(depth).toMatchObject({
 		symbol: "BTC_USD",

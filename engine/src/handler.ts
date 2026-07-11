@@ -10,16 +10,16 @@ import {
 	userPayloadSchema,
 } from "./types/order";
 
-type Handler = (payload: Record<string, unknown>) => unknown;
+type Handler = (payload: Record<string, unknown>) => unknown | Promise<unknown>;
 
 const handlers: Record<EngineCommandType, Handler> = {
-	create_order: (payload) => {
+	create_order: async (payload) => {
 		const parsed = orderPayloadSchema.safeParse(payload);
 		if (!parsed.success) throw new Error("Invalid order payload");
 		return placeOrder(parsed.data);
 	},
 
-	get_depth: (payload) => {
+	get_depth: async (payload) => {
 		const parsed = symbolPayloadSchema.safeParse(payload);
 		if (!parsed.success) throw new Error("Invalid symbol");
 		return getDepth(parsed.data.symbol);
@@ -49,14 +49,14 @@ const handlers: Record<EngineCommandType, Handler> = {
 		return getFills(parsed.data.symbol, parsed.data.limit);
 	},
 
-	cancel_order: (payload) => {
+	cancel_order: async (payload) => {
 		const parsed = orderIdPayloadSchema.safeParse(payload);
 		if (!parsed.success) throw new Error("Invalid OrderId");
 		return cancelOrder(parsed.data.userId, parsed.data.orderId);
 	},
 };
 
-export function handleEngineRequest(message: EngineRequest) {
+export async function handleEngineRequest(message: EngineRequest) {
 	const handler = handlers[message.type];
 
 	if (!handler) throw new Error("Unknown message type");
