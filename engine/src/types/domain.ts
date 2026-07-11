@@ -21,6 +21,7 @@ export interface RestingOrder {
 	filledQty: bigint;
 	status: OrderStatus;
 	fills: Fill[];
+	averagePrice: bigint | null;
 	createdAt: number;
 }
 
@@ -34,8 +35,9 @@ export interface OrderRecord {
 	qty: bigint;
 	filledQty: bigint;
 	status: OrderStatus;
-	lockedAmount: bigint;
+	lockedAmount: bigint | null;
 	fills: Fill[];
+	averagePrice: bigint | null;
 	createdAt: number;
 }
 
@@ -46,6 +48,8 @@ export interface Fill {
 	qty: bigint;
 	buyOrderId: string;
 	sellOrderId: string;
+	buyerId: string;
+	sellerId: string;
 	isBuyerMaker: boolean;
 	createdAt: number;
 }

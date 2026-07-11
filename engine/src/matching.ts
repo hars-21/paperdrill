@@ -1,5 +1,6 @@
 import { addOrderToBook, recomputeBestPrice } from "./orderbook";
 import { publishDepth, publishFill } from "./redis/publish";
+import { streamEvent } from "./redis/stream";
 import { FILLS, ORDERBOOK } from "./store";
 import type { Fill, OrderRecord } from "./types/domain";
 
@@ -37,12 +38,24 @@ export async function matchOrder(order: OrderRecord) {
 
 			if (remainingQty >= availableQty) {
 				remainingQty -= availableQty;
-				restingOrder.filledQty += availableQty;
 
+				restingOrder.filledQty += availableQty;
 				order.filledQty += availableQty;
+
 				order.status = remainingQty === 0n ? "FILLED" : "PARTIALLY_FILLED";
 				restingOrder.status =
 					restingOrder.qty === restingOrder.filledQty ? "FILLED" : "PARTIALLY_FILLED";
+
+				order.averagePrice =
+					((order.averagePrice ? order.averagePrice : 0n) * (order.filledQty - availableQty) +
+						bestPrice * availableQty) /
+					order.filledQty;
+
+				restingOrder.averagePrice =
+					((restingOrder.averagePrice ? restingOrder.averagePrice : 0n) *
+						(restingOrder.filledQty - availableQty) +
+						bestPrice * availableQty) /
+					restingOrder.filledQty;
 
 				const fill: Fill = {
 					fillId: crypto.randomUUID(),
@@ -51,6 +64,8 @@ export async function matchOrder(order: OrderRecord) {
 					qty: availableQty,
 					buyOrderId,
 					sellOrderId,
+					buyerId: side === "BUY" ? order.userId : restingOrder.userId,
+					sellerId: side === "BUY" ? restingOrder.userId : order.userId,
 					isBuyerMaker: side !== "BUY",
 					createdAt: Date.now(),
 				};
@@ -62,21 +77,35 @@ export async function matchOrder(order: OrderRecord) {
 				priceLevel.totalQty -= availableQty;
 				priceLevel.orders.shift();
 
-				await publishFill({
-					symbol,
-					price: fill.price,
-					qty: fill.qty,
-					maker: fill.isBuyerMaker,
-					timestamp: fill.createdAt,
+				streamEvent({
+					event: "order",
+					order: {
+						...restingOrder,
+						lockedAmount: null,
+					},
 				});
+
+				await publishFill(fill);
 			} else {
-				restingOrder.filledQty += remainingQty;
 				priceLevel.totalQty -= remainingQty;
 
+				restingOrder.filledQty += remainingQty;
 				order.filledQty += remainingQty;
+
 				order.status = "FILLED";
 				restingOrder.status =
 					restingOrder.qty === restingOrder.filledQty ? "FILLED" : "PARTIALLY_FILLED";
+
+				order.averagePrice =
+					((order.averagePrice ? order.averagePrice : 0n) * (order.filledQty - remainingQty) +
+						bestPrice * remainingQty) /
+					order.filledQty;
+
+				restingOrder.averagePrice =
+					((restingOrder.averagePrice ? restingOrder.averagePrice : 0n) *
+						(restingOrder.filledQty - remainingQty) +
+						bestPrice * remainingQty) /
+					restingOrder.filledQty;
 
 				const fill: Fill = {
 					fillId: crypto.randomUUID(),
@@ -85,6 +114,8 @@ export async function matchOrder(order: OrderRecord) {
 					qty: remainingQty,
 					buyOrderId,
 					sellOrderId,
+					buyerId: side === "BUY" ? order.userId : restingOrder.userId,
+					sellerId: side === "BUY" ? restingOrder.userId : order.userId,
 					isBuyerMaker: order.side !== "BUY",
 					createdAt: Date.now(),
 				};
@@ -95,13 +126,20 @@ export async function matchOrder(order: OrderRecord) {
 
 				remainingQty = 0n;
 
-				await publishFill({
-					symbol,
-					price: fill.price,
-					qty: fill.qty,
-					maker: fill.isBuyerMaker,
-					timestamp: fill.createdAt,
+				streamEvent({
+					event: "order",
+					order: {
+						...restingOrder,
+						lockedAmount: null,
+					},
 				});
+
+				streamEvent({
+					event: "order",
+					order,
+				});
+
+				await publishFill(fill);
 			}
 
 			await publishDepth({

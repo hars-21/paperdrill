@@ -9,15 +9,16 @@ import {
 } from "./redis/client";
 import { config } from "./config";
 import { logger } from "./logger";
+import { bigintReplacer } from "./redis/stream";
 
 const abortController = new AbortController();
 
-await connectRedis();
-logger.info(`Engine listening on Redis queue: ${config.incomingStream}`);
-
-function bigintReplacer(_key: string, value: unknown) {
-	return typeof value === "bigint" ? value.toString() : value;
-}
+await connectRedis()
+	.then(() => logger.info(`Engine listening on Redis queue: ${config.incomingStream}`))
+	.catch((err) => {
+		logger.error("Redis connection error", err);
+		process.exit(1);
+	});
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));

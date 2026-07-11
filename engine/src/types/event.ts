@@ -1,6 +1,6 @@
-import type { DepthLevel, Symbol } from "./domain";
+import type { DepthLevel, Fill, OrderRecord, Symbol } from "./domain";
 
-export type EventMessage =
+export type PublishEventMessage =
 	| {
 			event: "depth";
 			symbol: string;
@@ -17,4 +17,14 @@ export type EventMessage =
 			qty: string;
 			maker: boolean;
 			timestamp: number;
+	  };
+
+export type StreamEventMessage =
+	| {
+			event: "order";
+			order: OrderRecord;
+	  }
+	| {
+			event: "fill";
+			fill: Fill;
 	  };

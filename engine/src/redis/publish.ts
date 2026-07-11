@@ -1,7 +1,8 @@
 import { cacheClient, publisher, streamProducer } from "./client";
-import type { EventMessage } from "../types/event";
-import type { Depth, Symbol } from "../types/domain";
+import type { PublishEventMessage } from "../types/event";
+import type { Depth, Fill, Symbol } from "../types/domain";
 import { logger } from "../logger";
+import { streamEvent } from "./stream";
 
 let localDepthId = 0;
 let localTradeId = 0;
@@ -15,18 +16,12 @@ async function safeIncr(key: string, fallbackFn: () => number): Promise<number> 
 	}
 }
 
-export async function publishEvent(message: EventMessage) {
+export async function publishEvent(message: PublishEventMessage) {
 	if (!publisher.isOpen) {
 		return;
 	}
 
 	await publisher.publish(`${message.event}:${message.symbol}`, JSON.stringify(message));
-
-	if (message.event === "trade") {
-		await streamProducer.xAdd(`${message.event}`, "*", {
-			data: JSON.stringify(message),
-		});
-	}
 }
 
 export async function publishDepth({
@@ -50,7 +45,7 @@ export async function publishDepth({
 
 	const lastUpdateId = await safeIncr("engine:depth:last_id", () => ++localDepthId);
 
-	const message: EventMessage = {
+	const message: PublishEventMessage = {
 		event: "depth",
 		lastUpdateId,
 		timestamp: Date.now(),
@@ -62,30 +57,23 @@ export async function publishDepth({
 	});
 }
 
-export async function publishFill({
-	symbol,
-	price,
-	qty,
-	maker,
-	timestamp,
-}: {
-	symbol: Symbol;
-	price: bigint;
-	qty: bigint;
-	maker: boolean;
-	timestamp: number;
-}) {
+export async function publishFill(fill: Fill) {
 	const id = await safeIncr("engine:trade:last_id", () => ++localTradeId);
 
-	const message: EventMessage = {
+	const message: PublishEventMessage = {
 		event: "trade",
-		symbol,
-		price: price.toString(),
-		qty: qty.toString(),
-		maker,
+		symbol: fill.symbol,
+		price: fill.price.toString(),
+		qty: fill.qty.toString(),
+		maker: fill.isBuyerMaker,
 		id,
-		timestamp,
+		timestamp: fill.createdAt,
 	};
+
+	streamEvent({
+		event: "fill",
+		fill,
+	});
 
 	publishEvent(message).catch((err) => {
 		logger.error("Failed to publish trade", err);

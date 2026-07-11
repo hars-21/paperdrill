@@ -3,6 +3,7 @@ import { removeOrderFromBook } from "./orderbook";
 import { FILLS, ORDERS } from "./store";
 import type { CreateOrderInput, OrderRecord } from "./types/domain";
 import { matchOrder } from "./matching";
+import { streamEvent } from "./redis/stream";
 
 export async function placeOrder(orderInput: CreateOrderInput) {
 	const lockedAmount = lockBalance(orderInput);
@@ -13,10 +14,13 @@ export async function placeOrder(orderInput: CreateOrderInput) {
 		status: "OPEN",
 		fills: [],
 		lockedAmount,
+		averagePrice: null,
 		createdAt: Date.now(),
 	};
 
 	ORDERS.set(order.orderId, order);
+
+	streamEvent({ event: "order", order });
 
 	await matchOrder(order);
 
@@ -32,17 +36,12 @@ export async function placeOrder(orderInput: CreateOrderInput) {
 		releaseBalance(order);
 	}
 
-	const averagePrice =
-		order.fills.length > 0
-			? order.fills.reduce((total, fill) => total + fill.price * fill.qty, 0n) / order.filledQty
-			: null;
-
 	return {
 		orderId: order.orderId,
 		symbol: order.symbol,
 		status: order.status,
 		filledQty: order.filledQty,
-		averagePrice,
+		averagePrice: order.averagePrice,
 		lockedAmount,
 		fills: order.fills,
 	};
@@ -80,6 +79,11 @@ export async function cancelOrder(userId: string, orderId: string) {
 	const releasedFunds = releaseBalance(order);
 
 	order.status = "CANCELLED";
+
+	streamEvent({
+		event: "order",
+		order,
+	});
 
 	return {
 		orderId: order.orderId,

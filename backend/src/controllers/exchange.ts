@@ -204,8 +204,7 @@ export async function getCandles(req: Request, res: Response) {
 		const candles = await prisma.$queryRaw`
 	  SELECT
 	    (EXTRACT(EPOCH FROM bucket) * 1000)::float8 AS "time",
-	    symbol, open, high, low, close,
-	    volume::float8
+	    symbol, open, high, low, close, volume
 	  FROM (
 	    SELECT
 	      time_bucket(${bucket}, "time") AS bucket,
@@ -214,7 +213,7 @@ export async function getCandles(req: Request, res: Response) {
 	      MAX(high) AS high,
 	      MIN(low) AS low,
 		  LAST(close, "time") AS close,
-	      SUM(volume)::float8 AS volume
+	      SUM(volume) AS volume
 	    FROM "Candle"
 	    WHERE symbol = ${symbol}
 	    GROUP BY bucket, symbol
