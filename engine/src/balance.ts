@@ -114,7 +114,7 @@ export function releaseBalance(order: OrderRecord) {
 	if (side === "BUY") {
 		const scale = qtyScale(market.qtyPrecision);
 		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0n) / scale;
-		const remaining = order.lockedAmount - spent;
+		const remaining = order.lockedAmount! - spent;
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");
 		if (quote.locked < remaining) throw new Error("Insufficient Locked Balance");

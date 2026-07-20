@@ -36,3 +36,10 @@ export const orderBodySchema = z.discriminatedUnion("type", [
 export const candleQuerySchema = z.object({
 	interval: z.enum(["15M", "1H", "4H", "1D"]).optional(),
 });
+
+export const orderQuerySchema = z.object({
+	symbol: z.string().trim().optional(),
+	status: z.enum(["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"]).optional(),
+	limit: z.number().int().positive().optional(),
+	page: z.number().int().positive().optional(),
+});

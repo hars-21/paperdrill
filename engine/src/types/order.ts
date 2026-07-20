@@ -33,8 +33,3 @@ export const orderIdPayloadSchema = z.object({
 	userId: z.string().trim().min(1, "userId is required"),
 	orderId: z.string().trim().min(1, "orderId is required"),
 });
-
-export const tradesPayloadSchema = z.object({
-	symbol: z.string().trim().min(1, "symbol is required"),
-	limit: z.coerce.number().int().positive().default(100),
-});

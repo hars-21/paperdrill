@@ -2,23 +2,22 @@ import { Router } from "express";
 import { requireAuth } from "../utils/auth";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
-	cancelOrder,
-	createOrder,
-	getBalance,
-	getDepth,
-	getMarkets,
-	getOrder,
 	getOpenOrders,
-	getTrades,
-	getCandles,
-} from "../controllers/exchange";
+	createOrder,
+	getOrderById,
+	cancelOrder,
+	getOrders,
+} from "../controllers/order";
+import { getMarkets, getDepth, getTrades, getCandles } from "../controllers/market";
+import { getBalance } from "../controllers/exchange";
 
 export const exchangeRouter = Router();
 
 // Orders
+exchangeRouter.get("/orders", requireAuth, asyncHandler(getOrders));
 exchangeRouter.get("/orders/open", requireAuth, asyncHandler(getOpenOrders));
 exchangeRouter.post("/orders", requireAuth, asyncHandler(createOrder));
-exchangeRouter.get("/orders/:orderId", requireAuth, asyncHandler(getOrder));
+exchangeRouter.get("/orders/:orderId", requireAuth, asyncHandler(getOrderById));
 exchangeRouter.delete("/orders/:orderId", requireAuth, asyncHandler(cancelOrder));
 
 // Markets

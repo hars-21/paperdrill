@@ -47,16 +47,6 @@ export async function placeOrder(orderInput: CreateOrderInput) {
 	};
 }
 
-export function getOrder(userId: string, orderId: string) {
-	const order = ORDERS.get(orderId);
-
-	if (order === undefined || order.userId !== userId) {
-		throw new Error("Order not Found");
-	}
-
-	return order;
-}
-
 export function getOpenOrders(userId: string) {
 	const orders = [...ORDERS.values()].filter(
 		(order) => order.status === "OPEN" && order.userId === userId,
@@ -93,10 +83,4 @@ export async function cancelOrder(userId: string, orderId: string) {
 		filledQty: order.filledQty,
 		releasedFunds,
 	};
-}
-
-export function getFills(symbol: string, limit: number = 100) {
-	return FILLS.filter((f) => f.symbol === symbol)
-		.reverse()
-		.slice(0, limit);
 }
