@@ -12,6 +12,7 @@ import { config } from "./config";
 import { logger } from "./logger";
 import { bigintReplacer } from "./redis/stream";
 import { FILLS, ORDERS } from "./store";
+import { snapshot, loadSnapshot } from "./snapshot";
 
 const abortController = new AbortController();
 
@@ -21,6 +22,8 @@ await connectRedis()
 		logger.error("Redis connection error", err);
 		process.exit(1);
 	});
+
+await loadSnapshot();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
@@ -161,6 +164,8 @@ async function processAcks() {
 
 processMessages().catch((err) => logger.error("Engine process error", err));
 processAcks().catch((err) => logger.error("Engine ack process error", err));
+
+setInterval(snapshot, config.snapshotInterval).unref();
 
 async function gracefulShutdown(signal: string) {
 	logger.info(`Received ${signal}, shutting down...`);
