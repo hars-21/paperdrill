@@ -30,6 +30,7 @@ export async function placeOrder(orderInput: CreateOrderInput) {
 
 	if (order.type === "MARKET" && order.status === "PARTIALLY_FILLED") {
 		order.status = "CANCELLED";
+		streamEvent({ event: "order", order });
 	}
 
 	if (orderInput.type === "MARKET" || order.status === "FILLED") {

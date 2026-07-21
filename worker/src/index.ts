@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pool } from "./db";
-import { connectRedis, disconnectRedis, streamReader } from "./redis";
+import { cacheClient, connectRedis, disconnectRedis, sendAck, streamConsumer } from "./redis";
 import { logger } from "./logger";
 import { flushCandles } from "./candle";
 import { handleFill, handleOrder } from "./persistence";
@@ -20,8 +20,8 @@ await pool.query("SELECT 1").catch((err) => {
 
 logger.info("Worker started, listening for stream events");
 
-let lastFillId = (await streamReader.get("worker:fill:last_id")) ?? "0-0";
-let lastOrderId = (await streamReader.get("worker:order:last_id")) ?? "0-0";
+let lastFillId = (await cacheClient.get("worker:fill:last_id")) ?? "0-0";
+let lastOrderId = (await cacheClient.get("worker:order:last_id")) ?? "0-0";
 
 const flushInterval = setTimeout(
 	() => {
@@ -50,7 +50,7 @@ async function processMessages() {
 		if (signal.aborted) break;
 
 		try {
-			const streams = await streamReader.xRead(
+			const streams = await streamConsumer.xRead(
 				[
 					{ key: "stream:fill", id: lastFillId },
 					{ key: "stream:order", id: lastOrderId },
@@ -83,7 +83,8 @@ async function processMessages() {
 				try {
 					await handleOrder(event.order);
 					lastOrderId = event.id;
-					await streamReader.set("worker:order:last_id", event.id);
+					await cacheClient.set("worker:order:last_id", event.id);
+					await sendAck("order", [event.order.orderId]);
 				} catch (err) {
 					logger.error("Failed to process order event", err);
 				}
@@ -93,7 +94,8 @@ async function processMessages() {
 				try {
 					await handleFill(event.fill);
 					lastFillId = event.id;
-					await streamReader.set("worker:fill:last_id", event.id);
+					await cacheClient.set("worker:fill:last_id", event.id);
+					await sendAck("fill", [event.fill.fillId]);
 				} catch (err) {
 					logger.error("Failed to process fill event", err);
 				}

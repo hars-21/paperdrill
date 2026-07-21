@@ -3,11 +3,11 @@ import { config } from "../config";
 import { logger } from "../logger";
 
 export const streamConsumer = createClient({ url: config.redisUrl }).on("error", (err) =>
-	logger.error("Redis publisher error", { error: (err as Error).message }),
+	logger.error("Redis streamConsumer error", { error: (err as Error).message }),
 );
 
 export const streamProducer = createClient({ url: config.redisUrl }).on("error", (err) =>
-	logger.error("Redis publisher error", { error: (err as Error).message }),
+	logger.error("Redis streamProducer error", { error: (err as Error).message }),
 );
 
 export const publisher = createClient({ url: config.redisUrl }).on("error", (err) =>
@@ -15,7 +15,11 @@ export const publisher = createClient({ url: config.redisUrl }).on("error", (err
 );
 
 export const cacheClient = createClient({ url: config.redisUrl }).on("error", (err) =>
-	logger.error("Redis subscriber error", { error: (err as Error).message }),
+	logger.error("Redis cacheClient error", { error: (err as Error).message }),
+);
+
+export const ackConsumer = createClient({ url: config.redisUrl }).on("error", (err) =>
+	logger.error("Redis ackConsumer error", { error: (err as Error).message }),
 );
 
 export async function connectRedis() {
@@ -24,6 +28,7 @@ export async function connectRedis() {
 		streamProducer.connect(),
 		publisher.connect(),
 		cacheClient.connect(),
+		ackConsumer.connect(),
 	]);
 }
 
@@ -33,5 +38,6 @@ export async function disconnectRedis() {
 		streamProducer.quit(),
 		publisher.quit(),
 		cacheClient.quit(),
+		ackConsumer.quit(),
 	]);
 }
