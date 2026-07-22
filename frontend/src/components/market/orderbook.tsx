@@ -93,7 +93,7 @@ export function Orderbook({ bids, asks, loading, symbol }: OrderbookProps) {
 								</div>
 								<div className="flex h-full w-[35%] items-center justify-end z-1">
 									<span className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis">
-										{ask.total.toFixed(4)}
+										{ask.total.toFixed(2)}
 									</span>
 								</div>
 							</div>

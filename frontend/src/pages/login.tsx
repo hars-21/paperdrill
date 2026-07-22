@@ -28,7 +28,7 @@ export function LoginPage() {
 			await api.signin(email, password);
 			await refreshUser();
 			toast.success("Successfully logged in");
-			navigate("/");
+			navigate("/markets");
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Login failed");
 		} finally {

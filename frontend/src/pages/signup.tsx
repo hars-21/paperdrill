@@ -35,7 +35,7 @@ export function SignupPage() {
 			await api.signup(email, name, password);
 			await refreshUser();
 			toast.success("Account created successfully");
-			navigate("/");
+			navigate("/markets");
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Signup failed");
 		} finally {

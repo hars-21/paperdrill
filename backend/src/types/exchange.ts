@@ -40,6 +40,6 @@ export const candleQuerySchema = z.object({
 export const orderQuerySchema = z.object({
 	symbol: z.string().trim().optional(),
 	status: z.enum(["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"]).optional(),
-	limit: z.number().int().positive().optional(),
-	page: z.number().int().positive().optional(),
+	limit: z.coerce.number().int().positive().optional(),
+	page: z.coerce.number().int().positive().optional(),
 });

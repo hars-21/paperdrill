@@ -16,14 +16,26 @@ function getMarket(symbol: string) {
 export function formatOrder(order: Record<string, unknown>) {
 	const m = getMarket(order.symbol as string);
 
+	const orderId = (order.orderId ?? order.id) as string;
+	const createdAt = order.createdAt;
+
 	const formatted = {
-		...order,
+		id: orderId,
+		userId: order.userId,
+		symbol: order.symbol,
+		side: order.side,
+		type: order.type,
+		status: order.status,
 		price: fmt(order.price, m.pricePrecision),
 		qty: fmt(order.qty, m.qtyPrecision),
 		filledQty: fmt(order.filledQty, m.qtyPrecision),
 		averagePrice: fmt(order.averagePrice, m.pricePrecision),
-		lockedAmount: fmt(order.lockedAmount, order.side === "BUY" ? m.pricePrecision : m.qtyPrecision),
-		fills: order.fills ? (order.fills as Record<string, unknown>[]).map(formatTrade) : order.fills,
+		createdAt:
+			typeof createdAt === "number"
+				? new Date(createdAt).toISOString()
+				: createdAt instanceof Date
+					? createdAt.toISOString()
+					: createdAt,
 	};
 
 	return Object.fromEntries(Object.entries(formatted).filter(([, value]) => value != null));
@@ -90,7 +102,9 @@ export function formatBalance(balance: Record<string, Record<string, unknown>>) 
 export function formatCancel(result: Record<string, unknown>) {
 	const m = getMarket(result.symbol as string);
 	return {
-		...result,
+		id: (result.orderId ?? result.id) as string,
+		symbol: result.symbol,
+		side: result.side,
 		qty: fmt(result.qty, m.qtyPrecision),
 		filledQty: fmt(result.filledQty, m.qtyPrecision),
 		releasedFunds: fmt(result.releasedFunds, m.pricePrecision),

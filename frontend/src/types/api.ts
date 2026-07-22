@@ -8,7 +8,7 @@ export type UserData = {
 };
 
 export type OrderResult = {
-	orderId: string;
+	id: string;
 	status: string;
 	filledQty: string;
 	averagePrice: string | null;
@@ -16,14 +16,16 @@ export type OrderResult = {
 };
 
 export type Fill = {
-	fillId: string;
+	id: string;
 	symbol: string;
 	price: string;
 	qty: string;
+	side: "BUY" | "SELL";
 	buyOrderId: string;
 	sellOrderId: string;
-	isBuyerMaker: boolean;
-	createdAt: number;
+	buyerId: string;
+	sellerId: string;
+	createdAt: string;
 };
 
 export type DepthSnapshot = {
@@ -35,7 +37,7 @@ export type DepthSnapshot = {
 };
 
 export type CancelResult = {
-	orderId: string;
+	id: string;
 	status: string;
 	qty: string;
 	filledQty: string;

@@ -1,46 +1,18 @@
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Loader from "@/components/ui/loader";
 import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
-import type { OrderRecord } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import { Page, PageHeader, PageContent } from "@/components/ui/page";
+import { OrdersTable } from "@/components/market/orders-table";
 
 export function ProfilePage() {
-	const { user, setUser, loading, refreshUser } = useAuth();
-	const [orders, setOrders] = useState<OrderRecord[]>([]);
-	const [ordersLoading, setOrdersLoading] = useState(true);
-
-	useEffect(() => {
-		if (!user) return;
-
-		const init = async () => {
-			await refreshUser();
-			try {
-				const data = await api.getOpenOrders();
-				setOrders(data);
-			} catch (err) {
-				console.error("Failed to load open orders:", err);
-				toast.error("Failed to load open orders");
-			} finally {
-				setOrdersLoading(false);
-			}
-		};
-		init();
-	}, []);
+	const { user, setUser, loading } = useAuth();
+	const navigate = useNavigate();
 
 	if (loading) return <Loader />;
 	if (!user) return <Navigate to="/" replace />;
@@ -50,9 +22,11 @@ export function ProfilePage() {
 			await api.signout();
 		} catch (err) {
 			console.error("Signout failed:", err);
+		} finally {
+			setUser(null);
+			toast.success("Logged out successfully");
+			navigate("/");
 		}
-		setUser(null);
-		toast.success("Logged out successfully");
 	};
 
 	return (
@@ -146,68 +120,11 @@ export function ProfilePage() {
 					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
 							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-								Open Orders
+								Orders
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="px-0 py-0">
-							{ordersLoading ? (
-								<div className="px-6 py-4 space-y-3">
-									{Array.from({ length: 2 }).map((_, i) => (
-										<div key={i} className="flex items-center gap-3 animate-pulse">
-											<div className="h-3 bg-muted rounded w-20" />
-											<div className="h-3 bg-muted rounded w-12" />
-											<div className="h-3 bg-muted rounded w-16 ml-auto" />
-										</div>
-									))}
-								</div>
-							) : orders.length === 0 ? (
-								<p className="text-xs font-medium text-muted-foreground py-6 px-6">
-									No open orders in this sandbox session
-								</p>
-							) : (
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead className="px-6 py-3 text-left">Market</TableHead>
-											<TableHead className="px-6 py-3 text-left">Side</TableHead>
-											<TableHead className="px-6 py-3 text-left">Type</TableHead>
-											<TableHead className="px-6 py-3 text-right">Price</TableHead>
-											<TableHead className="px-6 py-3 text-right">Qty</TableHead>
-											<TableHead className="px-6 py-3 text-right">Filled</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{orders.map((order) => (
-											<TableRow key={order.orderId}>
-												<TableCell className="px-6 py-3">
-													{order.symbol.replace("_", "/")}
-												</TableCell>
-												<TableCell
-													className={`px-6 py-3 font-semibold ${order.side === "BUY" ? "text-success" : "text-destructive"}`}
-												>
-													{order.side}
-												</TableCell>
-												<TableCell className="px-6 py-3 text-muted-foreground">
-													{order.type}
-												</TableCell>
-												<TableCell className="px-6 py-3 text-right">
-													{order.price ?? "Market"}
-												</TableCell>
-												<TableCell className="px-6 py-3 text-right">{order.qty}</TableCell>
-												<TableCell className="px-6 py-3 text-right">
-													{Number(order.filledQty) > 0 ? (
-														<span className="text-orange-500">
-															{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
-														</span>
-													) : (
-														<span className="text-muted-foreground">0%</span>
-													)}
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							)}
+						<CardContent>
+							<OrdersTable />
 						</CardContent>
 					</Card>
 				</div>

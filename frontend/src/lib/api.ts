@@ -69,8 +69,9 @@ export const api = {
 		return request<DepthSnapshot>(`/markets/${symbol}/depth`);
 	},
 
-	getTrades(symbol: string): Promise<Fill[]> {
-		return request<Fill[]>(`/markets/${symbol}/trades`);
+	getTrades(symbol: string, limit?: number): Promise<Fill[]> {
+		const params = limit ? `?limit=${limit}` : "";
+		return request<Fill[]>(`/markets/${symbol}/trades${params}`);
 	},
 
 	getCandles(
@@ -88,6 +89,21 @@ export const api = {
 
 	getOpenOrders(): Promise<OrderRecord[]> {
 		return request<OrderRecord[]>("/orders/open");
+	},
+
+	getOrders(params?: {
+		symbol?: string;
+		status?: string;
+		limit?: number;
+		page?: number;
+	}): Promise<OrderRecord[]> {
+		const q = new URLSearchParams();
+		if (params?.symbol) q.set("symbol", params.symbol);
+		if (params?.status) q.set("status", params.status);
+		if (params?.limit) q.set("limit", String(params.limit));
+		if (params?.page) q.set("page", String(params.page));
+		const qs = q.toString();
+		return request<OrderRecord[]>(`/orders${qs ? `?${qs}` : ""}`);
 	},
 
 	createOrder(

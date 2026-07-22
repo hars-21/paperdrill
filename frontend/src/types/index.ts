@@ -30,7 +30,7 @@ export type OrderBook = {
 };
 
 export interface OrderRecord {
-	orderId: string;
+	id: string;
 	userId: string;
 	side: "BUY" | "SELL";
 	type: "LIMIT" | "MARKET";
@@ -38,16 +38,16 @@ export interface OrderRecord {
 	price: string | null;
 	qty: string;
 	filledQty: string;
-	status: string;
-	createdAt: number;
+	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
+	createdAt: string;
 }
 
 export interface Trade {
-	id: number;
+	id: string;
 	price: string;
 	qty: string;
-	maker: boolean;
-	timestamp: number;
+	side: "BUY" | "SELL";
+	timestamp: string;
 }
 
 export interface Market {

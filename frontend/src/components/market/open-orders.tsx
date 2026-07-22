@@ -19,7 +19,7 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 	const fetchOpenOrders = async () => {
 		try {
 			const data = await api.getOpenOrders();
-			setOrders(data);
+			setOrders(data.filter((o, i, self) => i === self.findIndex((s) => s.id === o.id)));
 		} catch (err) {
 			console.error("Failed to fetch open orders:", err);
 			toast.error("Failed to fetch open orders");
@@ -76,7 +76,7 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 					<TableBody>
 						{orders?.length > 0 ? (
 							orders.map((order) => (
-								<TableRow key={order.orderId}>
+								<TableRow key={order.id}>
 									<TableCell>{order.symbol.replace("_", "/")}</TableCell>
 									<TableCell className={order.side === "BUY" ? "text-success" : "text-destructive"}>
 										{order.side}
@@ -95,8 +95,8 @@ export function OpenOrders({ loading, refreshKey }: OpenOrdersProps) {
 									</TableCell>
 									<TableCell className="text-right">
 										<Button
-											onClick={() => handleCancel(order.orderId)}
-											disabled={cancelling === order.orderId}
+											onClick={() => handleCancel(order.id)}
+											disabled={cancelling === order.id}
 											variant="ghost"
 											size="icon-sm"
 											className="text-low-emphasis hover:text-destructive hover:bg-destructive/10"
