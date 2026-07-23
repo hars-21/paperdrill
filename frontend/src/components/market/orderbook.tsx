@@ -14,13 +14,15 @@ export function Orderbook({ bids, asks, loading, symbol }: OrderbookProps) {
 		return <OrderbookSkeleton />;
 	}
 
-	const sortedAsks = Object.entries(asks)
-		.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
-		.sort((a, b) => a.price - b.price);
+const sortedAsks = Object.entries(asks)
+  .map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
+  .filter(({ qty }) => qty > 0)
+  .sort((a, b) => a.price - b.price);
 
-	const sortedBids = Object.entries(bids)
-		.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
-		.sort((a, b) => b.price - a.price);
+const sortedBids = Object.entries(bids)
+  .map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
+  .filter(({ qty }) => qty > 0)
+  .sort((a, b) => b.price - a.price);
 
 	const bestAsk = sortedAsks.length > 0 ? sortedAsks[0]?.price : 0;
 	const bestBid = sortedBids.length > 0 ? sortedBids[0]?.price : 0;

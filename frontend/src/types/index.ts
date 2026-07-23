@@ -10,8 +10,8 @@ export interface Depth {
 }
 
 export interface Balance {
-	available: string;
-	locked: string;
+	available: string | null;
+	locked: string | null;
 }
 
 export interface UserBalance {

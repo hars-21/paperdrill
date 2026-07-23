@@ -103,9 +103,9 @@ export function ProfilePage() {
 										</div>
 										<div className="text-right">
 											<span className="font-mono text-high-emphasis font-semibold block">
-												{bal.available}
+												{bal.available ?? "0"}
 											</span>
-											{Number(bal.locked) > 0 && (
+											{Number(bal.locked ?? 0) > 0 && (
 												<span className="font-mono text-[10px] text-muted-foreground">
 													{bal.locked} locked
 												</span>
