@@ -7,10 +7,10 @@ function qtyScale(qtyPrecision: number): bigint {
 
 function initializeBalance(): UserBalance {
 	return {
-		USD: { available: 1000000n, locked: 0n },
-		BTC: { available: 10000n, locked: 0n },
-		SOL: { available: 10000n, locked: 0n },
-		ETH: { available: 10000n, locked: 0n },
+		USD: { available: 10000000n, locked: 0n },
+		BTC: { available: 100000n, locked: 0n },
+		SOL: { available: 100000n, locked: 0n },
+		ETH: { available: 100000n, locked: 0n },
 	};
 }
 
