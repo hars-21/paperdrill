@@ -1,0 +1,38 @@
+services:
+  btc-bot:
+    build: ./
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MARKET: BTC_USD
+      BOT_EMAIL: bot-btc@atlas.com
+    networks:
+      - exchange
+
+  sol-bot:
+    build: ./
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MARKET: SOL_USD
+      BOT_EMAIL: bot-sol@atlas.com
+    networks:
+      - exchange
+
+  eth-bot:
+    build: ./
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MARKET: ETH_USD
+      BOT_EMAIL: bot-eth@atlas.com
+    networks:
+      - exchange
+
+networks:
+  exchange:
+    name: exchange-network
+    external: true

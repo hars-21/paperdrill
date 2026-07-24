@@ -94,11 +94,9 @@ async function maintain(midPrice: number) {
 	const needAsks = config.depthPerSide - openAsks.length;
 
 	if (needBids > 0 || needAsks > 0) {
-		const all = generateOrders(midPrice);
-		// const newBids = all.filter((o) => o.side === "BUY").slice(0, needBids);
-		// const newAsks = all.filter((o) => o.side === "SELL").slice(0, needAsks);
+		const orders = generateOrders(midPrice);
 
-		for (const o of all) {
+		for (const o of orders) {
 			try {
 				await placeOrder(o.side, "LIMIT", o.price, o.qty);
 			} catch {

@@ -13,6 +13,8 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - exchange
 
   engine:
     build:
@@ -25,6 +27,8 @@ services:
       - /usr/src/app/node_modules
     depends_on:
       - redis
+    networks:
+      - exchange
 
   worker:
     build:
@@ -38,6 +42,8 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - exchange
 
   postgres:
     image: timescale/timescaledb:2.28.2-pg17
@@ -50,12 +56,21 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - exchange
 
   redis:
     image: redis:7.2
     restart: unless-stopped
     ports:
       - "6380:6379"
+    networks:
+      - exchange
 
 volumes:
   postgres_data:
+
+networks:
+  exchange:
+    name: exchange-network
+    external: true

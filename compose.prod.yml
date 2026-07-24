@@ -18,6 +18,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - exchange
 
   engine:
     build:
@@ -30,6 +32,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - exchange
 
   worker:
     build:
@@ -42,6 +46,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - exchange
 
   nginx:
     image: nginx:stable
@@ -51,3 +57,10 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - exchange
+
+networks:
+  exchange:
+    name: exchange-network
+    external: true
