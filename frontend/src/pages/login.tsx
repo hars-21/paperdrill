@@ -39,7 +39,7 @@ export function LoginPage() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-center text-lg">Log in to Atlas</CardTitle>
+				<CardTitle className="text-center text-lg">Log in to Matchloop</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<form onSubmit={handleLogin} className="space-y-4">

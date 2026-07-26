@@ -19,6 +19,37 @@ interface ChartProps {
 
 const INTERVALS = ["15M", "1H", "4H", "1D"];
 
+function resolveThemeColor(varName: string): string {
+	return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+	if (hex.startsWith("rgba") || hex.startsWith("rgb")) return hex;
+	const h = hex.replace("#", "");
+	const r = parseInt(h.substring(0, 2), 16);
+	const g = parseInt(h.substring(2, 4), 16);
+	const b = parseInt(h.substring(4, 6), 16);
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getChartColors() {
+	const success = resolveThemeColor("--success") || "#00C087";
+	const destructive = resolveThemeColor("--destructive") || "#FF3B30";
+	const mutedFg = resolveThemeColor("--muted-foreground") || "#8E8E93";
+	const border = resolveThemeColor("--border") || "#1E1E24";
+
+	return {
+		textColor: mutedFg,
+		gridColor: hexToRgba(border, 0.4),
+		crosshairColor: resolveThemeColor("--chart-crosshair") || "#3E3E48",
+		borderColor: border,
+		candleUp: success,
+		candleDown: destructive,
+		volumeUp: resolveThemeColor("--chart-volume-up") || hexToRgba(success, 0.15),
+		volumeDown: resolveThemeColor("--chart-volume-down") || hexToRgba(destructive, 0.15),
+	};
+}
+
 export function Chart({ symbol }: ChartProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [hoveredCandle, setHoveredCandle] = useState<Partial<Candle> | null>(null);
@@ -37,27 +68,28 @@ export function Chart({ symbol }: ChartProps) {
 
 		const initialWidth = containerRef.current.clientWidth || 600;
 		const initialHeight = containerRef.current.clientHeight || 350;
+		const colors = getChartColors();
 
 		const chart = createChart(containerRef.current, {
 			layout: {
 				background: { type: ColorType.Solid, color: "transparent" },
-				textColor: "#8E8E93",
+				textColor: colors.textColor,
 			},
 			grid: {
-				vertLines: { color: "rgba(30, 30, 36, 0.4)", style: 1 },
-				horzLines: { color: "rgba(30, 30, 36, 0.4)", style: 1 },
+				vertLines: { color: colors.gridColor, style: 1 },
+				horzLines: { color: colors.gridColor, style: 1 },
 			},
 			crosshair: {
 				mode: CrosshairMode.Normal,
-				vertLine: { width: 1, color: "#3E3E48", style: 3 },
-				horzLine: { width: 1, color: "#3E3E48", style: 3 },
+				vertLine: { width: 1, color: colors.crosshairColor, style: 3 },
+				horzLine: { width: 1, color: colors.crosshairColor, style: 3 },
 			},
 			rightPriceScale: {
-				borderColor: "#1E1E24",
+				borderColor: colors.borderColor,
 				autoScale: true,
 			},
 			timeScale: {
-				borderColor: "#1E1E24",
+				borderColor: colors.borderColor,
 				timeVisible: true,
 				secondsVisible: false,
 				rightOffset: 12,
@@ -71,12 +103,12 @@ export function Chart({ symbol }: ChartProps) {
 		});
 
 		const candleSeries = chart.addSeries(CandlestickSeries, {
-			upColor: "#00C087",
-			downColor: "#FF3B30",
-			borderDownColor: "#FF3B30",
-			borderUpColor: "#00C087",
-			wickDownColor: "#FF3B30",
-			wickUpColor: "#00C087",
+			upColor: colors.candleUp,
+			downColor: colors.candleDown,
+			borderDownColor: colors.candleDown,
+			borderUpColor: colors.candleUp,
+			wickDownColor: colors.candleDown,
+			wickUpColor: colors.candleUp,
 		});
 
 		const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -112,8 +144,8 @@ export function Chart({ symbol }: ChartProps) {
 							value: Number(c.volume),
 							color:
 								Number(c.close) >= Number(c.open)
-									? "rgba(0, 192, 135, 0.15)"
-									: "rgba(255, 59, 48, 0.15)",
+									? colors.volumeUp
+									: colors.volumeDown,
 						})),
 					);
 				}
@@ -129,16 +161,16 @@ export function Chart({ symbol }: ChartProps) {
 				return;
 			}
 
-			const candleData = param.seriesData.get(candleSeries) as any;
-			const volumeData = param.seriesData.get(volumeSeries) as any;
+			const candleData = param.seriesData.get(candleSeries) as { open?: string | number; high?: string | number; low?: string | number; close?: string | number } | undefined;
+			const volumeData = param.seriesData.get(volumeSeries) as { value?: string | number } | undefined;
 
 			if (candleData) {
 				setHoveredCandle({
-					open: candleData.open,
-					high: candleData.high,
-					low: candleData.low,
-					close: candleData.close,
-					volume: volumeData ? volumeData.value : 0,
+					open: String(candleData.open ?? ""),
+					high: String(candleData.high ?? ""),
+					low: String(candleData.low ?? ""),
+					close: String(candleData.close ?? ""),
+					volume: String(volumeData?.value ?? 0),
 				});
 			} else {
 				setHoveredCandle(null);
@@ -167,8 +199,8 @@ export function Chart({ symbol }: ChartProps) {
 				value: Number(candle.volume),
 				color:
 					Number(candle.close) >= Number(candle.open)
-						? "rgba(0, 192, 135, 0.15)"
-						: "rgba(255, 59, 48, 0.15)",
+						? colors.volumeUp
+						: colors.volumeDown,
 			});
 		});
 
@@ -193,7 +225,7 @@ export function Chart({ symbol }: ChartProps) {
 	const isUp = displayCandle
 		? Number(displayCandle.close ?? 0) >= Number(displayCandle.open ?? 0)
 		: true;
-	const valueColor = isUp ? "text-success" : "text-destructive";
+	const valueColor = isUp ? "text-green-text" : "text-red-text";
 
 	const formatPrice = (p?: string | number) =>
 		p !== undefined ? String(Number(p).toFixed(2)) : "—";
@@ -210,16 +242,16 @@ export function Chart({ symbol }: ChartProps) {
 			<div className="relative flex-1 w-full h-full min-h-75 z-0">
 				<div className="absolute top-3 left-3 z-10 flex flex-col gap-2.5 pointer-events-none select-none">
 					<div className="flex items-center gap-3 pointer-events-auto">
-						<div className="flex items-center bg-card/60 backdrop-blur-md border border-border/30 rounded-md p-0.5 shadow-sm">
+						<div className="flex items-center bg-card border border-border/40 rounded-lg p-0.5">
 							{INTERVALS.map((int) => (
 								<Button
 									key={int}
 									onClick={() => setInterval(int)}
 									variant="ghost"
-									className={`px-2.5 py-1 text-[10px] font-semibold rounded-sm ${
+									className={`px-2.5 py-1 text-[10px] font-medium rounded-md ${
 										interval === int
-											? "bg-muted text-high-emphasis shadow-sm"
-											: "text-muted-foreground hover:text-high-emphasis hover:bg-muted/50"
+											? "bg-muted text-high-emphasis"
+											: "text-medium-emphasis hover:text-high-emphasis hover:bg-muted/50"
 									}`}
 								>
 									{int}
@@ -227,29 +259,29 @@ export function Chart({ symbol }: ChartProps) {
 							))}
 						</div>
 
-						<div className="flex items-center gap-2 bg-card/60 backdrop-blur-md border border-border/30 rounded-md px-2.5 py-1 shadow-sm">
-							<span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(0,192,135,0.6)]" />
-							<span className="text-[10px] font-mono font-medium text-muted-foreground tracking-wide">
+						<div className="flex items-center gap-2 bg-card border border-border/40 rounded-lg px-2.5 py-1">
+							<span className="w-1.5 h-1.5 rounded-full bg-success" />
+							<span className="text-[10px] font-medium text-medium-emphasis">
 								{currentTime.toLocaleTimeString([], { hour12: false })}
 							</span>
 						</div>
 					</div>
 
 					{displayCandle && (
-						<div className="flex items-center gap-3.5 text-xs font-mono px-1">
-							<span className="text-muted-foreground">
+						<div className="flex items-center gap-3.5 text-xs px-1">
+							<span className="text-medium-emphasis">
 								O <span className={valueColor}>{formatPrice(displayCandle.open)}</span>
 							</span>
-							<span className="text-muted-foreground">
+							<span className="text-medium-emphasis">
 								H <span className={valueColor}>{formatPrice(displayCandle.high)}</span>
 							</span>
-							<span className="text-muted-foreground">
+							<span className="text-medium-emphasis">
 								L <span className={valueColor}>{formatPrice(displayCandle.low)}</span>
 							</span>
-							<span className="text-muted-foreground">
+							<span className="text-medium-emphasis">
 								C <span className={valueColor}>{formatPrice(displayCandle.close)}</span>
 							</span>
-							<span className="text-muted-foreground">
+							<span className="text-medium-emphasis">
 								V <span className="text-high-emphasis">{formatVol(displayCandle.volume)}</span>
 							</span>
 						</div>
@@ -266,8 +298,6 @@ export function Chart({ symbol }: ChartProps) {
 				)}
 
 				<div ref={containerRef} className="w-full h-full" />
-
-				<div className="absolute left-0 top-0 bottom-6 w-px bg-[#1E1E24]" />
 			</div>
 		</div>
 	);

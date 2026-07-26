@@ -1,30 +1,75 @@
+import { Link } from "react-router-dom";
+
 export function Footer() {
 	return (
-		<footer className="border-t border-border/40 py-12 bg-card/20">
-			<div className="mx-auto max-w-6xl px-6">
-				<div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-					<div>
-						<a href="/" className="text-lg font-semibold tracking-tight">
-							Atlas
-						</a>
-						<p className="mt-1 text-sm text-muted-foreground">
-							Transparent market infrastructure for developers.
+		<footer className="border-t border-border/40 bg-card/20">
+			<div className="mx-auto max-w-6xl px-6 py-12">
+				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="sm:col-span-2 lg:col-span-1">
+						<Link to="/" className="text-lg font-semibold tracking-tight">
+							Matchloop
+						</Link>
+						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
+							Transparent trading infrastructure for developers. Learn, build and test strategies on
+							a real matching engine.
 						</p>
 					</div>
-					<div className="flex gap-8 text-sm text-muted-foreground">
-						<a href="#" className="transition-colors hover:text-high-emphasis">
-							Docs
-						</a>
-						<a href="#" className="transition-colors hover:text-high-emphasis">
-							GitHub
-						</a>
-						<a href="#" className="transition-colors hover:text-high-emphasis">
-							Status
-						</a>
+
+					<div>
+						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Platform</h4>
+						<ul className="space-y-2 text-sm text-medium-emphasis">
+							<li>
+								<Link to="/markets" className="transition-colors hover:text-high-emphasis">
+									Markets
+								</Link>
+							</li>
+							<li>
+								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
+									Trading
+								</Link>
+							</li>
+							<li>
+								<Link to="/profile" className="transition-colors hover:text-high-emphasis">
+									Profile
+								</Link>
+							</li>
+						</ul>
+					</div>
+
+					<div>
+						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Developers</h4>
+						<ul className="space-y-2 text-sm text-medium-emphasis">
+							<li>
+								<Link
+									to="/docs"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="transition-colors hover:text-high-emphasis"
+								>
+									Documentation
+								</Link>
+							</li>
+							<li>
+								<Link
+									to="https://github.com/hars-21/centralised-exchange"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="transition-colors hover:text-high-emphasis"
+								>
+									GitHub
+								</Link>
+							</li>
+						</ul>
 					</div>
 				</div>
-				<div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground sm:text-left">
-					&copy; {new Date().getFullYear()} Atlas. All rights reserved.
+
+				<div className="mt-10 border-t border-border/40 pt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+					<p className="text-xs text-low-emphasis">
+						&copy; {new Date().getFullYear()} Matchloop. All rights reserved.
+					</p>
+					<p className="text-xs text-low-emphasis">
+						Simulated environment. No real funds or assets are involved.
+					</p>
 				</div>
 			</div>
 		</footer>

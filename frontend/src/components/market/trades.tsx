@@ -33,20 +33,17 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 				toast.error("Failed to load trades");
 			});
 
-		const handleTrade = (msg: any) => {
-			if (msg.event === "trade") {
-				setTrades((prev) =>
-					[
-						{
-							id: msg.id,
-							price: msg.price,
-							qty: msg.qty,
-							side: msg.side,
-							timestamp: msg.timestamp,
-						},
-						...prev,
-					].slice(0, 50),
-				);
+		const handleTrade = (msg: unknown) => {
+			const data = msg as Record<string, unknown>;
+			if (data.event === "trade") {
+				const trade: Trade = {
+					id: String(data.id ?? ""),
+					price: String(data.price ?? "0"),
+					qty: String(data.qty ?? "0"),
+					side: (data.side === "BUY" || data.side === "SELL" ? data.side : "BUY") as "BUY" | "SELL",
+					timestamp: String(data.timestamp ?? ""),
+				};
+				setTrades((prev) => [trade, ...prev].slice(0, 50));
 			}
 		};
 
@@ -69,10 +66,13 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 
 	return (
 		<div className="flex h-full flex-col select-none">
-			<div className="sticky top-0 z-10 flex border-b border-border/30 px-3 py-2 text-[10px] font-semibold tracking-wider text-muted-foreground/80 bg-card/90 backdrop-blur-xs shrink-0">
-				<span className="w-[30%]">Price (USD)</span>
-				<span className="w-[35%] text-right">Size ({symbol.split("_")[0]})</span>
-				<span className="w-[35%] pr-2 text-right">Time</span>
+			<div className="flex flex-row min-w-0 gap-1 px-3 py-2">
+				<div className="flex justify-between flex-row w-2/3 min-w-0 gap-1">
+					<p className="text-high-emphasis truncate text-xs">Price (USD)</p>
+					<p className="text-medium-emphasis truncate text-right text-xs">
+						Size ({symbol.split("_")[0]})
+					</p>
+				</div>
 			</div>
 
 			<div className="flex flex-col justify-start flex-1 min-h-178 max-h-178 overflow-hidden overflow-y-auto">
@@ -84,24 +84,24 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 					trades.map((t, i) => (
 						<div
 							key={t.id ?? i}
-							className="relative flex h-6 items-center overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors shrink-0"
+							className="flex h-6 items-center overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors shrink-0"
 						>
-							<div className="flex h-full w-[30%] items-center z-1">
+							<div className="flex h-full w-[30%] items-center">
 								<span
 									className={`text-left text-xs font-normal tabular-nums ${
-										t.side === "BUY" ? "text-success" : "text-destructive"
+										t.side === "BUY" ? "text-green-text/90" : "text-red-text/90"
 									}`}
 								>
 									{t.price}
 								</span>
 							</div>
-							<div className="flex h-full w-[35%] items-center justify-end z-1">
-								<span className="text-right text-xs font-normal tabular-nums text-high-emphasis">
+							<div className="flex h-full w-[35%] items-center justify-end">
+								<span className="text-right text-xs font-normal tabular-nums text-high-emphasis/90">
 									{t.qty}
 								</span>
 							</div>
-							<div className="flex h-full w-[35%] items-center justify-end z-1">
-								<span className="pr-2 text-right text-xs font-normal tabular-nums text-muted-foreground/60">
+							<div className="flex h-full w-[35%] items-center justify-end">
+								<span className="text-right text-xs font-normal tabular-nums text-medium-emphasis">
 									{formatTime(t.timestamp)}
 								</span>
 							</div>

@@ -89,7 +89,7 @@ export function SignupPage() {
 						/>
 						<Label
 							htmlFor="terms"
-							className="text-xs text-muted-foreground font-normal leading-relaxed"
+							className="text-xs text-muted-foreground font-normal leading-relaxed cursor-pointer"
 						>
 							I accept the{" "}
 							<Link to="/terms" className="text-primary hover:underline">

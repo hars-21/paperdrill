@@ -1,11 +1,10 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { MarketHeader } from "../components/market/market-header";
 import { Orderbook } from "../components/market/orderbook";
 import { Trades } from "../components/market/trades";
 import { TradeForm } from "../components/market/trade-form";
-import { OpenOrders } from "../components/market/open-orders";
+import { DataPanel } from "../components/market/data-panel";
 import { Chart } from "../components/market/chart";
-import { Button } from "../components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "../components/ui/skeleton";
@@ -103,38 +102,94 @@ export function TradePage() {
 
 	const isDataLoading = loading || authLoading;
 
+	const bookTradesTabs = (
+		<div className="flex items-center justify-start flex-row gap-1">
+			<button
+				onClick={() => setLeftTab("book")}
+				className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
+					leftTab === "book"
+						? "text-high-emphasis bg-muted"
+						: "text-medium-emphasis hover:text-high-emphasis"
+				}`}
+			>
+				Book
+			</button>
+			<button
+				onClick={() => setLeftTab("trades")}
+				className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
+					leftTab === "trades"
+						? "text-high-emphasis bg-muted"
+						: "text-medium-emphasis hover:text-high-emphasis"
+				}`}
+			>
+				Trades
+			</button>
+		</div>
+	);
+
 	return (
-		<Page fixed className="px-4 gap-4">
+		<Page fixed className="px-4 gap-4 mb-2">
 			<MarketHeader market={symbol} />
 
-			<div className="flex flex-row gap-4 flex-1 overflow-y-auto">
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-72 shrink-0 h-full overflow-hidden">
-					<div className="flex border-b border-border/40 shrink-0">
-						<Button
-							onClick={() => setLeftTab("book")}
-							variant="ghost"
-							className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
-								leftTab === "book"
-									? "text-high-emphasis border-b-2 border-primary"
-									: "text-muted-foreground/60 hover:text-high-emphasis"
-							}`}
-						>
-							Orderbook
-						</Button>
-						<Button
-							onClick={() => setLeftTab("trades")}
-							variant="ghost"
-							className={`flex-1 rounded-none py-2 text-[11px] font-semibold uppercase tracking-wider ${
-								leftTab === "trades"
-									? "text-high-emphasis border-b-2 border-primary"
-									: "text-muted-foreground/60 hover:text-high-emphasis"
-							}`}
-						>
-							Trades
-						</Button>
+			<div className="hidden lg:flex gap-3 min-h-0">
+				<div className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar gap-3 rounded-lg">
+					<div className="flex gap-3 flex-1 min-h-155">
+						<div className="flex flex-col bg-card border-border/40 w-1/3 max-w-75 min-w-65 overflow-hidden rounded-lg border shadow-sm">
+							<div className="p-3 shrink-0">{bookTradesTabs}</div>
+							<div className="flex-1 min-h-0">
+								{leftTab === "book" ? (
+									<Orderbook
+										bids={orderbook.bids}
+										asks={orderbook.asks}
+										loading={isDataLoading}
+										symbol={symbol}
+									/>
+								) : (
+									<Trades symbol={symbol} loading={isDataLoading} />
+								)}
+							</div>
+						</div>
+
+						<div className="flex-1 bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden flex flex-col min-h-0">
+							{isDataLoading ? (
+								<div className="flex-1 p-6 flex flex-col justify-between">
+									<div className="flex justify-between items-center">
+										<Skeleton className="h-4 w-32" />
+										<Skeleton className="h-4 w-12" />
+									</div>
+									<div className="flex-1 flex flex-col justify-end gap-2.5 py-6">
+										<Skeleton className="h-3 w-full" />
+										<Skeleton className="h-5 w-5/6" />
+										<Skeleton className="h-3.5 w-full" />
+									</div>
+									<div className="flex justify-between">
+										<Skeleton className="h-3 w-8" />
+										<Skeleton className="h-3 w-8" />
+										<Skeleton className="h-3 w-8" />
+									</div>
+								</div>
+							) : (
+								<div className="flex-1 relative">
+									<Chart symbol={symbol} />
+								</div>
+							)}
+						</div>
 					</div>
 
-					<div className="flex-1 min-h-0">
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0 min-h-75 max-h-screen">
+						<DataPanel loading={isDataLoading} refreshKey={orderbookRefreshKey} symbol={symbol} />
+					</div>
+				</div>
+
+				<div className="flex flex-row max-w-86 min-w-70 flex-[0.8] bg-card rounded-lg border border-border/40 shadow-sm overflow-y-auto no-scrollbar">
+					<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
+				</div>
+			</div>
+
+			<div className="flex flex-col gap-3 flex-1 lg:hidden">
+				<div className="flex flex-col bg-card rounded-lg border border-border/40 shadow-sm w-full shrink-0 overflow-hidden">
+					<div className="p-3 shrink-0">{bookTradesTabs}</div>
+					<div className="min-h-64">
 						{leftTab === "book" ? (
 							<Orderbook
 								bids={orderbook.bids}
@@ -148,46 +203,35 @@ export function TradePage() {
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-4 flex-1 h-full min-w-0">
-					{isDataLoading ? (
-						<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-sm p-6 flex flex-col justify-between animate-pulse">
-							<div className="flex justify-between items-center">
-								<Skeleton className="h-4 w-32" />
-								<Skeleton className="h-4 w-12" />
-							</div>
-							<div className="flex-1 flex flex-col justify-end gap-2.5 py-6">
-								<Skeleton className="h-3 w-full" />
-								<Skeleton className="h-5 w-5/6" />
-								<Skeleton className="h-3.5 w-full" />
-							</div>
-							<div className="flex justify-between">
-								<Skeleton className="h-3 w-8" />
-								<Skeleton className="h-3 w-8" />
-								<Skeleton className="h-3 w-8" />
-							</div>
+				{isDataLoading ? (
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm p-6 flex flex-col justify-between min-h-75">
+						<div className="flex justify-between items-center">
+							<Skeleton className="h-4 w-32" />
+							<Skeleton className="h-4 w-12" />
 						</div>
-					) : (
-						<div className="flex-1 bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden relative">
-							<Chart symbol={symbol} />
+						<div className="flex-1 flex flex-col justify-end gap-2.5 py-6">
+							<Skeleton className="h-3 w-full" />
+							<Skeleton className="h-5 w-5/6" />
+							<Skeleton className="h-3.5 w-full" />
 						</div>
-					)}
-
-					<div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden max-h-97 shrink-0">
-						<OpenOrders loading={isDataLoading} refreshKey={orderbookRefreshKey} />
+						<div className="flex justify-between">
+							<Skeleton className="h-3 w-8" />
+							<Skeleton className="h-3 w-8" />
+							<Skeleton className="h-3 w-8" />
+						</div>
 					</div>
+				) : (
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden min-h-75">
+						<Chart symbol={symbol} />
+					</div>
+				)}
+
+				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden">
+					<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
 				</div>
 
-				<div className="flex flex-col bg-card rounded-xl border border-border/40 shadow-sm w-80 shrink-0 h-full overflow-hidden">
-					{user ? (
-						<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
-					) : (
-						<div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-							<p className="text-sm text-muted-foreground">Sign in to start trading</p>
-							<Link to="/login">
-								<Button size="sm">Sign in</Button>
-							</Link>
-						</div>
-					)}
+				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden">
+					<DataPanel loading={isDataLoading} refreshKey={orderbookRefreshKey} symbol={symbol} />
 				</div>
 			</div>
 		</Page>

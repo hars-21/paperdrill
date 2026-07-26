@@ -1,11 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { COIN_LOGOS } from "@/utils/misc";
 import { TradeFormSkeleton } from "./skeletons";
 
 interface TradeFormProps {
@@ -25,7 +24,11 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 		return <TradeFormSkeleton />;
 	}
 
-	const handlePlaceOrder = async (e: React.SubmitEvent) => {
+	const [base, quote] = symbol.split("_") as [string, string];
+	const baseLogo = COIN_LOGOS[base];
+	const quoteLogo = COIN_LOGOS[quote];
+
+	const handlePlaceOrder = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!quantity || Number(quantity) <= 0) {
 			toast.error("Enter a valid quantity");
@@ -67,161 +70,195 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 		}
 	};
 
-	const base = symbol.split("_")[0];
+	const estTotal =
+		orderType === "LIMIT" ? (parseFloat(price) * parseFloat(quantity) || 0).toFixed(2) : "—";
 
 	return (
-		<div className="flex h-full flex-col select-none">
-			<Tabs
-				value={side}
-				onValueChange={(v) => setSide(v as "BUY" | "SELL")}
-				className="flex flex-1 flex-col"
-			>
-				<div className="border-b border-border/40 p-4 bg-muted/15">
-					<TabsList className="grid w-full grid-cols-2 p-1 bg-l2 border border-border/10">
-						<TabsTrigger
-							value="BUY"
-							className="data-[state=active]:bg-success data-[state=active]:text-white text-xs font-semibold transition-all py-1.5 dark:data-[state=active]:bg-success"
+		<div className="flex flex-col select-none">
+			<div className="p-3">
+				<div className="flex flex-col gap-3">
+					<div className="bg-muted/40 relative flex h-12 w-full overflow-hidden rounded-xl">
+						<div
+							className="absolute top-0 h-full w-1/2 rounded-xl transition-all duration-100 ease-in-out"
+							style={{
+								backgroundColor: side === "BUY" ? "#122322" : "#351a1f",
+								left: side === "BUY" ? "0" : "50%",
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => setSide("BUY")}
+							className={`relative z-10 w-full rounded-xl text-sm font-semibold transition-colors duration-100 cursor-pointer ${
+								side === "BUY" ? "text-green-text" : "text-low-emphasis hover:text-green-text"
+							}`}
 						>
 							Buy
-						</TabsTrigger>
-						<TabsTrigger
-							value="SELL"
-							className="data-[state=active]:bg-destructive data-[state=active]:text-white text-xs font-semibold transition-all py-1.5 dark:data-[state=active]:bg-destructive"
+						</button>
+						<button
+							type="button"
+							onClick={() => setSide("SELL")}
+							className={`relative z-10 w-full rounded-xl text-sm font-semibold transition-colors duration-100 cursor-pointer ${
+								side === "SELL" ? "text-red-text" : "text-low-emphasis hover:text-red-text"
+							}`}
 						>
 							Sell
-						</TabsTrigger>
-					</TabsList>
-				</div>
+						</button>
+					</div>
 
-				<TabsContent value={side} className="flex-1 p-5 flex flex-col justify-between" forceMount>
-					<form onSubmit={handlePlaceOrder} className="space-y-5 flex-1 flex flex-col">
-						<div className="space-y-4">
-							<div className="flex justify-between items-center text-xs">
-								<span className="text-muted-foreground">Available Balance</span>
-								<span className="font-mono text-high-emphasis font-semibold">
-									{side === "BUY"
-										? `${user?.balance.USD?.available ?? 0} USD`
-										: `${user?.balance[base!]?.available ?? 0} ${base}`}
-								</span>
-							</div>
+					<div className="flex items-center justify-start flex-row gap-1">
+						<button
+							type="button"
+							onClick={() => setOrderType("LIMIT")}
+							className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
+								orderType === "LIMIT"
+									? "text-high-emphasis bg-l3"
+									: "text-medium-emphasis hover:text-high-emphasis"
+							}`}
+						>
+							Limit
+						</button>
+						<button
+							type="button"
+							onClick={() => setOrderType("MARKET")}
+							className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
+								orderType === "MARKET"
+									? "text-high-emphasis bg-l3"
+									: "text-medium-emphasis hover:text-high-emphasis"
+							}`}
+						>
+							Market
+						</button>
+					</div>
 
-							<div className="grid grid-cols-2 gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/20">
-								<button
-									type="button"
-									onClick={() => setOrderType("LIMIT")}
-									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
-										orderType === "LIMIT"
-											? "bg-card text-high-emphasis shadow-sm border border-border/10"
-											: "text-muted-foreground hover:text-high-emphasis"
-									}`}
-								>
-									Limit
-								</button>
-								<button
-									type="button"
-									onClick={() => setOrderType("MARKET")}
-									className={`rounded-md py-1.5 text-xs font-semibold transition-all ${
-										orderType === "MARKET"
-											? "bg-card text-high-emphasis shadow-sm border border-border/10"
-											: "text-muted-foreground hover:text-high-emphasis"
-									}`}
-								>
-									Market
-								</button>
-							</div>
+					<form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
+						<div className="flex justify-between flex-row">
+							<span className="text-medium-emphasis text-xs">Balance</span>
+							<span className="text-high-emphasis text-xs font-medium">
+								{side === "BUY"
+									? `${user?.balance[quote]?.available ?? 0} ${quote}`
+									: `${user?.balance[base]?.available ?? 0} ${base}`}
+							</span>
+						</div>
 
-							{orderType === "LIMIT" ? (
-								<div className="space-y-1.5">
-									<Label htmlFor="price" className="text-xs font-medium text-muted-foreground">
-										Price
-									</Label>
-									<div className="relative">
-										<Input
-											id="price"
-											type="number"
-											step="0.01"
-											min={0}
-											value={price}
-											onChange={(e) => setPrice(e.target.value)}
-											placeholder="0.00"
-											mono
-											size="lg"
-											className="pr-12"
-										/>
-										<div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground/80 tracking-wider">
-											USD
+						{orderType === "LIMIT" && (
+							<div className="flex flex-col gap-1.5">
+								<div className="flex items-center justify-between flex-row">
+									<p className="text-medium-emphasis text-xs">Price</p>
+								</div>
+								<div className="relative">
+									<input
+										type="text"
+										inputMode="numeric"
+										step="0.1"
+										placeholder="0"
+										value={price}
+										onChange={(e) => setPrice(e.target.value)}
+										className="bg-l3 border-l3 placeholder-medium-emphasis focus:border-primary border-1.5 w-full rounded-lg pr-12 text-left ring-0 transition focus:ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
+									/>
+									<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
+										<div
+											className="relative flex-none overflow-hidden rounded-full"
+											style={{ width: 24, height: 24 }}
+										>
+											{quoteLogo ? (
+												<img src={quoteLogo} alt={quote} className="h-6 w-6 object-contain" />
+											) : (
+												<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
+													{quote[0]}
+												</div>
+											)}
 										</div>
 									</div>
 								</div>
-							) : (
-								<div className="space-y-1.5">
-									<Label
-										htmlFor="price-market"
-										className="text-xs font-medium text-muted-foreground"
+							</div>
+						)}
+
+						<div className="flex flex-col gap-1.5">
+							<p className="text-medium-emphasis text-xs">Quantity</p>
+							<div className="relative">
+								<input
+									type="text"
+									inputMode="numeric"
+									step="0.00001"
+									placeholder="0"
+									value={quantity}
+									onChange={(e) => setQuantity(e.target.value)}
+									className="bg-l3 border-border/60 placeholder-medium-emphasis focus:border-primary border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 transition focus:ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
+								/>
+								<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
+									<div
+										className="relative flex-none overflow-hidden rounded-full"
+										style={{ width: 24, height: 24 }}
 									>
-										Price
-									</Label>
-									<div className="relative">
-										<Input
-											id="price-market"
-											type="text"
-											disabled
-											value="Market Price"
-											size="lg"
-											className="font-sans bg-muted/40 border-dashed text-muted-foreground/80"
-										/>
+										{baseLogo ? (
+											<img src={baseLogo} alt={base} className="h-6 w-6 object-contain" />
+										) : (
+											<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
+												{base[0]}
+											</div>
+										)}
 									</div>
 								</div>
-							)}
+							</div>
+						</div>
 
-							<div className="space-y-1.5">
-								<Label htmlFor="quantity" className="text-xs font-medium text-muted-foreground">
-									Quantity
-								</Label>
+						{orderType === "LIMIT" && (
+							<div className="flex flex-col gap-1.5">
+								<p className="text-medium-emphasis text-xs">Order Value</p>
 								<div className="relative">
-									<Input
-										id="quantity"
-										type="number"
-										step="0.01"
-										min={0}
-										value={quantity}
-										onChange={(e) => setQuantity(e.target.value)}
-										placeholder="0.00"
-										mono
-										size="lg"
-										className="pr-12"
+									<input
+										type="text"
+										inputMode="numeric"
+										placeholder="0"
+										value={estTotal === "0.00" ? "" : estTotal}
+										disabled
+										className="bg-l3 border-border/60 placeholder-medium-emphasis disabled:opacity-60 border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 transition text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
 									/>
-									<div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground/80 tracking-wider">
-										{base}
+									<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
+										<div
+											className="relative flex-none overflow-hidden rounded-full"
+											style={{ width: 24, height: 24 }}
+										>
+											{quoteLogo ? (
+												<img src={quoteLogo} alt={quote} className="h-6 w-6 object-contain" />
+											) : (
+												<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
+													{quote[0]}
+												</div>
+											)}
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
+						)}
 
-						<div className="space-y-4 pt-4 border-t border-border/40">
-							<div className="flex justify-between items-center text-xs">
-								<span className="text-muted-foreground">Est. Total</span>
-								<span className="font-mono font-bold text-high-emphasis">
-									{(parseFloat(price) * parseFloat(quantity) || 0).toFixed(2)} USD
-								</span>
+						{user ? (
+							<div className="flex flex-col gap-2 pt-1">
+								<Button type="submit" variant="primary" disabled={submitting}>
+									{submitting
+										? "Placing..."
+										: side === "BUY"
+											? "Place Buy Order"
+											: "Place Sell Order"}
+								</Button>
 							</div>
-
-							<Button
-								type="submit"
-								disabled={submitting}
-								variant={side === "BUY" ? "buy" : "sell"}
-								className="h-10"
-							>
-								{submitting
-									? "Placing..."
-									: side === "BUY"
-										? "Place Buy Order"
-										: "Place Sell Order"}
-							</Button>
-						</div>
+						) : (
+							<div className="flex flex-col gap-2 pt-4">
+								<Link to="/signup">
+									<Button size="lg" className="w-full">
+										Sign up to trade
+									</Button>
+								</Link>
+								<Link to="/login">
+									<Button size="lg" variant="secondary" className="w-full">
+										Log in to trade
+									</Button>
+								</Link>
+							</div>
+						)}
 					</form>
-				</TabsContent>
-			</Tabs>
+				</div>
+			</div>
 		</div>
 	);
 }

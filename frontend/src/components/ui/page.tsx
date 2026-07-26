@@ -23,7 +23,7 @@ function PageHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement
 	return (
 		<div
 			data-slot="page-header"
-			className="border-b border-border/40 bg-card/10 shrink-0 select-none"
+			className="border-b border-border/40 shrink-0 select-none"
 		>
 			<div
 				className={cn(

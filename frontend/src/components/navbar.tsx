@@ -38,9 +38,9 @@ export function Navbar() {
 			<div>
 				<div className="relative flex h-14 w-full flex-col justify-center">
 					<div className="grid grid-cols-[1fr_auto_1fr] items-center">
-						<div className="flex items-center flex-row">
-							<Link to="/markets" className="text-lg font-semibold tracking-tight px-4">
-								Atlas
+						<div className="flex items-center flex-row px-4">
+							<Link to="/markets" className="text-lg font-semibold tracking-tight px-6">
+								Matchloop
 							</Link>
 
 							<Button
@@ -53,20 +53,29 @@ export function Navbar() {
 							</Button>
 
 							<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-4 md:flex lg:gap-7 xl:gap-8">
-								<Link to="/#features" className="transition-colors hover:text-high-emphasis">
-									Features
+								<Link
+									to="/"
+									className="text-medium-emphasis hover:text-high-emphasis transition-colors"
+								>
+									Home
 								</Link>
-								<Link to="/markets" className="transition-colors hover:text-high-emphasis">
+								<Link
+									to="/markets"
+									className="text-medium-emphasis hover:text-high-emphasis transition-colors"
+								>
 									Markets
 								</Link>
-								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
+								<Link
+									to="/trade/BTC_USD"
+									className="text-medium-emphasis hover:text-high-emphasis transition-colors"
+								>
 									Trading
 								</Link>
 							</nav>
 						</div>
 
 						<div className="col-start-3 flex justify-end">
-							<div className="animate-in fade-in col-span-2 flex flex-row justify-self-end xl:col-span-1">
+							<div className="col-span-2 flex flex-row justify-self-end xl:col-span-1">
 								<div className="flex items-center flex-row gap-3 pr-4">
 									<Button
 										variant="ghost"
@@ -85,7 +94,7 @@ export function Navbar() {
 													size="sm"
 													className="h-9 gap-2 rounded-full border border-transparent bg-l1 px-2 pr-3 transition-colors hover:bg-l2 hover:border-border"
 												>
-													<div className="flex size-6 items-center justify-center rounded-full bg-l3 text-xs font-semibold uppercase text-high-emphasis">
+													<div className="flex size-6 items-center justify-center rounded-full bg-transparent text-xs font-semibold uppercase text-high-emphasis">
 														<User />
 													</div>
 
@@ -152,7 +161,7 @@ export function Navbar() {
 
 												<DropdownMenuItem
 													onClick={handleLogout}
-													variant="destructive"
+													variant="red"
 													className="gap-3 rounded-lg"
 												>
 													<LogOut className="size-4" />
@@ -177,32 +186,32 @@ export function Navbar() {
 						</div>
 
 						{open && (
-							<div className="border-t bg-background px-6 py-4 sm:hidden">
+							<div className="border-t border-border/40 px-6 py-4 sm:hidden">
 								<nav className="flex flex-col gap-3 text-sm">
 									<Link
-										to="/#features"
-										className="text-muted-foreground hover:text-high-emphasis"
+										to="/"
+										className="text-medium-emphasis hover:text-high-emphasis"
 										onClick={() => setOpen(false)}
 									>
-										Features
+										Home
 									</Link>
 									<Link
 										to="/markets"
-										className="text-muted-foreground hover:text-high-emphasis"
+										className="text-medium-emphasis hover:text-high-emphasis"
 										onClick={() => setOpen(false)}
 									>
 										Markets
 									</Link>
 									<Link
 										to="/trade/BTC_USD"
-										className="text-muted-foreground hover:text-high-emphasis"
+										className="text-medium-emphasis hover:text-high-emphasis"
 										onClick={() => setOpen(false)}
 									>
 										Trading
 									</Link>
 
 									<div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">
-										<span className="text-xs text-muted-foreground">Theme</span>
+										<span className="text-xs text-medium-emphasis">Theme</span>
 										<Button
 											variant="ghost"
 											size="icon-sm"
@@ -216,7 +225,7 @@ export function Navbar() {
 									<div className="flex flex-col gap-2 pt-2 border-t border-border/40">
 										{user ? (
 											<>
-												<div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
+												<div className="flex items-center gap-2 px-2 py-1.5 text-xs text-medium-emphasis">
 													<div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold uppercase">
 														{user.name[0]}
 													</div>

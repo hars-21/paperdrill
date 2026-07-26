@@ -49,29 +49,29 @@ export function ProfilePage() {
 				</Button>
 			</PageHeader>
 
-			<PageContent className="max-w-3xl animate-fade-in">
+			<PageContent className="max-w-3xl">
 				<div className="space-y-5">
 					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+							<CardTitle className="text-xs font-medium text-medium-emphasis">
 								User Account
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<div className="text-sm flex items-center justify-between">
 								<span className="text-muted-foreground">Email</span>
-								<span className="font-mono font-medium text-high-emphasis">{user.email}</span>
+								<span className="font-medium text-high-emphasis">{user.email}</span>
 							</div>
 							<div className="text-sm flex items-center justify-between mt-2 pt-2 border-t border-border/20">
 								<span className="text-muted-foreground">Name</span>
-								<span className="font-mono font-medium text-high-emphasis">{user.name}</span>
+								<span className="font-medium text-high-emphasis">{user.name}</span>
 							</div>
 						</CardContent>
 					</Card>
 
 					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+							<CardTitle className="text-xs font-medium text-medium-emphasis">
 								Sandbox Asset Balances
 							</CardTitle>
 						</CardHeader>
@@ -96,17 +96,17 @@ export function ProfilePage() {
 											)}
 											<div className="flex flex-col">
 												<span className="font-semibold text-high-emphasis">{currency}</span>
-												<span className="text-[10px] text-muted-foreground font-medium">
+												<span className="text-[10px] text-low-emphasis font-medium">
 													{ASSET_NAMES[currency] || currency}
 												</span>
 											</div>
 										</div>
 										<div className="text-right">
-											<span className="font-mono text-high-emphasis font-semibold block">
+											<span className="text-high-emphasis font-semibold block">
 												{bal.available ?? "0"}
 											</span>
 											{Number(bal.locked ?? 0) > 0 && (
-												<span className="font-mono text-[10px] text-muted-foreground">
+												<span className="text-[10px] text-low-emphasis">
 													{bal.locked} locked
 												</span>
 											)}
@@ -119,7 +119,7 @@ export function ProfilePage() {
 
 					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+							<CardTitle className="text-xs font-medium text-medium-emphasis">
 								Orders
 							</CardTitle>
 						</CardHeader>

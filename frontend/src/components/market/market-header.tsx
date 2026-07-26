@@ -38,7 +38,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 	});
 
 	return (
-		<div className="flex flex-wrap items-center justify-between bg-card rounded-xl border border-border/40 px-5 py-3 shadow-sm gap-4 shrink-0 select-none">
+		<div className="flex flex-wrap items-center justify-between bg-card rounded-xl border border-border/40 px-5 py-3 gap-4 shrink-0 select-none">
 			<div className="flex items-center gap-4">
 				<DropdownMenu
 					onOpenChange={(open) => {
@@ -70,7 +70,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 							className="flex items-center gap-2 px-3 py-2.5 border-b border-border/20 sticky top-0 bg-popover z-10"
 							onKeyDown={(e) => e.stopPropagation()}
 						>
-							<Search className="size-3.5 text-muted-foreground/60 shrink-0" />
+							<Search className="size-3.5 text-low-emphasis shrink-0" />
 							<input
 								type="text"
 								placeholder="Search markets"
@@ -80,13 +80,13 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 							/>
 						</div>
 
-						<DropdownMenuLabel className="px-3 pt-2 pb-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+						<DropdownMenuLabel className="px-3 pt-2 pb-1 text-[10px] text-medium-emphasis font-medium">
 							Spot Markets
 						</DropdownMenuLabel>
 
 						<div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
 							{filteredMarkets.length === 0 ? (
-								<div className="text-center py-4 text-xs text-muted-foreground/60">
+								<div className="text-center py-4 text-xs text-low-emphasis">
 									No markets found
 								</div>
 							) : (
@@ -120,7 +120,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 													<span className="text-xs font-bold leading-tight">
 														{b}/{q}
 													</span>
-													<span className="text-[9px] text-muted-foreground/60 leading-none">
+													<span className="text-[9px] text-low-emphasis leading-none">
 														Spot
 													</span>
 												</div>

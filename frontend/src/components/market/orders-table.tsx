@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 
+
 type SortField =
 	| "symbol"
 	| "side"
@@ -62,7 +63,7 @@ function SortIcon({
 	sortField: SortField;
 	sortDir: SortDir;
 }) {
-	if (field !== sortField) return <ChevronsUpDown className="size-3 text-muted-foreground/40" />;
+	if (field !== sortField) return <ChevronsUpDown className="size-3 text-low-emphasis" />;
 	return sortDir === "asc" ? (
 		<ChevronUp className="size-3 text-high-emphasis" />
 	) : (
@@ -169,7 +170,7 @@ export function OrdersTable() {
 	};
 
 	const thClass =
-		"px-4 py-2.5 text-left text-[10px] font-semibold tracking-wider uppercase select-none";
+		"px-4 py-2.5 text-left text-[10px] font-medium text-medium-emphasis select-none";
 
 	return (
 		<div className="space-y-3">
@@ -226,7 +227,7 @@ export function OrdersTable() {
 									Type <SortIcon field="type" sortField={sortField} sortDir={sortDir} />
 								</button>
 							</TableHead>
-							<TableHead className="px-4 py-2.5 text-right text-[10px] font-semibold tracking-wider uppercase select-none">
+							<TableHead className="px-4 py-2.5 text-right text-[10px] font-medium text-medium-emphasis select-none">
 								<button
 									onClick={() => handleSort("price")}
 									className="flex items-center gap-1 cursor-pointer justify-end ml-auto"
@@ -234,7 +235,7 @@ export function OrdersTable() {
 									Price <SortIcon field="price" sortField={sortField} sortDir={sortDir} />
 								</button>
 							</TableHead>
-							<TableHead className="px-4 py-2.5 text-right text-[10px] font-semibold tracking-wider uppercase select-none">
+							<TableHead className="px-4 py-2.5 text-right text-[10px] font-medium text-medium-emphasis select-none">
 								<button
 									onClick={() => handleSort("qty")}
 									className="flex items-center gap-1 cursor-pointer justify-end ml-auto"
@@ -242,7 +243,7 @@ export function OrdersTable() {
 									Qty <SortIcon field="qty" sortField={sortField} sortDir={sortDir} />
 								</button>
 							</TableHead>
-							<TableHead className="px-4 py-2.5 text-right text-[10px] font-semibold tracking-wider uppercase select-none">
+							<TableHead className="px-4 py-2.5 text-right text-[10px] font-medium text-medium-emphasis select-none">
 								<button
 									onClick={() => handleSort("filledQty")}
 									className="flex items-center gap-1 cursor-pointer justify-end ml-auto"
@@ -258,7 +259,7 @@ export function OrdersTable() {
 									Status <SortIcon field="status" sortField={sortField} sortDir={sortDir} />
 								</button>
 							</TableHead>
-							<TableHead className="px-4 py-2.5 text-right text-[10px] font-semibold tracking-wider uppercase select-none">
+							<TableHead className="px-4 py-2.5 text-right text-[10px] font-medium text-medium-emphasis select-none">
 								<button
 									onClick={() => handleSort("createdAt")}
 									className="flex items-center gap-1 cursor-pointer justify-end ml-auto"
@@ -320,23 +321,23 @@ export function OrdersTable() {
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-right text-xs tabular-nums">
 											{fillPct > 0 ? (
-												<span className="text-orange-500 font-medium">{fillPct.toFixed(1)}%</span>
+												<span className="text-primary font-medium">{fillPct.toFixed(1)}%</span>
 											) : (
 												<span className="text-low-emphasis">0%</span>
 											)}
 										</TableCell>
 										<TableCell className="px-4 py-2.5">
-											<span
-												className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-													order.status === "OPEN"
-														? "bg-blue-500/10 text-blue-500"
-														: order.status === "FILLED"
-															? "bg-success/10 text-success"
-															: order.status === "PARTIALLY_FILLED"
-																? "bg-orange-500/10 text-orange-500"
-																: "bg-muted text-muted-foreground"
-												}`}
-											>
+										<span
+											className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+												order.status === "OPEN"
+													? "bg-primary/10 text-primary"
+													: order.status === "FILLED"
+														? "bg-green-bg/10 text-success"
+														: order.status === "PARTIALLY_FILLED"
+															? "bg-red-text/10 text-red-text"
+															: "bg-muted text-medium-emphasis"
+											}`}
+										>
 												{order.status.replace("_", " ")}
 											</span>
 										</TableCell>
