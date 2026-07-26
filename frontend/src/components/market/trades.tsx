@@ -5,9 +5,8 @@ import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 import { toast } from "sonner";
 
-function formatTime(ts: string) {
-	const d = new Date(ts);
-	return d.toLocaleTimeString("en-US", { hour12: false });
+function formatTime(ts: string | number) {
+	return new Date(ts).toLocaleTimeString("en-US", { hour12: false });
 }
 
 export function Trades({ symbol, loading }: { symbol: string; loading?: boolean }) {
@@ -36,12 +35,13 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 		const handleTrade = (msg: unknown) => {
 			const data = msg as Record<string, unknown>;
 			if (data.event === "trade") {
+				const ts = typeof data.timestamp === "number" ? data.timestamp : Number(data.timestamp) || Date.now();
 				const trade: Trade = {
 					id: String(data.id ?? ""),
 					price: String(data.price ?? "0"),
 					qty: String(data.qty ?? "0"),
 					side: (data.side === "BUY" || data.side === "SELL" ? data.side : "BUY") as "BUY" | "SELL",
-					timestamp: String(data.timestamp ?? ""),
+					timestamp: ts,
 				};
 				setTrades((prev) => [trade, ...prev].slice(0, 50));
 			}

@@ -47,7 +47,7 @@ export interface Trade {
 	price: string;
 	qty: string;
 	side: "BUY" | "SELL";
-	timestamp: string;
+	timestamp: string | number;
 }
 
 export interface Market {

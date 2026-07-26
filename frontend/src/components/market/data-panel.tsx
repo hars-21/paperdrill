@@ -1,7 +1,7 @@
 import { Inbox, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import type { OrderRecord, UserBalance } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -47,7 +47,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 	const [typeFilter, setTypeFilter] = useState<"all" | "LIMIT" | "MARKET">("all");
 	const [page, setPage] = useState(1);
 
-	const fetchAll = async () => {
+	const fetchAll = useCallback(async () => {
 		try {
 			const [open, history, bal] = await Promise.all([
 				api.getOpenOrders(),
@@ -62,7 +62,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 			console.error("Failed to fetch orders:", err);
 			toast.error("Failed to load orders");
 		}
-	};
+	}, []);
 
 	const handleCancel = async (orderId: string) => {
 		setCancelling(orderId);
@@ -79,7 +79,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 
 	useEffect(() => {
 		if (user) fetchAll();
-	}, [refreshKey, user]);
+	}, [refreshKey, user, fetchAll]);
 
 	const filteredOpen = useMemo(() => {
 		return openOrders.filter((o) => {
