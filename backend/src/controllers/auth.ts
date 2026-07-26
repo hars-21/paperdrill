@@ -26,6 +26,7 @@ export async function signup(req: Request, res: Response) {
 
 		if (existingUser) {
 			res.status(400).json({ error: "User already exists" });
+			return;
 		}
 
 		const user = await prisma.user.create({
