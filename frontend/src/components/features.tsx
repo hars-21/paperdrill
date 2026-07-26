@@ -9,7 +9,7 @@ export function Features() {
 		>
 			<div className="mx-auto max-w-6xl">
 				<div className="mb-14 text-center">
-					<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+					<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
 						Built for Developers
 					</h2>
 					<p className="mx-auto max-w-lg text-medium-emphasis text-sm leading-relaxed">

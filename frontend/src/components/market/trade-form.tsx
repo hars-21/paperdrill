@@ -234,7 +234,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 
 						{user ? (
 							<div className="flex flex-col gap-2 pt-1">
-								<Button type="submit" variant="primary" disabled={submitting}>
+								<Button type="submit" variant="inverted" disabled={submitting}>
 									{submitting
 										? "Placing..."
 										: side === "BUY"
@@ -245,7 +245,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 						) : (
 							<div className="flex flex-col gap-2 pt-4">
 								<Link to="/signup">
-									<Button size="lg" className="w-full">
+									<Button size="lg" variant="inverted" className="w-full">
 										Sign up to trade
 									</Button>
 								</Link>

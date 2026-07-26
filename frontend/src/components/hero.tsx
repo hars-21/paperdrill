@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 
 export function Hero() {
 	return (
-		<section className="flex items-center justify-center px-6 py-42 overflow-hidden bg-background">
+		<section className="flex items-center justify-center px-6 py-20 pt-40 overflow-hidden bg-background">
 			<div className="mx-auto max-w-3xl text-center relative z-10">
-				<h1 className="mb-5 text-4xl font-bold tracking-tight sm:text-5xl text-high-emphasis">
+				<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-high-emphasis">
 					Trading Infrastructure <span className="text-primary">Simulator</span>
 				</h1>
 
-				<p className="mx-auto mb-8 max-w-lg text-sm leading-relaxed text-medium-emphasis sm:text-base">
+				<p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-medium-emphasis sm:text-lg">
 					Transparent, paper-trading infrastructure for developers. Replay markets, observe matching
 					execution, simulate strategies and build with confidence.
 				</p>
