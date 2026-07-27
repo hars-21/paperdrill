@@ -98,6 +98,10 @@ export async function loadSnapshot() {
 
 		logger.info("Snapshot loaded", { metadata: parsed.metadata });
 	} catch (err) {
-		logger.error("Error loading snapshot:", err);
+		if (err && typeof err === "object" && "code" in err && (err as any).code === "ENOENT") {
+			logger.info("No snapshot file found, starting with empty state");
+		} else {
+			logger.error("Error loading snapshot", err);
+		}
 	}
 }

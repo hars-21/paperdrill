@@ -31,7 +31,13 @@ async function sendResponse(responseQueue: string, response: EngineResponse) {
 
 async function processMessages() {
 	const signal = abortController.signal;
-	let jobsLastId = (await cacheClient.get("engine:jobs:last_id")) ?? "0-0";
+	let jobsLastId: string;
+	try {
+		jobsLastId = (await cacheClient.get("engine:jobs:last_id")) ?? "0-0";
+	} catch (err) {
+		logger.error("Failed to read last job ID from cache", err);
+		jobsLastId = "0-0";
+	}
 
 	for (;;) {
 		if (signal.aborted) break;
@@ -97,9 +103,9 @@ async function processMessages() {
 					await cacheClient.set("engine:jobs:last_id", message.id);
 				}
 
-				for (const response of responses) {
-					sendResponse(response.queue, response.payload);
-				}
+				await Promise.all(responses.map((r) => sendResponse(r.queue, r.payload))).catch((err) => {
+					logger.error("Failed to send engine response", err);
+				});
 			}
 		} catch (err) {
 			if (signal.aborted) break;
@@ -110,7 +116,13 @@ async function processMessages() {
 
 async function processAcks() {
 	const signal = abortController.signal;
-	let lastAckId = (await cacheClient.get("engine:ack:last_id")) ?? "0-0";
+	let lastAckId: string;
+	try {
+		lastAckId = (await cacheClient.get("engine:ack:last_id")) ?? "0-0";
+	} catch (err) {
+		logger.error("Failed to read last ack ID from cache", err);
+		lastAckId = "0-0";
+	}
 
 	for (;;) {
 		if (signal.aborted) break;
@@ -165,7 +177,9 @@ async function processAcks() {
 processMessages().catch((err) => logger.error("Engine process error", err));
 processAcks().catch((err) => logger.error("Engine ack process error", err));
 
-setInterval(snapshot, config.snapshotInterval).unref();
+setInterval(() => {
+	snapshot().catch((err) => logger.error("Snapshot error", err));
+}, config.snapshotInterval).unref();
 
 async function gracefulShutdown(signal: string) {
 	logger.info(`Received ${signal}, shutting down...`);
