@@ -100,7 +100,11 @@ async function processMessages() {
 					}
 
 					jobsLastId = message.id;
-					await cacheClient.set("engine:jobs:last_id", message.id);
+					try {
+						await cacheClient.set("engine:jobs:last_id", message.id);
+					} catch (err) {
+						logger.error("Failed to persist job ID", err);
+					}
 				}
 
 				await Promise.all(responses.map((r) => sendResponse(r.queue, r.payload))).catch((err) => {
@@ -164,7 +168,11 @@ async function processAcks() {
 					}
 
 					lastAckId = message.id;
-					await cacheClient.set("engine:ack:last_id", message.id);
+					try {
+						await cacheClient.set("engine:ack:last_id", message.id);
+					} catch (err) {
+						logger.error("Failed to persist ack ID", err);
+					}
 				}
 			}
 		} catch (err) {
