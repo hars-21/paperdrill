@@ -3,8 +3,8 @@ dist/
 .git
 .env
 .env.*
-.env.example
-.env.local
+tests/
+coverage/
 Dockerfile
 .dockerignore
 .gitignore

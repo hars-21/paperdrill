@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000
-    env_file: ./backend/.env.production
+    env_file: ./.env.prod
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:8000/health"]
       interval: 30s
@@ -18,6 +18,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
+      - redis
     networks:
       - exchange
 
@@ -26,14 +28,16 @@ services:
       context: ./engine
       target: runner
     restart: unless-stopped
-    env_file: ./engine/.env.production
+    env_file: ./.env.prod
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
+      - redis
     volumes:
-      - engine-snapshots:/app/data/snapshots
+      - engine-snapshots:/usr/src/app/snapshots
     networks:
       - exchange
 
@@ -42,12 +46,14 @@ services:
       context: ./worker
       target: runner
     restart: unless-stopped
-    env_file: ./worker/.env.production
+    env_file: ./.env.prod
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
+      - redis
     networks:
       - exchange
 
