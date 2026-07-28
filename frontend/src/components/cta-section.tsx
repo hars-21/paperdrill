@@ -6,9 +6,10 @@ export function CtaSection() {
 	return (
 		<section className="border-t border-border/40 bg-muted/5 px-6 py-20">
 			<div className="mx-auto max-w-2xl text-center">
-				<h2 className="mb-3 text-2xl font-bold tracking-tight">Access the Playground</h2>
+				<h2 className="mb-3 text-2xl font-bold tracking-tight">Ready to trade?</h2>
 				<p className="mb-8 text-medium-emphasis text-sm">
-					Initialize your sandbox environment and begin testing.
+					Create an account and start trading on a live simulated exchange in minutes.
+				 No KYC, no real money, no risk.
 				</p>
 				<div className="flex flex-wrap items-center justify-center gap-3">
 					<Link to="/signup">

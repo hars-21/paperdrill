@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req: Request, res: Response) => {
 	res.status(200).json({
-		message: "Welcome to Centralised Exchange",
+		message: "Welcome to Paperdrill",
 		status: "running",
 		success: true,
 	});

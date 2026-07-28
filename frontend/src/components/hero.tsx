@@ -7,12 +7,14 @@ export function Hero() {
 		<section className="flex items-center justify-center px-6 py-20 pt-40 overflow-hidden bg-background">
 			<div className="mx-auto max-w-3xl text-center relative z-10">
 				<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-high-emphasis">
-					Trading Infrastructure <span className="text-primary">Simulator</span>
+					The exchange built for
+					<br />
+					<span className="text-primary">developers</span>, not spectators.
 				</h1>
 
 				<p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-medium-emphasis sm:text-lg">
-					Transparent, paper-trading infrastructure for developers. Replay markets, observe matching
-					execution, simulate strategies and build with confidence.
+					A live, always-on exchange with a real matching engine and order book. Trade on the UI or
+					connect a bot via API - no KYC, no real money, no risk.
 				</p>
 
 				<div className="flex flex-wrap items-center justify-center gap-3">

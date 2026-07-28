@@ -6,9 +6,9 @@ services:
       - .env
     environment:
       MARKET: BTC_USD
-      BOT_EMAIL: bot-btc@atlas.com
+      BOT_EMAIL: bot-btc@paperdrill.com
     networks:
-      - exchange
+      - paperdrill
 
   sol-bot:
     build: ./
@@ -17,9 +17,9 @@ services:
       - .env
     environment:
       MARKET: SOL_USD
-      BOT_EMAIL: bot-sol@atlas.com
+      BOT_EMAIL: bot-sol@paperdrill.com
     networks:
-      - exchange
+      - paperdrill
 
   eth-bot:
     build: ./
@@ -28,11 +28,11 @@ services:
       - .env
     environment:
       MARKET: ETH_USD
-      BOT_EMAIL: bot-eth@atlas.com
+      BOT_EMAIL: bot-eth@paperdrill.com
     networks:
-      - exchange
+      - paperdrill
 
 networks:
-  exchange:
-    name: exchange-network
+  paperdrill:
+    name: paperdrill-network
     external: true

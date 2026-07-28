@@ -1,5 +1,5 @@
 import { Card } from "./ui/card";
-import { Zap, Radio, Key, Wallet, Trophy } from "lucide-react";
+import { Trophy, Lock } from "lucide-react";
 
 export function Features() {
 	return (
@@ -13,8 +13,7 @@ export function Features() {
 						Built for Developers
 					</h2>
 					<p className="mx-auto max-w-lg text-medium-emphasis text-sm leading-relaxed">
-						A fully transparent trading infrastructure simulator with a real matching engine,
-						programmatic access and persistent state - everything you need to build and test.
+						Not a diagram. Not a one-time demo. A live exchange you can actually send orders to.
 					</p>
 				</div>
 
@@ -92,9 +91,9 @@ export function Features() {
 								Live Matching Engine
 							</h3>
 							<p className="text-sm leading-relaxed text-medium-emphasis">
-								A real price-time priority order matching engine runs under the hood. Orders are
-								matched instantly based on price improvement first then time of submission, just
-								like production exchanges.
+								Real price-time priority order matching, not a mock. Orders are matched instantly
+								based on price improvement first then time of submission - the same logic used in
+								production exchanges.
 							</p>
 							<ul className="space-y-2 text-xs text-medium-emphasis">
 								<li className="flex items-center gap-2">
@@ -112,12 +111,11 @@ export function Features() {
 					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
 						<div className="w-full lg:w-1/2 space-y-4">
 							<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
-								Real-Time API Feeds
+								Real-Time Order Book
 							</h3>
 							<p className="text-sm leading-relaxed text-medium-emphasis">
-								Stream live order book updates, trade executions, and account changes over
-								WebSocket. Use the REST API for order placement, account queries and market data
-								retrieval - all with sub-second latency.
+								Watch depth and trades move over a live WebSocket feed. See how the book reacts to
+								orders in real time - the same data feed a production trading system would give you.
 							</p>
 							<ul className="space-y-2 text-xs text-medium-emphasis">
 								<li className="flex items-center gap-2">
@@ -126,7 +124,7 @@ export function Features() {
 								</li>
 								<li className="flex items-center gap-2">
 									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
-									<span>REST endpoints for orders, balances and market data.</span>
+									<span>Observe how the book reacts to orders in real time.</span>
 								</li>
 							</ul>
 						</div>
@@ -134,91 +132,31 @@ export function Features() {
 						<div className="w-full lg:w-1/2 flex justify-center">
 							<Card className="w-full max-w-md border-border/40 overflow-hidden">
 								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5 text-[10px] text-medium-emphasis">
-									<span className="font-medium text-high-emphasis">POST /api/v1/order</span>
-									<span>client.ts</span>
+									<span className="font-medium text-high-emphasis">Live Depth</span>
+									<span className="text-success font-medium">WebSocket</span>
 								</div>
 								<div className="p-4 text-[10px] space-y-3 leading-relaxed">
-									<div>
-										<div className="text-low-emphasis">// Request Payload</div>
-										<pre className="text-high-emphasis bg-l2 p-2.5 rounded-md border border-border/40">
-											{`{
-  "market": "BTC_USD",
-  "side": "buy",
-  "type": "limit",
-  "price": "65427.50",
-  "quantity": "0.50"
-}`}
-										</pre>
+									<div className="space-y-1">
+										{[65435.0, 65432.5, 65430.0].map((price, i) => (
+											<div key={i} className="flex justify-between">
+												<span className="text-red-text">{price.toFixed(2)}</span>
+												<span className="text-low-emphasis">{(0.18 * (i + 1.5)).toFixed(2)}</span>
+											</div>
+										))}
 									</div>
-									<div>
-										<div className="text-low-emphasis">// Match Response</div>
-										<pre className="text-success bg-success/5 p-2.5 rounded-md border border-success/15">
-											{`{
-  "orderId": "ord_a78f29",
-  "status": "filled",
-  "filledSize": "0.50",
-  "avgPrice": "65427.50",
-  "timestamp": 1781600215042
-}`}
-										</pre>
+									<div className="border-y border-border/40 py-1.5 text-center text-medium-emphasis">
+										Spread: 2.50 USD
+									</div>
+									<div className="space-y-1">
+										{[65427.5, 65425.0, 65422.5].map((price, i) => (
+											<div key={i} className="flex justify-between">
+												<span className="text-green-text">{price.toFixed(2)}</span>
+												<span className="text-low-emphasis">{(0.24 * (i + 1.2)).toFixed(2)}</span>
+											</div>
+										))}
 									</div>
 								</div>
 							</Card>
-						</div>
-					</div>
-
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
-						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
-							<Card className="w-full max-w-md border-border/40 overflow-hidden">
-								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
-									<span className="text-[10px] font-medium text-medium-emphasis">API Keys</span>
-									<span className="text-[10px] text-success font-medium">2 Active</span>
-								</div>
-								<div className="p-4 space-y-3">
-									{[
-										{ name: "Trading Bot", key: "ml_live_a3f8...x9k2", created: "2 days ago" },
-										{ name: "Backtest Script", key: "ml_live_b7c1...m4p6", created: "5 hours ago" },
-									].map((apiKey, i) => (
-										<div
-											key={i}
-											className="flex items-center justify-between p-2.5 rounded-md border border-border/40 bg-l2 text-[10px]"
-										>
-											<div className="space-y-1">
-												<div className="font-medium text-high-emphasis">{apiKey.name}</div>
-												<div className="font-mono text-low-emphasis">{apiKey.key}</div>
-											</div>
-											<div className="text-right space-y-1">
-												<div className="text-low-emphasis">{apiKey.created}</div>
-											</div>
-										</div>
-									))}
-									<div className="text-[9px] text-low-emphasis pt-1">
-										Authenticate requests via{" "}
-										<code className="bg-l3 px-1 py-0.5 rounded text-[9px]">X-API-Key</code> header
-									</div>
-								</div>
-							</Card>
-						</div>
-
-						<div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
-							<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
-								API-Key Based Access
-							</h3>
-							<p className="text-sm leading-relaxed text-medium-emphasis">
-								Generate an API key and connect your trading scripts, bots or custom clients
-								directly - no manual UI interaction required. Full programmatic control over your
-								sandbox account.
-							</p>
-							<ul className="space-y-2 text-xs text-medium-emphasis">
-								<li className="flex items-center gap-2">
-									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
-									<span>Authenticate via header - ideal for bots and automated strategies.</span>
-								</li>
-								<li className="flex items-center gap-2">
-									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
-									<span>Multiple keys per account with instant revocation.</span>
-								</li>
-							</ul>
 						</div>
 					</div>
 
@@ -228,9 +166,9 @@ export function Features() {
 								Persistent Accounts
 							</h3>
 							<p className="text-sm leading-relaxed text-medium-emphasis">
-								Your sandbox state persists across sessions. Simulated balances update with every
-								trade and your full order history is always available for analysis and strategy
-								iteration.
+								Simulated balances, full order history, nothing resets on refresh. Your sandbox
+								state persists across sessions - trade, come back tomorrow and your portfolio is
+								exactly where you left it.
 							</p>
 							<ul className="space-y-2 text-xs text-medium-emphasis">
 								<li className="flex items-center gap-2">
@@ -301,7 +239,12 @@ export function Features() {
 
 					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
 						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
-							<Card className="w-full max-w-md border-border/40 overflow-hidden">
+							<Card className="w-full max-w-md border-border/40 overflow-hidden relative">
+								<div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3">
+									<Lock className="size-8 text-medium-emphasis" />
+									<span className="text-sm font-semibold text-high-emphasis">Coming Soon</span>
+									<span className="text-xs text-medium-emphasis">Public Leaderboard</span>
+								</div>
 								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
 									<div className="flex items-center gap-2">
 										<span className="text-[10px] font-medium text-medium-emphasis">
@@ -311,7 +254,7 @@ export function Features() {
 									</div>
 									<span className="text-[10px] text-low-emphasis">All Time</span>
 								</div>
-								<div className="p-4 text-[10px]">
+								<div className="p-4 text-[10px] opacity-40">
 									<div className="flex justify-between text-[9px] text-low-emphasis font-medium uppercase tracking-wider mb-2 px-2">
 										<span>Rank</span>
 										<span>Trader</span>
@@ -359,12 +302,17 @@ export function Features() {
 						</div>
 
 						<div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
-							<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
-								Public Leaderboard
-							</h3>
+							<div className="flex items-center gap-2">
+								<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
+									Public Leaderboard
+								</h3>
+								<span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+									Coming Soon
+								</span>
+							</div>
 							<p className="text-sm leading-relaxed text-medium-emphasis">
-								Compete with other developers on a public leaderboard tracking simulated
-								performance. Compare PnL, win rates and strategy effectiveness across the community.
+								See how your strategy stacks up against everyone else's. Compare PnL, win rates and
+								strategy effectiveness across the community.
 							</p>
 							<ul className="space-y-2 text-xs text-medium-emphasis">
 								<li className="flex items-center gap-2">
@@ -374,6 +322,137 @@ export function Features() {
 								<li className="flex items-center gap-2">
 									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
 									<span>Compare strategies and learn from top-performing traders.</span>
+								</li>
+							</ul>
+						</div>
+					</div>
+
+					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+						<div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
+							<div className="flex items-center gap-2">
+								<h3 className="text-lg font-bold tracking-tight text-high-emphasis">Bot Support</h3>
+								<span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+									Coming Soon
+								</span>
+							</div>
+							<p className="text-sm leading-relaxed text-medium-emphasis">
+								Register, get an API key and connect a trading bot to the live market. Write a
+								strategy in any language, point it at the API and compete on the leaderboard fully
+								automated, no UI required.
+							</p>
+							<ul className="space-y-2 text-xs text-medium-emphasis">
+								<li className="flex items-center gap-2">
+									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
+									<span>Connect bots via REST API and WebSocket feeds.</span>
+								</li>
+								<li className="flex items-center gap-2">
+									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
+									<span>Compete against other bots and human traders on the leaderboard.</span>
+								</li>
+							</ul>
+						</div>
+
+						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
+							<Card className="w-full max-w-md border-border/40 overflow-hidden relative">
+								<div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3">
+									<Lock className="size-8 text-medium-emphasis" />
+									<span className="text-sm font-semibold text-high-emphasis">Coming Soon</span>
+									<span className="text-xs text-medium-emphasis">API Keys & Bot Connectivity</span>
+								</div>
+								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
+									<span className="text-[10px] font-medium text-medium-emphasis">
+										Bot Connections
+									</span>
+									<span className="text-[10px] text-low-emphasis">Live Market</span>
+								</div>
+								<div className="p-4 space-y-3 opacity-40">
+									{[
+										{ name: "Market Maker Bot", status: "Connected", pnl: "+$1,240" },
+										{ name: "Momentum Strategy", status: "Connected", pnl: "+$890" },
+										{ name: "Arb Scanner", status: "Disconnected", pnl: "+$320" },
+									].map((bot, i) => (
+										<div
+											key={i}
+											className="flex items-center justify-between p-2.5 rounded-md border border-border/40 bg-l2 text-[10px]"
+										>
+											<div className="space-y-1">
+												<div className="font-medium text-high-emphasis">{bot.name}</div>
+												<div
+													className={`font-medium ${bot.status === "Connected" ? "text-success" : "text-low-emphasis"}`}
+												>
+													{bot.status}
+												</div>
+											</div>
+											<div className="text-right">
+												<div className="text-success font-medium">{bot.pnl}</div>
+											</div>
+										</div>
+									))}
+								</div>
+							</Card>
+						</div>
+					</div>
+
+					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
+							<Card className="w-full max-w-md border-border/40 overflow-hidden relative">
+								<div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3">
+									<Lock className="size-8 text-medium-emphasis" />
+									<span className="text-sm font-semibold text-high-emphasis">Coming Soon</span>
+									<span className="text-xs text-medium-emphasis">Full REST API & API Keys</span>
+								</div>
+								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
+									<span className="text-[10px] font-medium text-medium-emphasis">API Keys</span>
+									<span className="text-[10px] text-success font-medium">2 Active</span>
+								</div>
+								<div className="p-4 space-y-3 opacity-40">
+									{[
+										{ name: "Trading Bot", key: "pd_live_a3f8...x9k2", created: "2 days ago" },
+										{ name: "Backtest Script", key: "pd_live_b7c1...m4p6", created: "5 hours ago" },
+									].map((apiKey, i) => (
+										<div
+											key={i}
+											className="flex items-center justify-between p-2.5 rounded-md border border-border/40 bg-l2 text-[10px]"
+										>
+											<div className="space-y-1">
+												<div className="font-medium text-high-emphasis">{apiKey.name}</div>
+												<div className="font-mono text-low-emphasis">{apiKey.key}</div>
+											</div>
+											<div className="text-right space-y-1">
+												<div className="text-low-emphasis">{apiKey.created}</div>
+											</div>
+										</div>
+									))}
+									<div className="text-[9px] text-low-emphasis pt-1">
+										Authenticate requests via{" "}
+										<code className="bg-l3 px-1 py-0.5 rounded text-[9px]">X-API-Key</code> header
+									</div>
+								</div>
+							</Card>
+						</div>
+
+						<div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
+							<div className="flex items-center gap-2">
+								<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
+									API-First Access
+								</h3>
+								<span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+									Coming Soon
+								</span>
+							</div>
+							<p className="text-sm leading-relaxed text-medium-emphasis">
+								Full REST API and API keys built for bots, not just a UI. Generate an API key and
+								connect your trading scripts, bots or custom clients directly - no manual UI
+								interaction required.
+							</p>
+							<ul className="space-y-2 text-xs text-medium-emphasis">
+								<li className="flex items-center gap-2">
+									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
+									<span>Authenticate via header - ideal for bots and automated strategies.</span>
+								</li>
+								<li className="flex items-center gap-2">
+									<span className="h-1 w-1 rounded-full bg-red-text shrink-0" />
+									<span>Multiple keys per account with instant revocation.</span>
 								</li>
 							</ul>
 						</div>

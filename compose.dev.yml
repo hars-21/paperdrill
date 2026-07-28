@@ -14,7 +14,7 @@ services:
       - postgres
       - redis
     networks:
-      - exchange
+      - paperdrill
 
   engine:
     build:
@@ -28,7 +28,7 @@ services:
     depends_on:
       - redis
     networks:
-      - exchange
+      - paperdrill
 
   worker:
     build:
@@ -43,7 +43,7 @@ services:
       - postgres
       - redis
     networks:
-      - exchange
+      - paperdrill
 
   postgres:
     image: timescale/timescaledb:2.28.2-pg17
@@ -51,13 +51,13 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: exchange
+      POSTGRES_DB: paperdrill
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - exchange
+      - paperdrill
 
   redis:
     image: redis:7.2
@@ -65,12 +65,12 @@ services:
     ports:
       - "6380:6379"
     networks:
-      - exchange
+      - paperdrill
 
 volumes:
   postgres_data:
 
 networks:
-  exchange:
-    name: exchange-network
+  paperdrill:
+    name: paperdrill-network
     external: true

@@ -28,7 +28,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - exchange
+      - paperdrill
 
   engine:
     build:
@@ -47,7 +47,7 @@ services:
     volumes:
       - engine-snapshots:/usr/src/app/snapshots
     networks:
-      - exchange
+      - paperdrill
 
   worker:
     build:
@@ -64,7 +64,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - exchange
+      - paperdrill
 
   nginx:
     image: nginx:stable
@@ -78,7 +78,7 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
-      - exchange
+      - paperdrill
 
   redis:
     image: redis:7.2
@@ -98,13 +98,13 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - exchange
+      - paperdrill
 
 volumes:
   engine-snapshots:
   redis-data:
 
 networks:
-  exchange:
-    name: exchange-network
+  paperdrill:
+    name: paperdrill-network
     external: true

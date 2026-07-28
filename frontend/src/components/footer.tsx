@@ -7,12 +7,12 @@ export function Footer() {
 				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
 					<div className="sm:col-span-2 lg:col-span-1">
 						<Link to="/" className="text-lg font-semibold tracking-tight">
-							Matchloop
-						</Link>
-						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
-							Transparent trading infrastructure for developers. Learn, build and test strategies on
-							a real matching engine.
-						</p>
+						PaperDrill
+					</Link>
+					<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
+						The exchange built for developers, not spectators. Real matching engine,
+						real order book, zero risk.
+					</p>
 					</div>
 
 					<div>
@@ -51,7 +51,7 @@ export function Footer() {
 							</li>
 							<li>
 								<Link
-									to="https://github.com/hars-21/centralised-exchange"
+									to="https://github.com/hars-21/paperdrill"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="transition-colors hover:text-high-emphasis"
@@ -65,7 +65,7 @@ export function Footer() {
 
 				<div className="mt-10 border-t border-border/40 pt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
 					<p className="text-xs text-low-emphasis">
-						&copy; {new Date().getFullYear()} Matchloop. All rights reserved.
+						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
 						Simulated environment. No real funds or assets are involved.

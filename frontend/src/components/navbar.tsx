@@ -40,7 +40,7 @@ export function Navbar() {
 					<div className="grid grid-cols-[1fr_auto_1fr] items-center">
 						<div className="flex items-center flex-row px-4">
 							<Link to="/markets" className="text-lg font-semibold tracking-tight px-6">
-								Matchloop
+								PaperDrill
 							</Link>
 
 							<Button

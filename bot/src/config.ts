@@ -1,6 +1,6 @@
 export const config = {
 	baseUrl: process.env.BASE_URL ?? "http://localhost:8000",
-	email: process.env.BOT_EMAIL ?? "bot@atlas.com",
+	email: process.env.BOT_EMAIL ?? "bot@paperdrill.com",
 	password: process.env.BOT_PASSWORD ?? "bot123",
 
 	market: (process.env.MARKET ?? "SOL_USD") as "BTC_USD" | "ETH_USD" | "SOL_USD",
