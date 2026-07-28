@@ -8,6 +8,9 @@ export function Footer() {
 					<div className="sm:col-span-2 lg:col-span-1">
 						<Link to="/" className="text-lg font-semibold tracking-tight">
 						PaperDrill
+						<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
+							Beta
+						</span>
 					</Link>
 					<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
 						The exchange built for developers, not spectators. Real matching engine,
@@ -59,6 +62,16 @@ export function Footer() {
 									GitHub
 								</Link>
 							</li>
+							<li>
+								<Link
+									to="https://github.com/hars-21/paperdrill/releases"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="transition-colors hover:text-high-emphasis"
+								>
+									Changelog
+								</Link>
+							</li>
 						</ul>
 					</div>
 				</div>
@@ -68,7 +81,7 @@ export function Footer() {
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						Simulated environment. No real funds or assets are involved.
+						v0.1-beta — Simulated environment. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>

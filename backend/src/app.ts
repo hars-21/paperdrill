@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req: Request, res: Response) => {
 	res.status(200).json({
-		message: "Welcome to Paperdrill",
+		message: "Welcome to PaperDrill",
 		status: "running",
 		success: true,
 	});

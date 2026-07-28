@@ -1,6 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } from "lucide-react";
+import {
+	Menu,
+	X,
+	Sun,
+	Moon,
+	User,
+	LogOut,
+	TrendingUp,
+	Activity,
+	ChevronDown,
+	Rocket,
+} from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../lib/theme-provider";
 import { useAuth } from "@/context/AuthContext";
@@ -16,7 +27,8 @@ import {
 } from "./ui/dropdown-menu";
 
 export function Navbar() {
-	const [open, setOpen] = useState(false);
+	const [mobileOpen, setMobileOpen] = useState(false);
+	const [bannerVisible, setBannerVisible] = useState(true);
 	const { theme, toggleTheme } = useTheme();
 	const { user, setUser } = useAuth();
 	const navigate = useNavigate();
@@ -35,21 +47,46 @@ export function Navbar() {
 
 	return (
 		<header className="sticky top-0 z-50 w-full bg-l0">
+			{bannerVisible && (
+				<div className="relative flex h-9 w-full items-center justify-center gap-2 bg-l3 px-4 text-xs text-high-emphasis">
+					<span className="hidden sm:inline">
+						<Rocket className="size-3.5 text-red-text" />
+					</span>
+					<span>
+						<strong>PaperDrill Beta v0.1</strong> is live - real matching engine, real order book.{" "}
+						<Link to="/signup" className="font-medium text-primary hover:underline">
+							Get started
+						</Link>
+					</span>
+					<Button
+						variant="icon"
+						size="icon-sm"
+						onClick={() => setBannerVisible(false)}
+						className="absolute right-2"
+						aria-label="Dismiss"
+					>
+						<X className="size-3.5" />
+					</Button>
+				</div>
+			)}
 			<div>
 				<div className="relative flex h-14 w-full flex-col justify-center">
 					<div className="grid grid-cols-[1fr_auto_1fr] items-center">
 						<div className="flex items-center flex-row px-4">
 							<Link to="/markets" className="text-lg font-semibold tracking-tight px-6">
 								PaperDrill
+								<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
+									Beta
+								</span>
 							</Link>
 
 							<Button
 								variant="ghost"
 								size="icon-sm"
 								className="md:hidden"
-								onClick={() => setOpen(!open)}
+								onClick={() => setMobileOpen(!mobileOpen)}
 							>
-								{open ? <X className="size-5" /> : <Menu className="size-5" />}
+								{mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
 							</Button>
 
 							<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-4 md:flex lg:gap-7 xl:gap-8">
@@ -185,27 +222,27 @@ export function Navbar() {
 							</div>
 						</div>
 
-						{open && (
+						{mobileOpen && (
 							<div className="border-t border-border/40 px-6 py-4 sm:hidden">
 								<nav className="flex flex-col gap-3 text-sm">
 									<Link
 										to="/"
 										className="text-medium-emphasis hover:text-high-emphasis"
-										onClick={() => setOpen(false)}
+										onClick={() => setMobileOpen(false)}
 									>
 										Home
 									</Link>
 									<Link
 										to="/markets"
 										className="text-medium-emphasis hover:text-high-emphasis"
-										onClick={() => setOpen(false)}
+										onClick={() => setMobileOpen(false)}
 									>
 										Markets
 									</Link>
 									<Link
 										to="/trade/BTC_USD"
 										className="text-medium-emphasis hover:text-high-emphasis"
-										onClick={() => setOpen(false)}
+										onClick={() => setMobileOpen(false)}
 									>
 										Trading
 									</Link>
@@ -231,7 +268,7 @@ export function Navbar() {
 													</div>
 													<span>{user.name}</span>
 												</div>
-												<Link to="/profile" className="w-full" onClick={() => setOpen(false)}>
+												<Link to="/profile" className="w-full" onClick={() => setMobileOpen(false)}>
 													<Button variant="ghost" size="sm" className="w-full justify-start gap-2">
 														<User className="size-4" /> Profile & Balances
 													</Button>
@@ -239,7 +276,7 @@ export function Navbar() {
 												<Button
 													onClick={() => {
 														handleLogout();
-														setOpen(false);
+														setMobileOpen(false);
 													}}
 													variant="ghost"
 													size="sm"
@@ -250,12 +287,12 @@ export function Navbar() {
 											</>
 										) : (
 											<div className="flex gap-3">
-												<Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
+												<Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}>
 													<Button variant="ghost" size="sm" className="w-full">
 														Log in
 													</Button>
 												</Link>
-												<Link to="/signup" className="flex-1" onClick={() => setOpen(false)}>
+												<Link to="/signup" className="flex-1" onClick={() => setMobileOpen(false)}>
 													<Button size="sm" className="w-full">
 														Sign up
 													</Button>
