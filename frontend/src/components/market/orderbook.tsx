@@ -9,11 +9,14 @@ interface OrderbookProps {
 	asks: Record<string, string>;
 	loading?: boolean;
 	symbol: string;
+	compact?: boolean;
 }
 
-const DISPLAY_ROWS = 18;
+const DESKTOP_ROWS = 18;
+const MOBILE_ROWS = 10;
 
-export function Orderbook({ bids, asks, loading, symbol }: OrderbookProps) {
+export function Orderbook({ bids, asks, loading, symbol, compact = false }: OrderbookProps) {
+	const DISPLAY_ROWS = compact ? MOBILE_ROWS : DESKTOP_ROWS;
 	if (loading) {
 		return <OrderbookSkeleton />;
 	}

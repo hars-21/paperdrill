@@ -86,9 +86,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 
 						<div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
 							{filteredMarkets.length === 0 ? (
-								<div className="text-center py-4 text-xs text-low-emphasis">
-									No markets found
-								</div>
+								<div className="text-center py-4 text-xs text-low-emphasis">No markets found</div>
 							) : (
 								filteredMarkets.map((m) => {
 									const [b, q] = m.symbol.split("_") as [string, string];
@@ -120,9 +118,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 													<span className="text-xs font-bold leading-tight">
 														{b}/{q}
 													</span>
-													<span className="text-[9px] text-low-emphasis leading-none">
-														Spot
-													</span>
+													<span className="text-[9px] text-low-emphasis leading-none">Spot</span>
 												</div>
 											</div>
 										</DropdownMenuItem>

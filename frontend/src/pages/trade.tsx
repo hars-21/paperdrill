@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
-	const { user, loading: authLoading } = useAuth();
+	const { loading: authLoading } = useAuth();
 	const [loading, setLoading] = useState(true);
 	const [orderbookRefreshKey, setOrderbookRefreshKey] = useState(0);
 
@@ -186,25 +186,26 @@ export function TradePage() {
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-3 flex-1 lg:hidden">
+			<div className="flex flex-col gap-3 flex-1 lg:hidden overflow-y-auto pb-2">
 				<div className="flex flex-col bg-card rounded-lg border border-border/40 shadow-sm w-full shrink-0 overflow-hidden">
 					<div className="p-3 shrink-0">{bookTradesTabs}</div>
-					<div className="min-h-64">
+					<div className="min-h-48">
 						{leftTab === "book" ? (
 							<Orderbook
+								compact
 								bids={orderbook.bids}
 								asks={orderbook.asks}
 								loading={isDataLoading}
 								symbol={symbol}
 							/>
 						) : (
-							<Trades symbol={symbol} loading={isDataLoading} />
+							<Trades compact symbol={symbol} loading={isDataLoading} />
 						)}
 					</div>
 				</div>
 
 				{isDataLoading ? (
-					<div className="bg-card rounded-lg border border-border/40 shadow-sm p-6 flex flex-col justify-between min-h-75">
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm p-6 flex flex-col justify-between shrink-0">
 						<div className="flex justify-between items-center">
 							<Skeleton className="h-4 w-32" />
 							<Skeleton className="h-4 w-12" />
@@ -221,16 +222,16 @@ export function TradePage() {
 						</div>
 					</div>
 				) : (
-					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden min-h-75">
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0 min-h-64">
 						<Chart symbol={symbol} />
 					</div>
 				)}
 
-				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden">
+				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0">
 					<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
 				</div>
 
-				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden">
+				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0">
 					<DataPanel loading={isDataLoading} refreshKey={orderbookRefreshKey} symbol={symbol} />
 				</div>
 			</div>

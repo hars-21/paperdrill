@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export function Hero() {
 	return (
-		<section className="flex items-center justify-center px-6 py-20 pt-40 overflow-hidden bg-background">
+		<section className="flex items-center justify-center px-6 py-16 pt-28 lg:py-20 lg:pt-40 overflow-hidden bg-background">
 			<div className="mx-auto max-w-3xl text-center relative z-10">
 				<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-high-emphasis">
 					The exchange built for
@@ -65,7 +65,7 @@ export function Hero() {
 							</div>
 						</div>
 
-						<div className="md:col-span-2 p-4 flex flex-col justify-between h-56">
+						<div className="md:col-span-2 p-4 flex flex-col justify-between h-40 md:h-56">
 							<div className="flex justify-between items-center">
 								<div className="text-[10px] font-medium text-medium-emphasis">
 									BTC/USD Price Chart

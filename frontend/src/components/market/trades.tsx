@@ -9,14 +9,23 @@ function formatTime(ts: string | number) {
 	return new Date(ts).toLocaleTimeString("en-US", { hour12: false });
 }
 
-export function Trades({ symbol, loading }: { symbol: string; loading?: boolean }) {
+export function Trades({
+	symbol,
+	loading,
+	compact,
+}: {
+	symbol: string;
+	loading?: boolean;
+	compact?: boolean;
+}) {
 	const [trades, setTrades] = useState<Trade[]>([]);
+	const limit = compact ? 25 : 50;
 
 	useEffect(() => {
 		setTrades([]);
 
 		api
-			.getTrades(symbol)
+			.getTrades(symbol, limit)
 			.then((data) => {
 				const mapped = (Array.isArray(data) ? data : []).map((f) => ({
 					id: f.id,
@@ -35,7 +44,10 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 		const handleTrade = (msg: unknown) => {
 			const data = msg as Record<string, unknown>;
 			if (data.event === "trade") {
-				const ts = typeof data.timestamp === "number" ? data.timestamp : Number(data.timestamp) || Date.now();
+				const ts =
+					typeof data.timestamp === "number"
+						? data.timestamp
+						: Number(data.timestamp) || Date.now();
 				const trade: Trade = {
 					id: String(data.id ?? ""),
 					price: String(data.price ?? "0"),
@@ -75,7 +87,7 @@ export function Trades({ symbol, loading }: { symbol: string; loading?: boolean 
 				</div>
 			</div>
 
-			<div className="flex flex-col justify-start flex-1 min-h-178 max-h-178 overflow-hidden overflow-y-auto">
+			<div className="flex flex-col justify-start flex-1 overflow-hidden overflow-y-auto">
 				{trades.length === 0 ? (
 					<div className="flex items-center justify-center h-full text-xs text-low-emphasis">
 						No trades yet

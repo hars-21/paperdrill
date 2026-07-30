@@ -55,7 +55,7 @@ export function MarketsPage() {
 				</div>
 			</PageHeader>
 			<PageContent>
-				<div className="flex flex-col flex-1 gap-3 rounded-xl border border-border/40 bg-card p-4 mx-6 my-6">
+				<div className="flex flex-col flex-1 gap-3 rounded-xl border border-border/40 bg-card p-4 lg:mx-6 my-6">
 					<div className="flex flex-row">
 						<div className="flex items-center flex-row relative min-w-0 flex-1">
 							<div className="items-center justify-start flex-row flex gap-1 overflow-x-auto whitespace-nowrap">
@@ -88,7 +88,9 @@ export function MarketsPage() {
 									<TableRow className="hover:bg-transparent">
 										<TableHead className="text-left">Name</TableHead>
 										<TableHead className="w-[17%] text-right">Price</TableHead>
-										<TableHead className="w-[17%] text-right">24h Volume</TableHead>
+										<TableHead className="w-[17%] text-right hidden lg:table-cell">
+											24h Volume
+										</TableHead>
 										<TableHead className="w-[17%] text-right">24h Change</TableHead>
 									</TableRow>
 								</TableHeader>
@@ -139,10 +141,10 @@ export function MarketsPage() {
 																			<img
 																				src={COIN_LOGOS[quote]}
 																				alt={quote}
-																				className="h-8 w-8 object-contain"
+																				className="size-8 object-contain"
 																			/>
 																		) : (
-																			<div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+																			<div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
 																				{quote[0]}
 																			</div>
 																		)}
@@ -160,7 +162,7 @@ export function MarketsPage() {
 														<TableCell className="text-right whitespace-nowrap">
 															{stats.price}
 														</TableCell>
-														<TableCell className="text-right whitespace-nowrap">
+														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">
 															{stats.volume}
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
@@ -183,7 +185,7 @@ export function MarketsPage() {
 							</Table>
 						</div>
 					)}
-			</div>
+				</div>
 			</PageContent>
 		</Page>
 	);

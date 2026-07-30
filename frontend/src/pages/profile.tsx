@@ -106,9 +106,7 @@ export function ProfilePage() {
 												{bal.available ?? "0"}
 											</span>
 											{Number(bal.locked ?? 0) > 0 && (
-												<span className="text-[10px] text-low-emphasis">
-													{bal.locked} locked
-												</span>
+												<span className="text-[10px] text-low-emphasis">{bal.locked} locked</span>
 											)}
 										</div>
 									</div>
@@ -119,9 +117,7 @@ export function ProfilePage() {
 
 					<Card className="border-border/40 shadow-sm">
 						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-medium text-medium-emphasis">
-								Orders
-							</CardTitle>
+							<CardTitle className="text-xs font-medium text-medium-emphasis">Orders</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<OrdersTable />

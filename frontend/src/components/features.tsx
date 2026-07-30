@@ -5,10 +5,10 @@ export function Features() {
 	return (
 		<section
 			id="features"
-			className="border-t border-border/40 px-6 py-20 bg-background select-none"
+			className="border-t border-border/40 px-6 py-16 lg:py-20 bg-background select-none"
 		>
 			<div className="mx-auto max-w-6xl">
-				<div className="mb-14 text-center">
+				<div className="mb-10 lg:mb-14 text-center">
 					<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
 						Built for Developers
 					</h2>
@@ -17,8 +17,8 @@ export function Features() {
 					</p>
 				</div>
 
-				<div className="space-y-16">
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+				<div className="space-y-12 lg:space-y-16">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
 							<Card className="w-full max-w-md border-border/40 overflow-hidden">
 								<div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
@@ -108,7 +108,7 @@ export function Features() {
 						</div>
 					</div>
 
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 space-y-4">
 							<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
 								Real-Time Order Book
@@ -160,7 +160,7 @@ export function Features() {
 						</div>
 					</div>
 
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 space-y-4">
 							<h3 className="text-lg font-bold tracking-tight text-high-emphasis">
 								Persistent Accounts
@@ -237,7 +237,7 @@ export function Features() {
 						</div>
 					</div>
 
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
 							<Card className="w-full max-w-md border-border/40 overflow-hidden relative">
 								<div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3">
@@ -255,7 +255,7 @@ export function Features() {
 									<span className="text-[10px] text-low-emphasis">All Time</span>
 								</div>
 								<div className="p-4 text-[10px] opacity-40">
-									<div className="flex justify-between text-[9px] text-low-emphasis font-medium uppercase tracking-wider mb-2 px-2">
+									<div className="flex justify-between text-[9px] text-low-emphasis font-medium mb-2 px-2">
 										<span>Rank</span>
 										<span>Trader</span>
 										<span>PnL</span>
@@ -327,7 +327,7 @@ export function Features() {
 						</div>
 					</div>
 
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
 							<div className="flex items-center gap-2">
 								<h3 className="text-lg font-bold tracking-tight text-high-emphasis">Bot Support</h3>
@@ -393,7 +393,7 @@ export function Features() {
 						</div>
 					</div>
 
-					<div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+					<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 						<div className="w-full lg:w-1/2 flex justify-center order-2 lg:order-1">
 							<Card className="w-full max-w-md border-border/40 overflow-hidden relative">
 								<div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3">

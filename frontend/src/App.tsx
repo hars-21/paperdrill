@@ -11,7 +11,7 @@ import { AuthLayout } from "./components/auth-layout";
 
 function NotFound() {
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center px-4">
+		<div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4 text-center px-4">
 			<h1 className="text-6xl font-bold text-medium-emphasis">404</h1>
 			<p className="text-lg text-medium-emphasis">This page doesn't exist on PaperDrill yet.</p>
 			<Link to="/" className="text-primary hover:underline text-sm">

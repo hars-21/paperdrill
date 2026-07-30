@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { OpenOrderSkeleton } from "./skeletons";
 import { useAuth } from "@/context/AuthContext";
+import { COIN_LOGOS } from "@/utils/misc";
 
 type Tab = "open" | "history" | "balance";
 
@@ -30,7 +31,7 @@ function StatusBadge({ status }: { status: OrderRecord["status"] }) {
 		<span
 			className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${styles[status]}`}
 		>
-			{status.replace("_", " ")}
+			{status.replace("_", " ").toLowerCase()}
 		</span>
 	);
 }
@@ -235,7 +236,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 				</div>
 			)}
 
-			<div className="flex-1 min-h-0 px-3">
+			<div className="flex-1 min-h-0 px-3 overflow-x-auto">
 				{tab === "open" && (
 					<>
 						{paginatedData.length > 0 ? (
@@ -244,7 +245,6 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 									<TableRow className="hover:bg-transparent">
 										<TableHead>Market</TableHead>
 										<TableHead>Side</TableHead>
-										<TableHead>Type</TableHead>
 										<TableHead className="text-right">Price</TableHead>
 										<TableHead className="text-right">Size</TableHead>
 										<TableHead className="text-right">Filled</TableHead>
@@ -254,18 +254,21 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 								<TableBody>
 									{paginatedData.map((order) => (
 										<TableRow key={order.id}>
-											<TableCell>{order.symbol.replace("_", "/")}</TableCell>
-											<TableCell
-												className={order.side === "BUY" ? "text-green-text" : "text-red-text"}
-											>
-												{order.side}
+											<TableCell className="text-xs lg:text-sm">
+												{order.symbol.replace("_", "/")}
 											</TableCell>
-											<TableCell>{order.type}</TableCell>
-											<TableCell className="text-right tabular-nums">
+											<TableCell
+												className={`text-xs lg:text-sm ${order.side === "BUY" ? "text-green-text" : "text-red-text"}`}
+											>
+												{order.side.toLowerCase()}
+											</TableCell>
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 												{order.price ?? "—"}
 											</TableCell>
-											<TableCell className="text-right tabular-nums">{order.qty}</TableCell>
-											<TableCell className="text-right tabular-nums">
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
+												{order.qty}
+											</TableCell>
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 												{Number(order.filledQty) > 0 ? (
 													<span className="text-primary font-medium">
 														{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
@@ -282,7 +285,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 													size="icon-sm"
 													className="text-low-emphasis hover:text-destructive hover:bg-red-bg/10"
 												>
-													<X className="size-3.5" />
+													<X className="size-3" />
 												</Button>
 											</TableCell>
 										</TableRow>
@@ -307,9 +310,7 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 							<Table>
 								<TableHeader>
 									<TableRow className="hover:bg-transparent">
-										<TableHead>Market</TableHead>
 										<TableHead>Side</TableHead>
-										<TableHead>Type</TableHead>
 										<TableHead className="text-right">Price</TableHead>
 										<TableHead className="text-right">Size</TableHead>
 										<TableHead className="text-right">Filled</TableHead>
@@ -319,18 +320,18 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 								<TableBody>
 									{paginatedData.map((order) => (
 										<TableRow key={order.id}>
-											<TableCell>{order.symbol.replace("_", "/")}</TableCell>
 											<TableCell
-												className={order.side === "BUY" ? "text-green-text" : "text-red-text"}
+												className={`text-xs lg:text-sm ${order.side === "BUY" ? "text-green-text" : "text-red-text"}`}
 											>
-												{order.side}
+												{order.side.toLowerCase()}
 											</TableCell>
-											<TableCell>{order.type}</TableCell>
-											<TableCell className="text-right tabular-nums">
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 												{order.price ?? "—"}
 											</TableCell>
-											<TableCell className="text-right tabular-nums">{order.qty}</TableCell>
-											<TableCell className="text-right tabular-nums">
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
+												{order.qty}
+											</TableCell>
+											<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 												{Number(order.filledQty) > 0 ? (
 													<span className="text-primary font-medium">
 														{((Number(order.filledQty) / Number(order.qty)) * 100).toFixed(1)}%
@@ -375,21 +376,37 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 										const avail = Number(bal.available);
 										const locked = Number(bal.locked);
 										const total = avail + locked;
+										const logo = COIN_LOGOS[asset];
 										return (
 											<TableRow key={asset}>
-												<TableCell className="font-medium">{asset}</TableCell>
-												<TableCell className="text-right tabular-nums">
+												<TableCell className="font-medium">
+													<div className="flex items-center gap-2">
+														{logo ? (
+															<img
+																src={logo}
+																alt={asset}
+																className="size-5 object-contain shrink-0"
+															/>
+														) : (
+															<div className="size-4 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[7px] shrink-0">
+																{asset[0]}
+															</div>
+														)}
+														<span className="text-xs lg:text-sm">{asset}</span>
+													</div>
+												</TableCell>
+												<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 													{bal.available ?? "0"}
 												</TableCell>
-												<TableCell className="text-right tabular-nums">
+												<TableCell className="text-right text-xs lg:text-sm tabular-nums">
 													{Number(bal.locked) > 0 ? (
 														<span className="text-medium-emphasis">{bal.locked}</span>
 													) : (
 														<span className="text-low-emphasis">0</span>
 													)}
 												</TableCell>
-												<TableCell className="text-right tabular-nums font-medium">
-													{total}
+												<TableCell className="text-right text-xs lg:text-sm tabular-nums font-medium">
+													{total.toFixed(2)}
 												</TableCell>
 											</TableRow>
 										);

@@ -4,9 +4,9 @@ import { ArrowRight } from "lucide-react";
 
 export function CtaSection() {
 	return (
-		<section className="border-t border-border/40 bg-muted/5 px-6 py-20">
+		<section className="border-t border-border/40 bg-muted/5 px-6 py-16 lg:py-20">
 			<div className="mx-auto max-w-2xl text-center">
-				<h2 className="mb-3 text-2xl font-bold tracking-tight">Ready to trade?</h2>
+				<h2 className="mb-3 text-xl font-bold tracking-tight lg:text-2xl">Ready to trade?</h2>
 				<p className="mb-8 text-medium-emphasis text-sm">
 					Create an account and start trading on a live simulated exchange in minutes.
 				 No KYC, no real money, no risk.

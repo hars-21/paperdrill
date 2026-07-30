@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 
-
 type SortField =
 	| "symbol"
 	| "side"
@@ -41,7 +40,7 @@ type SortField =
 type SortDir = "asc" | "desc";
 
 const STATUS_OPTIONS = ["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"] as const;
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 function formatDate(iso: string) {
 	const d = new Date(iso);
@@ -169,8 +168,7 @@ export function OrdersTable() {
 		fetchOrders(p);
 	};
 
-	const thClass =
-		"px-4 py-2.5 text-left text-[10px] font-medium text-medium-emphasis select-none";
+	const thClass = "px-4 py-2.5 text-left text-[10px] font-medium text-medium-emphasis select-none";
 
 	return (
 		<div className="space-y-3">
@@ -307,11 +305,11 @@ export function OrdersTable() {
 											<span
 												className={`text-xs font-semibold ${order.side === "BUY" ? "text-success" : "text-destructive"}`}
 											>
-												{order.side}
+												{order.side.toLowerCase()}
 											</span>
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
-											{order.type}
+											{order.type.toLowerCase()}
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-right text-xs tabular-nums text-high-emphasis">
 											{order.price ?? "—"}
@@ -327,18 +325,18 @@ export function OrdersTable() {
 											)}
 										</TableCell>
 										<TableCell className="px-4 py-2.5">
-										<span
-											className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-												order.status === "OPEN"
-													? "bg-primary/10 text-primary"
-													: order.status === "FILLED"
-														? "bg-green-bg/10 text-success"
-														: order.status === "PARTIALLY_FILLED"
-															? "bg-red-text/10 text-red-text"
-															: "bg-muted text-medium-emphasis"
-											}`}
-										>
-												{order.status.replace("_", " ")}
+											<span
+												className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+													order.status === "OPEN"
+														? "bg-primary/10 text-primary"
+														: order.status === "FILLED"
+															? "bg-green-bg/10 text-success"
+															: order.status === "PARTIALLY_FILLED"
+																? "bg-red-text/10 text-red-text"
+																: "bg-muted text-medium-emphasis"
+												}`}
+											>
+												{order.status.replace("_", " ").toLowerCase()}
 											</span>
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-right text-[11px] tabular-nums text-muted-foreground/70">

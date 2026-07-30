@@ -7,15 +7,15 @@ export function Footer() {
 				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
 					<div className="sm:col-span-2 lg:col-span-1">
 						<Link to="/" className="text-lg font-semibold tracking-tight">
-						PaperDrill
-						<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
-							Beta
-						</span>
-					</Link>
-					<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
-						The exchange built for developers, not spectators. Real matching engine,
-						real order book, zero risk.
-					</p>
+							PaperDrill
+							<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
+								Beta
+							</span>
+						</Link>
+						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
+							The exchange built for developers, not spectators. Real matching engine, real order
+							book, zero risk.
+						</p>
 					</div>
 
 					<div>
@@ -81,7 +81,7 @@ export function Footer() {
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						v0.1-beta — Simulated environment. No real funds or assets are involved.
+						v0.1-beta - Simulated environment. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>
