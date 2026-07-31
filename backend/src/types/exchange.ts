@@ -43,3 +43,7 @@ export const orderQuerySchema = z.object({
 	limit: z.coerce.number().int().positive().optional(),
 	page: z.coerce.number().int().positive().optional(),
 });
+
+export const tradesQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(500).optional(),
+});

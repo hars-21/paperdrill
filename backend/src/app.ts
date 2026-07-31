@@ -4,13 +4,18 @@ import { prisma } from "./db";
 import { appRouter } from "./routes";
 import { config } from "./config";
 import { logger } from "./utils/logger";
+import { apiLimiter } from "./utils/rateLimit";
 import cors from "cors";
 
 export const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(cors(config.cors));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(apiLimiter);
 
 app.get("/", (_req: Request, res: Response) => {
 	res.status(200).json({

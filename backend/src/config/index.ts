@@ -16,6 +16,16 @@ const envSchema = z.object({
 	BACKEND_QUEUE_ID: z.string().default(crypto.randomUUID()),
 	ENGINE_TIMEOUT_MS: z.coerce.number().default(30000),
 
+	RATE_LIMIT_ENABLED: z
+		.string()
+		.transform((v) => v !== "false")
+		.default(true),
+	RATE_LIMIT_API_MAX: z.coerce.number().default(600),
+	RATE_LIMIT_API_WINDOW_MS: z.coerce.number().default(60000),
+	RATE_LIMIT_AUTH_MAX: z.coerce.number().default(10),
+	RATE_LIMIT_AUTH_WINDOW_MS: z.coerce.number().default(15 * 60000),
+	RATE_LIMIT_ORDER_MAX: z.coerce.number().default(30),
+	RATE_LIMIT_ORDER_WINDOW_MS: z.coerce.number().default(60000),
 	LOG_LEVEL: z.enum(["debug", "info"]),
 });
 
@@ -42,6 +52,22 @@ export const config = {
 
 	redis: {
 		url: env.REDIS_URL,
+	},
+
+	rateLimit: {
+		enabled: env.RATE_LIMIT_ENABLED,
+		api: {
+			max: env.RATE_LIMIT_API_MAX,
+			windowMs: env.RATE_LIMIT_API_WINDOW_MS,
+		},
+		auth: {
+			max: env.RATE_LIMIT_AUTH_MAX,
+			windowMs: env.RATE_LIMIT_AUTH_WINDOW_MS,
+		},
+		order: {
+			max: env.RATE_LIMIT_ORDER_MAX,
+			windowMs: env.RATE_LIMIT_ORDER_WINDOW_MS,
+		},
 	},
 
 	auth: {

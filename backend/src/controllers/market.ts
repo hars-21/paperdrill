@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { candleQuerySchema, symbolParamSchema } from "../types/exchange";
+import { candleQuerySchema, symbolParamSchema, tradesQuerySchema } from "../types/exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { prisma } from "../db";
 import { sendValidationError } from "../utils/validation";
@@ -27,20 +27,26 @@ export async function getMarkets(_req: Request, res: Response) {
 
 export async function getTrades(req: Request, res: Response) {
 	const parsedParams = symbolParamSchema.safeParse(req.params);
-	const { limit = 50 } = req.query;
+	const parsedQueries = tradesQuerySchema.safeParse(req.query);
 
 	if (!parsedParams.success) {
 		sendValidationError(res, parsedParams.error);
 		return;
 	}
 
+	if (!parsedQueries.success) {
+		sendValidationError(res, parsedQueries.error);
+		return;
+	}
+
 	try {
 		const { symbol } = parsedParams.data;
+		const { limit = 50 } = parsedQueries.data;
 
 		const trades = await prisma.fill.findMany({
 			where: { symbol },
 			orderBy: { createdAt: "desc" },
-			take: Number(limit),
+			take: limit,
 		});
 
 		res.status(200).json(formatTrades(trades as Record<string, unknown>[]));
