@@ -16,7 +16,12 @@ const { httpServer, wss } = createAppServer();
 
 async function main() {
 	await loadMarkets();
-	await connectRedis();
+	await connectRedis()
+		.then(() => logger.info("Connected to Redis"))
+		.catch((err) => {
+			logger.error("Error connecting to Redis", err);
+			process.exit(1);
+		});
 
 	listenForEngineresponses().catch((err) => logger.error("Engine listener error", err));
 	listenForOrderbookDepth().catch((err) => logger.error("Orderbook listener error", err));

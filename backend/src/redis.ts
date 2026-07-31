@@ -31,7 +31,7 @@ export async function connectRedis() {
 		publisher.connect(),
 		responsesubscriber.connect(),
 		marketSubscriber.connect(),
-		rateLimiterClient.connect(),
+		rateLimiterClient.isOpen ? Promise.resolve() : rateLimiterClient.connect(),
 	]);
 }
 
