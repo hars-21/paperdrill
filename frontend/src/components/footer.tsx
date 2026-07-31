@@ -43,32 +43,12 @@ export function Footer() {
 						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Developers</h4>
 						<ul className="space-y-2 text-sm text-medium-emphasis">
 							<li>
-								<Link
-									to="/docs"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="transition-colors hover:text-high-emphasis"
-								>
+								<Link to="/docs" className="transition-colors hover:text-high-emphasis">
 									Documentation
 								</Link>
 							</li>
 							<li>
-								<Link
-									to="https://github.com/hars-21/paperdrill"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="transition-colors hover:text-high-emphasis"
-								>
-									GitHub
-								</Link>
-							</li>
-							<li>
-								<Link
-									to="https://github.com/hars-21/paperdrill/releases"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="transition-colors hover:text-high-emphasis"
-								>
+								<Link to="/changelog" className="transition-colors hover:text-high-emphasis">
 									Changelog
 								</Link>
 							</li>

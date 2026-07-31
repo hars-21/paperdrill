@@ -6,6 +6,7 @@ import { SignupPage } from "./pages/signup";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
+import { ComingSoon } from "./pages/coming-soon";
 import { AppLayout } from "./components/app-layout";
 import { AuthLayout } from "./components/auth-layout";
 
@@ -30,6 +31,24 @@ export function App() {
 					<Route path="profile" element={<ProfilePage />} />
 					<Route path="markets" element={<MarketsPage />} />
 					<Route path="trade/:symbol" element={<TradePage />} />
+					<Route
+						path="docs"
+						element={
+							<ComingSoon
+								title="Documentation"
+								description="API reference and developer guides are on the way."
+							/>
+						}
+					/>
+					<Route
+						path="changelog"
+						element={
+							<ComingSoon
+								title="Changelog"
+								description="Release notes and updates will be published here."
+							/>
+						}
+					/>
 					<Route path="*" element={<NotFound />} />
 				</Route>
 				<Route element={<AuthLayout />}>
