@@ -26,6 +26,9 @@ const envSchema = z.object({
 	RATE_LIMIT_AUTH_WINDOW_MS: z.coerce.number().default(15 * 60000),
 	RATE_LIMIT_ORDER_MAX: z.coerce.number().default(30),
 	RATE_LIMIT_ORDER_WINDOW_MS: z.coerce.number().default(60000),
+
+	STREAM_RETENTION_MS: z.coerce.number().default(30 * 60 * 1000),
+
 	LOG_LEVEL: z.enum(["debug", "info"]),
 });
 
@@ -52,6 +55,7 @@ export const config = {
 
 	redis: {
 		url: env.REDIS_URL,
+		retentionMs: env.STREAM_RETENTION_MS,
 	},
 
 	rateLimit: {

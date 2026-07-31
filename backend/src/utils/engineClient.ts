@@ -15,12 +15,23 @@ export async function sendToEngine(
 	const correlationId = crypto.randomUUID();
 	const responsePromise = waitForEngineResponse(correlationId, config.engine.timeout);
 
-	await publisher.xAdd(config.engine.incomingStream, "*", {
-		correlationId,
-		responseQueue: config.engine.responseQueue,
-		type,
-		payload: JSON.stringify(payload),
-	});
+	await publisher.xAdd(
+		config.engine.incomingStream,
+		"*",
+		{
+			correlationId,
+			responseQueue: config.engine.responseQueue,
+			type,
+			payload: JSON.stringify(payload),
+		},
+		{
+			TRIM: {
+				strategy: "MINID",
+				strategyModifier: "=",
+				threshold: Date.now() - config.redis.retentionMs,
+			},
+		},
+	);
 
 	return responsePromise;
 }

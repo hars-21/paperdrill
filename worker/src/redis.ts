@@ -24,7 +24,18 @@ export async function disconnectRedis() {
 
 export async function sendAck(type: "fill" | "order", ids: string[]) {
 	if (!publisher.isOpen) return;
-	await publisher.xAdd("stream:ack", "*", {
-		data: JSON.stringify({ type, ids }),
-	});
+	await publisher.xAdd(
+		"stream:ack",
+		"*",
+		{
+			data: JSON.stringify({ type, ids }),
+		},
+		{
+			TRIM: {
+				strategy: "MINID",
+				strategyModifier: "=",
+				threshold: Date.now() - config.streamRetentionMs,
+			},
+		},
+	);
 }

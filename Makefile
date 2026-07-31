@@ -16,7 +16,7 @@ ifeq ($(ENV),bot)
 COMPOSE := docker compose $(BOT_FILE)
 endif
 
-.PHONY: up build down logs migrate-dev migrate-reset migrate-deploy seed clean
+.PHONY: up build down start stop logs migrate-dev migrate-reset migrate-deploy seed clean
 
 up:
 	$(COMPOSE) up -d
@@ -26,6 +26,12 @@ build:
 
 down:
 	$(COMPOSE) down
+
+start:
+	$(COMPOSE) start
+
+stop:
+	$(COMPOSE) stop
 
 logs:
 	$(COMPOSE) logs -f
