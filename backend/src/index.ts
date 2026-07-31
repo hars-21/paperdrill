@@ -10,6 +10,7 @@ import { connectRedis, disconnectRedis } from "./redis";
 import { logger } from "./utils/logger";
 import { prisma } from "./db";
 import { loadMarkets } from "./store/market";
+import _newrelic from "newrelic";
 
 const { httpServer, wss } = createAppServer();
 
