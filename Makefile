@@ -37,7 +37,7 @@ logs:
 	$(COMPOSE) logs -f
 
 migrate-dev:
-	$(COMPOSE) exec backend bun prisma migrate deploy
+	$(COMPOSE) exec backend bun prisma migrate dev
 
 migrate-reset:
 	$(COMPOSE) exec backend bun prisma migrate reset
@@ -45,7 +45,7 @@ migrate-reset:
 migrate-deploy:
 	$(COMPOSE) exec backend bun prisma migrate deploy
 
-seed:
+db-seed:
 	$(COMPOSE) exec backend bun prisma db seed
 
 clean:

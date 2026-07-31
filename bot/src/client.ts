@@ -24,6 +24,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 		headers: {
 			"Content-Type": "application/json",
 			Cookie: cookie,
+			"X-Service": "true",
 			...options?.headers,
 		},
 	});
@@ -36,7 +37,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 export async function signin() {
 	const res = await fetch(`${config.baseUrl}/signin`, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		headers: { "Content-Type": "application/json", "X-Service": "true" },
 		body: JSON.stringify({ email: config.email, password: config.password }),
 	});
 

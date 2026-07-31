@@ -18,7 +18,7 @@ function createLimiter(prefix: string, windowMs: number, limit: number) {
 		store: new RedisStore({ prefix, sendCommand }),
 		standardHeaders: true,
 		legacyHeaders: false,
-		skip: () => !config.rateLimit.enabled,
+		skip: (req) => !config.rateLimit.enabled || req.headers["x-service"] === "true",
 		handler: (req, res) => {
 			logger.warn("Rate limit exceeded", { ip: req.ip, path: req.originalUrl });
 			res.status(429).json({ error: "Too many requests, please try again later" });
