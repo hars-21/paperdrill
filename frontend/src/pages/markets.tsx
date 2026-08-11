@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
@@ -10,20 +11,10 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import type { Market } from "@/types";
-import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
+import { ASSET_NAMES, COIN_LOGOS, MARKET_STATS } from "@/utils/misc";
 import { api } from "@/lib/api";
 import { Page, PageContent, PageHeader } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
-
-const MARKET_STATS: Record<
-	string,
-	{ price: string; change: string; isUp: boolean; volume: string }
-> = {
-	BTC_USD: { price: "$65,425.50", change: "+2.45%", isUp: true, volume: "$452.8M" },
-	ETH_USD: { price: "$3,412.20", change: "-1.80%", isUp: false, volume: "$284.1M" },
-	SOL_USD: { price: "$142.10", change: "+5.12%", isUp: true, volume: "$95.4M" },
-	USD_USD: { price: "$1.00", change: "0.00%", isUp: true, volume: "$0.0M" },
-};
 
 const TABS = ["Spot"];
 
@@ -32,6 +23,7 @@ export function MarketsPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [activeTab, setActiveTab] = useState("Spot");
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		api
@@ -54,26 +46,28 @@ export function MarketsPage() {
 					</p>
 				</div>
 			</PageHeader>
+
 			<PageContent>
-				<div className="flex flex-col flex-1 gap-3 rounded-xl border border-border/40 bg-card p-4 lg:mx-6 my-6">
-					<div className="flex flex-row">
-						<div className="flex items-center flex-row relative min-w-0 flex-1">
-							<div className="items-center justify-start flex-row flex gap-1 overflow-x-auto whitespace-nowrap">
-								{TABS.map((tab) => (
-									<Button
-										key={tab}
-										onClick={() => setActiveTab(tab)}
-										className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
-											activeTab === tab
-												? "text-high-emphasis bg-muted"
-												: "text-medium-emphasis hover:text-high-emphasis"
-										}`}
-									>
-										{tab}
-									</Button>
-								))}
-							</div>
+				<div className="flex flex-col flex-1 gap-3 rounded-xl border border-border/40 bg-card p-4">
+					<div className="flex items-center justify-between gap-3">
+						<div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap">
+							{TABS.map((tab) => (
+								<Button
+									key={tab}
+									onClick={() => setActiveTab(tab)}
+									className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
+										activeTab === tab
+											? "text-high-emphasis bg-muted"
+											: "text-medium-emphasis hover:text-high-emphasis"
+									}`}
+								>
+									{tab}
+								</Button>
+							))}
 						</div>
+						<span className="hidden sm:block text-xs text-low-emphasis">
+							{loading ? "…" : `${markets.length} markets`}
+						</span>
 					</div>
 
 					{error ? (
@@ -92,6 +86,9 @@ export function MarketsPage() {
 											24h Volume
 										</TableHead>
 										<TableHead className="w-[17%] text-right">24h Change</TableHead>
+										<TableHead className="w-20 text-right hidden lg:table-cell">
+											<span className="sr-only">Trade</span>
+										</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
@@ -113,6 +110,9 @@ export function MarketsPage() {
 													<TableCell className="text-right">
 														<Skeleton className="h-4 w-12 ml-auto" />
 													</TableCell>
+													<TableCell className="text-right">
+														<Skeleton className="h-7 w-16 ml-auto" />
+													</TableCell>
 												</TableRow>
 											))
 										: markets.map((m) => {
@@ -126,10 +126,15 @@ export function MarketsPage() {
 												};
 
 												return (
-													<TableRow key={m.id} className="group cursor-pointer">
+													<TableRow
+														key={m.id}
+														className="group cursor-pointer"
+														onClick={() => navigate(`/trade/${m.symbol}`)}
+													>
 														<TableCell className="whitespace-nowrap">
 															<Link
 																to={`/trade/${m.symbol}`}
+																onClick={(e) => e.stopPropagation()}
 																className="flex shrink whitespace-nowrap"
 															>
 																<div className="flex items-center gap-2.5">
@@ -177,6 +182,20 @@ export function MarketsPage() {
 															>
 																{stats.change}
 															</span>
+														</TableCell>
+														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">
+															<Button
+																variant="ghost"
+																size="sm"
+																className="opacity-0 group-hover:opacity-100 transition-opacity text-medium-emphasis"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	navigate(`/trade/${m.symbol}`);
+																}}
+															>
+																Trade
+																<ArrowUpRight className="size-3.5" />
+															</Button>
 														</TableCell>
 													</TableRow>
 												);

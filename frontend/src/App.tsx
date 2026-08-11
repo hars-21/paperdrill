@@ -8,7 +8,7 @@ import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
 import { ComingSoon } from "./pages/coming-soon";
 import { AppLayout } from "./components/app-layout";
-import { AuthLayout } from "./components/auth-layout";
+import { Protected, PublicOnly } from "./components/route-guards";
 
 function NotFound() {
 	return (
@@ -28,7 +28,14 @@ export function App() {
 			<Route path="/">
 				<Route index element={<LandingPage />} />
 				<Route element={<AppLayout />}>
-					<Route path="profile" element={<ProfilePage />} />
+					<Route
+						path="profile"
+						element={
+							<Protected>
+								<ProfilePage />
+							</Protected>
+						}
+					/>
 					<Route path="markets" element={<MarketsPage />} />
 					<Route path="trade/:symbol" element={<TradePage />} />
 					<Route
@@ -49,11 +56,23 @@ export function App() {
 							/>
 						}
 					/>
+					<Route
+						path="login"
+						element={
+							<PublicOnly>
+								<LoginPage />
+							</PublicOnly>
+						}
+					/>
+					<Route
+						path="signup"
+						element={
+							<PublicOnly>
+								<SignupPage />
+							</PublicOnly>
+						}
+					/>
 					<Route path="*" element={<NotFound />} />
-				</Route>
-				<Route element={<AuthLayout />}>
-					<Route path="login" element={<LoginPage />} />
-					<Route path="signup" element={<SignupPage />} />
 				</Route>
 			</Route>
 		</Routes>

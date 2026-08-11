@@ -65,13 +65,13 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 				<div className="flex items-center justify-between flex-row pl-2">
 					<div className="flex items-center flex-row gap-2">
 						<div className="flex items-center justify-center flex-row gap-2">
-							<Button variant="icon">
+							<Button variant="icon" size="icon-xs">
 								<BidsIcon />
 							</Button>
-							<Button variant="icon">
+							<Button variant="icon" size="icon-xs">
 								<AsksIcon />
 							</Button>
-							<Button variant="icon">
+							<Button variant="icon" size="icon-xs">
 								<BidsAsksIcon />
 							</Button>
 						</div>

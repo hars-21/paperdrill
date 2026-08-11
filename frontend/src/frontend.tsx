@@ -5,7 +5,6 @@ import { App } from "./App";
 import { ErrorBoundary } from "./components/error-boundary";
 
 import { ThemeProvider } from "./lib/theme-provider";
-import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "./components/ui/sonner";
 
 const elem = document.getElementById("root")!;
@@ -14,10 +13,8 @@ const app = (
 		<ErrorBoundary>
 			<ThemeProvider>
 				<BrowserRouter>
-					<AuthProvider>
-						<App />
-						<Toaster />
-					</AuthProvider>
+					<App />
+					<Toaster />
 				</BrowserRouter>
 			</ThemeProvider>
 		</ErrorBoundary>

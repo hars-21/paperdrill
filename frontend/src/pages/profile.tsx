@@ -1,7 +1,8 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Loader from "@/components/ui/loader";
 import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
@@ -29,6 +30,9 @@ export function ProfilePage() {
 		}
 	};
 
+	const balances = Object.entries(user.balance || {});
+	const assetCount = balances.length;
+
 	return (
 		<Page>
 			<PageHeader>
@@ -52,19 +56,28 @@ export function ProfilePage() {
 			<PageContent className="max-w-3xl">
 				<div className="space-y-5">
 					<Card className="border-border/40 shadow-sm">
-						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-medium text-medium-emphasis">
-								User Account
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="text-sm flex items-center justify-between">
-								<span className="text-muted-foreground">Email</span>
-								<span className="font-medium text-high-emphasis">{user.email}</span>
+						<CardContent className="flex items-center gap-4">
+							<Avatar className="size-14">
+								<AvatarFallback className="bg-l3 text-lg font-bold text-high-emphasis">
+									{user.name[0]}
+								</AvatarFallback>
+							</Avatar>
+
+							<div className="min-w-0 flex-1">
+								<div className="flex items-center gap-2">
+									<h2 className="truncate text-lg font-bold tracking-tight text-high-emphasis">
+										{user.name}
+									</h2>
+								</div>
+								<p className="truncate text-sm text-muted-foreground">{user.email}</p>
 							</div>
-							<div className="text-sm flex items-center justify-between mt-2 pt-2 border-t border-border/20">
-								<span className="text-muted-foreground">Name</span>
-								<span className="font-medium text-high-emphasis">{user.name}</span>
+
+							<div className="hidden sm:block text-right shrink-0">
+								<p className="flex items-center justify-end gap-1 text-[10px] text-low-emphasis">
+									<ShieldCheck className="size-3" />
+									Role
+								</p>
+								<p className="mt-0.5 text-sm font-medium text-high-emphasis">Trader</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -74,44 +87,58 @@ export function ProfilePage() {
 							<CardTitle className="text-xs font-medium text-medium-emphasis">
 								Sandbox Asset Balances
 							</CardTitle>
+							<CardAction>
+								<span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-medium-emphasis">
+									{assetCount} {assetCount === 1 ? "asset" : "assets"}
+								</span>
+							</CardAction>
 						</CardHeader>
 						<CardContent>
-							<div className="divide-y divide-border/30">
-								{Object.entries(user.balance || {}).map(([currency, bal]) => (
-									<div
-										key={currency}
-										className="flex items-center justify-between py-3 text-sm first:pt-0 last:pb-0"
-									>
-										<div className="flex items-center gap-3">
-											{COIN_LOGOS[currency] ? (
-												<img
-													src={COIN_LOGOS[currency]}
-													alt={currency}
-													className="h-7 w-7 object-contain shrink-0"
-												/>
-											) : (
-												<div className="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0">
-													{currency[0]}
+							{assetCount === 0 ? (
+								<div className="py-6 text-center">
+									<p className="text-sm text-medium-emphasis">No balances yet</p>
+									<p className="mt-1 text-xs text-low-emphasis">
+										Funds are credited when you place your first order.
+									</p>
+								</div>
+							) : (
+								<div className="grid gap-2 sm:grid-cols-2">
+									{balances.map(([currency, bal]) => (
+										<div
+											key={currency}
+											className="flex items-center justify-between gap-3 rounded-xl border border-border/30 bg-muted/20 px-3.5 py-3 transition-colors hover:border-border/60"
+										>
+											<div className="flex items-center gap-3 min-w-0">
+												{COIN_LOGOS[currency] ? (
+													<img
+														src={COIN_LOGOS[currency]}
+														alt={currency}
+														className="h-8 w-8 object-contain shrink-0"
+													/>
+												) : (
+													<div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0">
+														{currency[0]}
+													</div>
+												)}
+												<div className="flex flex-col min-w-0">
+													<span className="font-semibold text-high-emphasis">{currency}</span>
+													<span className="text-[10px] text-low-emphasis truncate">
+														{ASSET_NAMES[currency] || currency}
+													</span>
 												</div>
-											)}
-											<div className="flex flex-col">
-												<span className="font-semibold text-high-emphasis">{currency}</span>
-												<span className="text-[10px] text-low-emphasis font-medium">
-													{ASSET_NAMES[currency] || currency}
+											</div>
+											<div className="text-right shrink-0">
+												<span className="block text-sm font-semibold text-high-emphasis">
+													{bal.available ?? "0"}
 												</span>
+												{Number(bal.locked ?? 0) > 0 && (
+													<span className="text-[10px] text-low-emphasis">{bal.locked} locked</span>
+												)}
 											</div>
 										</div>
-										<div className="text-right">
-											<span className="text-high-emphasis font-semibold block">
-												{bal.available ?? "0"}
-											</span>
-											{Number(bal.locked ?? 0) > 0 && (
-												<span className="text-[10px] text-low-emphasis">{bal.locked} locked</span>
-											)}
-										</div>
-									</div>
-								))}
-							</div>
+									))}
+								</div>
+							)}
 						</CardContent>
 					</Card>
 

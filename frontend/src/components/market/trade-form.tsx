@@ -81,7 +81,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 						<div
 							className="absolute top-0 h-full w-1/2 rounded-xl transition-all duration-100 ease-in-out"
 							style={{
-								backgroundColor: side === "BUY" ? "#122322" : "#351a1f",
+								backgroundColor: side === "BUY" ? "var(--green-bg)" : "var(--red-bg)",
 								left: side === "BUY" ? "0" : "50%",
 							}}
 						/>

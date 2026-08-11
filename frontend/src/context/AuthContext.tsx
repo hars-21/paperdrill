@@ -1,5 +1,5 @@
 import type { UserBalance } from "@/types";
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useRef, useState } from "react";
 import { api } from "@/lib/api";
 
 type User = {
@@ -50,12 +50,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 			await promise;
 		} finally {
 			inflightRef.current = null;
+			setLoading(false);
 		}
 	}, []);
-
-	useEffect(() => {
-		refreshUser().finally(() => setLoading(false));
-	}, [refreshUser]);
 
 	const setUserAndCache = useCallback((u: User) => {
 		userRef.current = u;
