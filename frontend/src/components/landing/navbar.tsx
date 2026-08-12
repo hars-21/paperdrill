@@ -4,10 +4,10 @@ import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/theme-provider";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
 
-const CENTER_LINKS = [
-	{ label: "Features", to: "/#features" },
-	{ label: "About", to: "/#about" },
+const LINKS = [
 	{ label: "Markets", to: "/markets" },
+	{ label: "Docs", to: "/docs" },
+	{ label: "Changelog", to: "/changelog" },
 ];
 
 export function Navbar() {
@@ -26,7 +26,7 @@ export function Navbar() {
 				</Link>
 
 				<nav className="items-center justify-center flex-row hidden gap-6 md:flex flex-1">
-					{CENTER_LINKS.map((link) => (
+					{LINKS.map((link) => (
 						<Link
 							key={link.label}
 							to={link.to}
@@ -80,7 +80,7 @@ export function Navbar() {
 							</div>
 
 							<nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-								{CENTER_LINKS.map((link) => (
+								{LINKS.map((link) => (
 									<SheetClose asChild key={link.to}>
 										<Link
 											to={link.to}

@@ -4,8 +4,8 @@ export function Footer() {
 	return (
 		<footer className="border-t border-border/40 bg-card/20">
 			<div className="mx-auto max-w-6xl px-6 py-12">
-				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
-					<div className="sm:col-span-2 lg:col-span-1">
+				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5">
+					<div className="sm:col-span-2">
 						<Link to="/" className="text-lg font-semibold tracking-tight">
 							PaperDrill
 							<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
@@ -22,6 +22,11 @@ export function Footer() {
 						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Platform</h4>
 						<ul className="space-y-2 text-sm text-medium-emphasis">
 							<li>
+								<Link to="/" className="transition-colors hover:text-high-emphasis">
+									Home
+								</Link>
+							</li>
+							<li>
 								<Link to="/markets" className="transition-colors hover:text-high-emphasis">
 									Markets
 								</Link>
@@ -29,11 +34,6 @@ export function Footer() {
 							<li>
 								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
 									Trading
-								</Link>
-							</li>
-							<li>
-								<Link to="/profile" className="transition-colors hover:text-high-emphasis">
-									Profile
 								</Link>
 							</li>
 						</ul>
@@ -50,6 +50,22 @@ export function Footer() {
 							<li>
 								<Link to="/changelog" className="transition-colors hover:text-high-emphasis">
 									Changelog
+								</Link>
+							</li>
+						</ul>
+					</div>
+
+					<div>
+						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Legal</h4>
+						<ul className="space-y-2 text-sm text-medium-emphasis">
+							<li>
+								<Link to="/terms" className="transition-colors hover:text-high-emphasis">
+									Terms of Service
+								</Link>
+							</li>
+							<li>
+								<Link to="/privacy" className="transition-colors hover:text-high-emphasis">
+									Privacy Policy
 								</Link>
 							</li>
 						</ul>

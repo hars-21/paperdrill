@@ -6,8 +6,12 @@ import { SignupPage } from "./pages/signup";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
-import { ComingSoon } from "./pages/coming-soon";
+import { DocsPage } from "./pages/docs";
+import { ChangelogPage } from "./pages/changelog";
+import { TermsPage } from "./pages/terms";
+import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
+import { RootLayout } from "./components/root-layout";
 import { Protected, PublicOnly } from "./components/route-guards";
 
 function NotFound() {
@@ -25,55 +29,42 @@ function NotFound() {
 export function App() {
 	return (
 		<Routes>
-			<Route path="/">
+			<Route element={<RootLayout />}>
 				<Route index element={<LandingPage />} />
-				<Route element={<AppLayout />}>
-					<Route
-						path="profile"
-						element={
-							<Protected>
-								<ProfilePage />
-							</Protected>
-						}
-					/>
-					<Route path="markets" element={<MarketsPage />} />
-					<Route path="trade/:symbol" element={<TradePage />} />
-					<Route
-						path="docs"
-						element={
-							<ComingSoon
-								title="Documentation"
-								description="API reference and developer guides are on the way."
-							/>
-						}
-					/>
-					<Route
-						path="changelog"
-						element={
-							<ComingSoon
-								title="Changelog"
-								description="Release notes and updates will be published here."
-							/>
-						}
-					/>
-					<Route
-						path="login"
-						element={
-							<PublicOnly>
-								<LoginPage />
-							</PublicOnly>
-						}
-					/>
-					<Route
-						path="signup"
-						element={
-							<PublicOnly>
-								<SignupPage />
-							</PublicOnly>
-						}
-					/>
-					<Route path="*" element={<NotFound />} />
-				</Route>
+				<Route path="docs" element={<DocsPage />} />
+				<Route path="changelog" element={<ChangelogPage />} />
+				<Route path="terms" element={<TermsPage />} />
+				<Route path="privacy" element={<PrivacyPage />} />
+			</Route>
+
+			<Route element={<AppLayout />}>
+				<Route
+					path="profile"
+					element={
+						<Protected>
+							<ProfilePage />
+						</Protected>
+					}
+				/>
+				<Route path="markets" element={<MarketsPage />} />
+				<Route path="trade/:symbol" element={<TradePage />} />
+				<Route
+					path="login"
+					element={
+						<PublicOnly>
+							<LoginPage />
+						</PublicOnly>
+					}
+				/>
+				<Route
+					path="signup"
+					element={
+						<PublicOnly>
+							<SignupPage />
+						</PublicOnly>
+					}
+				/>
+				<Route path="*" element={<NotFound />} />
 			</Route>
 		</Routes>
 	);

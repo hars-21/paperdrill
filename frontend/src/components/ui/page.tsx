@@ -49,7 +49,7 @@ function PageContent({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 		<div
 			data-slot="page-content"
 			className={cn(
-				"flex-1 min-h-0 px-6 py-8 space-y-6 max-w-6xl mx-auto w-full select-none",
+				"flex-1 min-h-0 px-6 py-8 mb-12 space-y-6 max-w-6xl mx-auto w-full select-none",
 				className,
 			)}
 			{...props}
