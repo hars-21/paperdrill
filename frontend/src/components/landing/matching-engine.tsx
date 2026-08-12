@@ -1,4 +1,4 @@
-import trading from "@/assets/trading.png";
+import { screenshots } from "@/assets";
 
 export default function MatchingEngineSection() {
 	return (
@@ -7,7 +7,7 @@ export default function MatchingEngineSection() {
 				<div className="w-full max-w-xs lg:w-2/5 lg:max-w-sm">
 					<div className="aspect-3/4 overflow-hidden rounded-2xl border border-border/40 bg-l2/40 shadow-sm">
 						<img
-							src={trading}
+							src={screenshots.trading}
 							alt="PaperDrill trading interface"
 							className="h-full w-full object-cover"
 							onError={(e) => {

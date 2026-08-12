@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function Footer() {
 	return (
@@ -6,12 +7,7 @@ export function Footer() {
 			<div className="mx-auto max-w-6xl px-6 py-12">
 				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5">
 					<div className="sm:col-span-2">
-						<Link to="/" className="text-lg font-semibold tracking-tight">
-							PaperDrill
-							<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
-								Beta
-							</span>
-						</Link>
+						<BrandLogo href="/" />
 						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
 							The exchange built for developers, not spectators. Real matching engine, real order
 							book, zero risk.

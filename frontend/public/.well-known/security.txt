@@ -1,0 +1,8 @@
+Contact: mailto:security@paperdrill.dev
+Expires: 2027-08-12T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://paperdrill.dev/.well-known/security.txt
+Policy: https://paperdrill.dev/privacy
+
+# PaperDrill security disclosure
+# Please report vulnerabilities responsibly. We aim to respond within 72 hours.

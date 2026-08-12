@@ -1,0 +1,29 @@
+# PaperDrill
+
+> PaperDrill is a live paper-trading exchange simulator with a real matching engine, live order book, and REST/WebSocket API — built for developers who want to trade or test bots without real money or KYC.
+
+PaperDrill runs BTC/USD, ETH/USD, and SOL/USD spot markets with price-time priority matching, persistent simulated balances, and real-time market data. It is free, browser-based, and designed as a sandbox for learning exchange mechanics and building trading strategies.
+
+## Platform
+
+- [Home](https://paperdrill.dev/): Landing page with product overview and live demo UI
+- [Markets](https://paperdrill.dev/markets): Browse live spot markets and 24h stats
+- [Trading Console](https://paperdrill.dev/trade/BTC_USD): Full trading UI with order book, chart, and order entry
+- [Sign Up](https://paperdrill.dev/signup): Create a free account with simulated starting balances
+
+## Developers
+
+- [Documentation](https://paperdrill.dev/docs): How PaperDrill works — markets, trading, API overview
+- [Changelog](https://paperdrill.dev/changelog): Product updates and release notes
+- [API](https://api.paperdrill.dev): REST API and WebSocket endpoints (see docs for usage)
+
+## Legal
+
+- [Terms of Service](https://paperdrill.dev/terms): Usage terms for the simulated platform
+- [Privacy Policy](https://paperdrill.dev/privacy): Data handling and privacy practices
+
+## Optional
+
+- [robots.txt](https://paperdrill.dev/robots.txt): Crawler directives
+- [sitemap.xml](https://paperdrill.dev/sitemap.xml): Canonical URL list for search engines
+- [security.txt](https://paperdrill.dev/.well-known/security.txt): Security contact information

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { brandIcon } from "@/assets";
 
 type Theme = "dark" | "light";
 
@@ -25,6 +26,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			root.classList.remove("dark");
 		}
 		localStorage.setItem("theme", theme);
+
+		let favicon = document.querySelector<HTMLLinkElement>('link[data-theme-favicon="true"]');
+		if (!favicon) {
+			favicon = document.createElement("link");
+			favicon.rel = "icon";
+			favicon.type = "image/svg+xml";
+			favicon.dataset.themeFavicon = "true";
+			document.head.appendChild(favicon);
+		}
+		favicon.href = brandIcon(theme);
 	}, [theme]);
 
 	const toggleTheme = () => {

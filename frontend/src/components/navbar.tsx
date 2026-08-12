@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } from "lucide-react";
 import { useTheme } from "../lib/theme-provider";
+import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -42,14 +43,7 @@ export function Navbar() {
 	return (
 		<header className="sticky top-0 z-50 w-full bg-l0">
 			<div className="relative flex h-14 w-full items-center px-4">
-				<Link to="/markets" className="flex items-center gap-2 shrink-0">
-					<span className="hidden sm:block text-lg font-semibold tracking-tight">
-						PaperDrill
-						<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
-							Beta
-						</span>
-					</span>
-				</Link>
+				<BrandLogo href="/markets" />
 
 				<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-4 md:flex lg:gap-7 xl:gap-8 ml-6">
 					{NAV_LINKS.map((link) => (
@@ -76,9 +70,7 @@ export function Navbar() {
 
 							<div className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-4">
 								<SheetClose asChild>
-									<Link to="/markets" className="flex items-center gap-2">
-										<span className="text-base font-semibold tracking-tight">PaperDrill</span>
-									</Link>
+									<BrandLogo href="/markets" showText={false} showBeta={false} />
 								</SheetClose>
 
 								<SheetClose asChild>

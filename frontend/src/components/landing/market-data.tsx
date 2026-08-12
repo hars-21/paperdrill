@@ -1,4 +1,4 @@
-import marketData from "@/assets/market-data.png";
+import { screenshots } from "@/assets";
 import { Safari } from "../ui/safari";
 
 export default function MarketDataSection() {
@@ -15,7 +15,7 @@ export default function MarketDataSection() {
 			</div>
 
 			<div className="mx-auto mt-12 max-w-4xl">
-				<Safari url="paperdrill.dev" imageSrc={marketData} />
+				<Safari url="paperdrill.dev" imageSrc={screenshots.marketData} />
 			</div>
 		</section>
 	);

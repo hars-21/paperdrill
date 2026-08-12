@@ -1,7 +1,4 @@
-import btcLogo from "@/assets/btc-logo.svg";
-import ethLogo from "@/assets/eth-logo.svg";
-import solLogo from "@/assets/sol-logo.svg";
-import usdLogo from "@/assets/usd-logo.svg";
+import { crypto } from "@/assets";
 
 export const ASSET_NAMES: Record<string, string> = {
 	USD: "US Dollar",
@@ -11,10 +8,10 @@ export const ASSET_NAMES: Record<string, string> = {
 };
 
 export const COIN_LOGOS: Record<string, string> = {
-	USD: usdLogo,
-	BTC: btcLogo,
-	ETH: ethLogo,
-	SOL: solLogo,
+	USD: crypto.USD,
+	BTC: crypto.BTC,
+	ETH: crypto.ETH,
+	SOL: crypto.SOL,
 };
 
 export interface MarketStat {

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/theme-provider";
+import { BrandLogo } from "@/components/brand-logo";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
 
 const LINKS = [
@@ -16,14 +17,7 @@ export function Navbar() {
 	return (
 		<header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur border-b border-border/40">
 			<div className="relative flex h-14 w-full items-center justify-between px-4">
-				<Link to="/" className="flex items-center gap-2 shrink-0">
-					<span className="hidden sm:block text-lg font-semibold tracking-tight">
-						PaperDrill
-						<span className="ml-1.5 text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-md align-middle">
-							Beta
-						</span>
-					</span>
-				</Link>
+				<BrandLogo href="/" />
 
 				<nav className="items-center justify-center flex-row hidden gap-6 md:flex flex-1">
 					{LINKS.map((link) => (
@@ -67,9 +61,7 @@ export function Navbar() {
 
 							<div className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-4">
 								<SheetClose asChild>
-									<Link to="/" className="flex items-center gap-2">
-										<span className="text-base font-semibold tracking-tight">PaperDrill</span>
-									</Link>
+									<BrandLogo href="/" showText={false} showBeta={false} />
 								</SheetClose>
 
 								<SheetClose asChild>

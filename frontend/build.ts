@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import plugin from "bun-plugin-tailwind";
 import { existsSync } from "fs";
-import { rm } from "fs/promises";
+import { cp, rm } from "fs/promises";
 import path from "path";
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
@@ -109,6 +109,7 @@ console.log("\n🚀 Starting build process...\n");
 
 const cliConfig = parseArgs();
 const outdir = cliConfig.outdir || path.join(process.cwd(), "dist");
+const publicDir = path.join(process.cwd(), "public");
 
 if (existsSync(outdir)) {
 	console.log(`🗑️ Cleaning previous build at ${outdir}`);
@@ -139,6 +140,11 @@ const result = await Bun.build({
 	},
 	...cliConfig,
 });
+
+if (existsSync(publicDir)) {
+	console.log(`📁 Copying public assets to ${outdir}`);
+	await cp(publicDir, outdir, { recursive: true });
+}
 
 const end = performance.now();
 

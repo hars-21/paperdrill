@@ -1,4 +1,4 @@
-import balance from "@/assets/balance.png";
+import { screenshots } from "@/assets";
 
 export default function PersistentSection() {
 	return (
@@ -14,7 +14,7 @@ export default function PersistentSection() {
 
 				<div className="overflow-hidden rounded-2xl border border-border/40 bg-l2/40 shadow-sm">
 					<img
-						src={balance}
+						src={screenshots.balance}
 						alt="PaperDrill balance interface"
 						className="h-full w-full object-cover"
 						onError={(e) => {
