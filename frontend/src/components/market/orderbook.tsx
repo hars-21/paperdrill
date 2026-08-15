@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import AsksIcon from "../icons/asks-icon";
 import BidsAsksIcon from "../icons/bids-asks-icon";
 import BidsIcon from "../icons/bids-icon";
@@ -17,6 +18,33 @@ const MOBILE_ROWS = 10;
 
 export function Orderbook({ bids, asks, loading, symbol, compact = false }: OrderbookProps) {
 	const DISPLAY_ROWS = compact ? MOBILE_ROWS : DESKTOP_ROWS;
+
+	const [displayMode, setDisplayMode] = useState<"both" | "asks" | "bids">("both");
+	const [isCentered, setIsCentered] = useState(true);
+	const scrollRef = useRef<HTMLDivElement>(null);
+
+	const handleScroll = () => {
+		const el = scrollRef.current;
+		if (el) {
+			const center = (el.scrollHeight - el.clientHeight) / 2;
+			setIsCentered(Math.abs(el.scrollTop - center) < 2);
+		}
+	};
+
+	const recenterOrderbook = () => {
+		const el = scrollRef.current;
+		if (el) {
+			el.scrollTop = (el.scrollHeight - el.clientHeight) / 2;
+			setIsCentered(true);
+		}
+	};
+
+	useEffect(() => {
+		if (!loading) {
+			recenterOrderbook();
+		}
+	}, [loading, displayMode]);
+
 	if (loading) {
 		return <OrderbookSkeleton />;
 	}
@@ -62,19 +90,24 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 	return (
 		<div className="flex h-full flex-col select-none">
 			<div className="flex flex-col h-full grow">
-				<div className="flex items-center justify-between flex-row pl-2">
+				<div className="flex items-center justify-between flex-row px-2">
 					<div className="flex items-center flex-row gap-2">
 						<div className="flex items-center justify-center flex-row gap-2">
-							<Button variant="icon" size="icon-xs">
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("bids")}>
 								<BidsIcon />
 							</Button>
-							<Button variant="icon" size="icon-xs">
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("asks")}>
 								<AsksIcon />
 							</Button>
-							<Button variant="icon" size="icon-xs">
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("both")}>
 								<BidsAsksIcon />
 							</Button>
 						</div>
+					</div>
+					<div className="flex items-center justify-center flex-row gap-2">
+						<p className="text-high-emphasis truncate text-[10px]">
+							Spread: {spread > 0 ? spread.toFixed(2) : "—"}
+						</p>
 					</div>
 				</div>
 
@@ -90,111 +123,119 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 					</p>
 				</div>
 
-				<div className="flex flex-col no-scrollbar h-full flex-1 font-sans overflow-y-auto">
+				<div
+					className="flex flex-col no-scrollbar h-full flex-1 font-sans overflow-y-auto"
+					ref={scrollRef}
+					onScroll={handleScroll}
+				>
 					<div className="flex flex-col flex-1">
 						<div className="flex justify-end h-full w-full flex-col-reverse">
-							{asksSliced.map((ask, i) => {
-								const depth = askMaxTotal > 0 ? ask.total / askMaxTotal : 0;
-								const barWidth = askMaxTotal > 0 ? ask.qty / askMaxTotal : 0;
-								return (
-									<div key={`ask-${i}`} className="flex h-6 items-center">
-										<div className="flex items-center flex-row relative h-full w-full cursor-pointer overflow-hidden px-3 border-t border-dashed border-transparent hover:border-border/50 transition-colors">
-											<div
-												className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-red-bg/50"
-												style={{
-													transformOrigin: "right center",
-													transform: `scaleX(${depth})`,
-													transition: "transform 0.5s",
-												}}
-											/>
-											<div
-												className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-red-bg"
-												style={{
-													transformOrigin: "right center",
-													transform: `scaleX(${barWidth})`,
-													transition: "transform 0.5s",
-												}}
-											/>
-											<div className="flex h-full w-[30%] items-center">
-												<p className="text-left text-xs font-normal tabular-nums text-red-text/90 z-10">
-													{ask.price}
-												</p>
-											</div>
-											<div className="flex h-full w-[35%] items-center justify-end">
-												<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-													{ask.qty}
-												</p>
-											</div>
-											<div className="flex h-full w-[35%] items-center justify-end">
-												<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-													{ask.total.toFixed(4)}
-												</p>
+							{displayMode !== "bids" &&
+								asksSliced.map((ask, i) => {
+									const depth = askMaxTotal > 0 ? ask.total / askMaxTotal : 0;
+									const barWidth = askMaxTotal > 0 ? ask.qty / askMaxTotal : 0;
+									return (
+										<div key={`ask-${i}`} className="flex h-6 items-center">
+											<div className="flex items-center flex-row relative h-full w-full cursor-pointer overflow-hidden px-3 border-t border-dashed border-transparent hover:border-border/50 transition-colors">
+												<div
+													className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-red-bg/50"
+													style={{
+														transformOrigin: "right center",
+														transform: `scaleX(${depth})`,
+														transition: "transform 0.5s",
+													}}
+												/>
+												<div
+													className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-red-bg"
+													style={{
+														transformOrigin: "right center",
+														transform: `scaleX(${barWidth})`,
+														transition: "transform 0.5s",
+													}}
+												/>
+												<div className="flex h-full w-[30%] items-center">
+													<p className="text-left text-xs font-normal tabular-nums text-red-text/90 z-10">
+														{ask.price}
+													</p>
+												</div>
+												<div className="flex h-full w-[35%] items-center justify-end">
+													<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
+														{ask.qty}
+													</p>
+												</div>
+												<div className="flex h-full w-[35%] items-center justify-end">
+													<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
+														{ask.total.toFixed(4)}
+													</p>
+												</div>
 											</div>
 										</div>
-									</div>
-								);
-							})}
+									);
+								})}
 						</div>
 					</div>
 
 					<div className="bg-card sticky z-10 flex-0 snap-center px-3 py-1 border-y border-border/20">
-						<div className="flex justify-between flex-row">
+						<div className="flex items-center justify-between flex-row">
 							<div className="flex items-center flex-row gap-1.5">
-								<button className="hover:opacity-90" type="button">
-									<p className="font-medium tabular-nums text-sm text-high-emphasis">
-										{midPrice > 0 ? midPrice.toFixed(2) : "—"}
-									</p>
-								</button>
+								<p className="font-medium tabular-nums text-sm text-high-emphasis">
+									{midPrice > 0 ? midPrice.toFixed(2) : "—"}
+								</p>
 							</div>
-							<span className="text-[10px] text-medium-emphasis tabular-nums">
-								Spread: {spread > 0 ? spread.toFixed(2) : "—"}
-							</span>
+
+							<button
+								onClick={recenterOrderbook}
+								className={`text-[10px] text-chart-5 cursor-pointer hover:text-chart-5/90 transition-colors ${isCentered ? "opacity-0" : ""}`}
+							>
+								Recenter
+							</button>
 						</div>
 					</div>
 
 					<div className="flex flex-col flex-1">
 						<div className="flex justify-start flex-col h-full w-full">
-							{bidsSliced.map((bid, i) => {
-								const depth = bidMaxTotal > 0 ? bid.total / bidMaxTotal : 0;
-								const barWidth = bidMaxTotal > 0 ? bid.qty / bidMaxTotal : 0;
-								return (
-									<div key={`bid-${i}`} className="flex h-6 items-center">
-										<div className="flex items-center flex-row relative h-full w-full cursor-pointer overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors">
-											<div
-												className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-green-bg/50"
-												style={{
-													transformOrigin: "right center",
-													transform: `scaleX(${depth})`,
-													transition: "transform 0.5s",
-												}}
-											/>
-											<div
-												className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-green-bg"
-												style={{
-													transformOrigin: "right center",
-													transform: `scaleX(${barWidth})`,
-													transition: "transform 0.5s",
-												}}
-											/>
-											<div className="flex h-full w-[30%] items-center">
-												<p className="text-left text-xs font-normal tabular-nums text-green-text/90 z-10">
-													{bid.price}
-												</p>
-											</div>
-											<div className="flex h-full w-[35%] items-center justify-end">
-												<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-													{bid.qty}
-												</p>
-											</div>
-											<div className="flex h-full w-[35%] items-center justify-end">
-												<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-													{bid.total.toFixed(4)}
-												</p>
+							{displayMode !== "asks" &&
+								bidsSliced.map((bid, i) => {
+									const depth = bidMaxTotal > 0 ? bid.total / bidMaxTotal : 0;
+									const barWidth = bidMaxTotal > 0 ? bid.qty / bidMaxTotal : 0;
+									return (
+										<div key={`bid-${i}`} className="flex h-6 items-center">
+											<div className="flex items-center flex-row relative h-full w-full cursor-pointer overflow-hidden px-3 border-b border-dashed border-transparent hover:border-border/50 transition-colors">
+												<div
+													className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-green-bg/50"
+													style={{
+														transformOrigin: "right center",
+														transform: `scaleX(${depth})`,
+														transition: "transform 0.5s",
+													}}
+												/>
+												<div
+													className="absolute top-px right-3 bottom-px w-full pointer-events-none bg-green-bg"
+													style={{
+														transformOrigin: "right center",
+														transform: `scaleX(${barWidth})`,
+														transition: "transform 0.5s",
+													}}
+												/>
+												<div className="flex h-full w-[30%] items-center">
+													<p className="text-left text-xs font-normal tabular-nums text-green-text/90 z-10">
+														{bid.price}
+													</p>
+												</div>
+												<div className="flex h-full w-[35%] items-center justify-end">
+													<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
+														{bid.qty}
+													</p>
+												</div>
+												<div className="flex h-full w-[35%] items-center justify-end">
+													<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
+														{bid.total.toFixed(4)}
+													</p>
+												</div>
 											</div>
 										</div>
-									</div>
-								);
-							})}
+									);
+								})}
 						</div>
 					</div>
 				</div>

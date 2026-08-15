@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const AnnouncementBar = () => {
 	const [dismissed, setDismissed] = useState(
-		localStorage.getItem("bar-dismissed") == "true" ? true : false,
+		sessionStorage.getItem("bar-dismissed") == "true" ? true : false,
 	);
 
 	if (dismissed) return null;
@@ -28,7 +28,7 @@ const AnnouncementBar = () => {
 				size="icon-sm"
 				onClick={() => {
 					setDismissed(true);
-					localStorage.setItem("bar-dismissed", "true");
+					sessionStorage.setItem("bar-dismissed", "true");
 				}}
 				className="absolute right-2"
 				aria-label="Dismiss"

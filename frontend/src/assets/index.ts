@@ -13,6 +13,7 @@ import usdLogo from "./crypto/usd.svg";
 import balanceScreenshot from "./screenshots/balance.png";
 import marketDataScreenshot from "./screenshots/market-data.png";
 import tradingScreenshot from "./screenshots/trading.png";
+import chartScreenshot from "./screenshots/chart.png";
 
 export type Theme = "light" | "dark";
 
@@ -40,6 +41,7 @@ export const crypto = {
 
 export const screenshots = {
 	balance: balanceScreenshot,
+	chart: chartScreenshot,
 	marketData: marketDataScreenshot,
 	trading: tradingScreenshot,
 } as const;
