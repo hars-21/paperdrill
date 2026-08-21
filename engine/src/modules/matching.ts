@@ -65,7 +65,7 @@ export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
 
 			priceLevel.totalQty -= matchQty;
 
-			if (remainingQty >= availableQty) {
+			if (matchQty >= availableQty) {
 				priceLevel.orders.shift();
 			}
 

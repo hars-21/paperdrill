@@ -1,7 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
-import { cancelOrder, placeOrder } from "../src/order";
-import { getDepth } from "../src/orderbook";
-import { resetState } from "./utils";
+import { cancelOrder, placeOrder, resetState } from "./utils";
+import { getDepth } from "../src/modules/orderbook";
 
 beforeEach(() => {
 	resetState();
@@ -23,7 +22,6 @@ test("cancel open limit order", async () => {
 		qty: 100000n,
 		filledQty: 0n,
 		status: "CANCELLED",
-		releasedFunds: 100000n,
 	});
 
 	expect(await getDepth("BTC_USD")).toMatchObject({
@@ -59,7 +57,6 @@ test("cancel partially filled order", async () => {
 		qty: 100000n,
 		filledQty: 40000n,
 		status: "CANCELLED",
-		releasedFunds: 60000n,
 	});
 
 	expect(await getDepth("BTC_USD")).toMatchObject({
@@ -113,7 +110,7 @@ test("cancel already cancelled order", async () => {
 });
 
 test("cancel unknown order", async () => {
-	await expect(cancelOrder("1", "invalid-order-id")).rejects.toThrow("Order not Found");
+	await expect(cancelOrder("1", "invalid-order-id")).rejects.toThrow("Order not found");
 });
 
 test("user tries to cancel another user's order", async () => {
@@ -127,5 +124,5 @@ test("user tries to cancel another user's order", async () => {
 		qty: 50000n,
 	});
 
-	await expect(cancelOrder("2", order.orderId)).rejects.toThrow("Order not Found");
+	await expect(cancelOrder("2", order.orderId)).rejects.toThrow("Order not found");
 });

@@ -1,4 +1,6 @@
-import { BALANCES, ORDERBOOK, ORDERS } from "../src/store";
+import { BALANCES, FILLS, ORDERBOOK, ORDERS, ARCHIVED_ORDERS } from "../src/store";
+import { createOrderHandler } from "../src/handlers/createOrder";
+import { cancelOrderHandler } from "../src/handlers/cancelOrder";
 
 export function resetState() {
 	ORDERBOOK.BTC_USD = {
@@ -27,4 +29,22 @@ export function resetState() {
 	};
 
 	ORDERS.clear();
+	FILLS.length = 0;
+	ARCHIVED_ORDERS.clear();
+}
+
+export async function placeOrder(input: {
+	orderId: string;
+	userId: string;
+	side: "BUY" | "SELL";
+	type: "LIMIT" | "MARKET";
+	symbol: "BTC_USD" | "ETH_USD" | "SOL_USD";
+	price: bigint | null;
+	qty: bigint;
+}) {
+	return createOrderHandler(input);
+}
+
+export async function cancelOrder(userId: string, orderId: string) {
+	return cancelOrderHandler({ userId, orderId });
 }

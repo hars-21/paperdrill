@@ -54,8 +54,10 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 			(f) => f.buyOrderId === affected.orderId || f.sellOrderId === affected.orderId,
 		);
 
+		const eventType = affected.status === "FILLED" ? "order.filled" : "order.partially_filled";
+
 		emitEvent({
-			type: "order.filled",
+			type: eventType,
 			order: toWireOrder(
 				{ ...affected, lockedAmount: null },
 				affectedFills,
@@ -63,8 +65,10 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 			),
 		});
 
-		ORDERS.delete(affected.orderId);
-		ARCHIVED_ORDERS.set(affected.orderId, "FILLED");
+		if (affected.status === "FILLED") {
+			ORDERS.delete(affected.orderId);
+			ARCHIVED_ORDERS.set(affected.orderId, "FILLED");
+		}
 	}
 
 	if (matchResult.fills.length > 0) {
