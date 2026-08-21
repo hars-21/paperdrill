@@ -1,6 +1,5 @@
 import "dotenv/config";
 import z from "zod";
-import { snapshot } from "../snapshot";
 
 export const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "test", "production"]),

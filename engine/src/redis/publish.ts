@@ -1,8 +1,9 @@
 import { cacheClient, publisher, streamProducer } from "./client";
-import type { PublishEventMessage } from "../types/event";
-import type { Depth, Fill, Symbol } from "../types/domain";
-import { logger } from "../logger";
-import { streamEvent } from "./stream";
+import type { PublishEventMessage, StreamEventMessage } from "../types/event";
+import type { Fill, Symbol } from "../types/domain";
+import { logger } from "../util/logger";
+import { config } from "../config";
+import { bigintReplacer } from "../util";
 
 let localDepthId = 0;
 let localTradeId = 0;
@@ -16,10 +17,27 @@ async function safeIncr(key: string, fallbackFn: () => number): Promise<number> 
 	}
 }
 
+export async function streamEvent(message: StreamEventMessage) {
+	if (!streamProducer.isOpen) return;
+
+	await streamProducer.xAdd(
+		`stream:${message.event}`,
+		"*",
+		{
+			data: JSON.stringify(message, bigintReplacer),
+		},
+		{
+			TRIM: {
+				strategy: "MINID",
+				strategyModifier: "=",
+				threshold: Date.now() - config.streamRetentionMs,
+			},
+		},
+	);
+}
+
 export async function publishEvent(message: PublishEventMessage) {
-	if (!publisher.isOpen) {
-		return;
-	}
+	if (!publisher.isOpen) return;
 
 	await publisher.publish(`${message.event}:${message.symbol}`, JSON.stringify(message));
 }
@@ -35,21 +53,15 @@ export async function publishDepth({
 	qty: bigint;
 	side: "bids" | "asks";
 }) {
-	const depth: Depth = {
-		symbol,
-		bids: [],
-		asks: [],
-	};
-
-	depth[side].push({ price: price.toString(), qty: qty.toString() });
-
 	const lastUpdateId = await safeIncr("engine:depth:last_id", () => ++localDepthId);
 
 	const message: PublishEventMessage = {
 		event: "depth",
+		symbol,
+		bids: side === "bids" ? [{ price: price.toString(), qty: qty.toString() }] : [],
+		asks: side === "asks" ? [{ price: price.toString(), qty: qty.toString() }] : [],
 		lastUpdateId,
 		timestamp: Date.now(),
-		...depth,
 	};
 
 	publishEvent(message).catch((err) => {
@@ -60,6 +72,8 @@ export async function publishDepth({
 export async function publishFill(fill: Fill) {
 	const id = await safeIncr("engine:trade:last_id", () => ++localTradeId);
 
+	streamEvent({ event: "fill", fill });
+
 	const message: PublishEventMessage = {
 		event: "trade",
 		symbol: fill.symbol,
@@ -69,11 +83,6 @@ export async function publishFill(fill: Fill) {
 		id,
 		timestamp: fill.createdAt,
 	};
-
-	streamEvent({
-		event: "fill",
-		fill,
-	});
 
 	publishEvent(message).catch((err) => {
 		logger.error("Failed to publish trade", err);

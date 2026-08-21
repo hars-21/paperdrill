@@ -1,3 +1,6 @@
+import type z from "zod";
+import type { orderPayloadSchema } from "../schema";
+
 export type Side = "BUY" | "SELL";
 export type OrderType = "LIMIT" | "MARKET";
 export type Symbol = "BTC_USD" | "ETH_USD" | "SOL_USD";
@@ -5,9 +8,25 @@ export type Asset = "BTC" | "SOL" | "ETH" | "USD";
 export type OrderStatus = "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
 export type UserBalance = Record<Asset, Balance>;
 
+export type CreateOrderInput = z.infer<typeof orderPayloadSchema>;
+
 export interface Balance {
 	available: bigint;
 	locked: bigint;
+}
+
+export interface InternalOrder {
+	orderId: string;
+	userId: string;
+	side: Side;
+	type: OrderType;
+	symbol: Symbol;
+	price: bigint | null;
+	qty: bigint;
+	filledQty: bigint;
+	status: OrderStatus;
+	lockedAmount: bigint | null;
+	createdAt: number;
 }
 
 export interface RestingOrder {
@@ -20,8 +39,6 @@ export interface RestingOrder {
 	qty: bigint;
 	filledQty: bigint;
 	status: OrderStatus;
-	fills: Fill[];
-	averagePrice: bigint | null;
 	createdAt: number;
 }
 
@@ -71,16 +88,6 @@ export interface Market {
 
 	bids: Map<bigint, PriceLevel>;
 	asks: Map<bigint, PriceLevel>;
-}
-
-export interface CreateOrderInput {
-	orderId: string;
-	userId: string;
-	side: Side;
-	type: OrderType;
-	symbol: Symbol;
-	price: bigint | null;
-	qty: bigint;
 }
 
 export interface DepthLevel {

@@ -1,8 +1,8 @@
 import fs from "fs/promises";
-import { BALANCES, FILLS, ORDERBOOK, ORDERS } from "./store";
-import type { OrderRecord, PriceLevel } from "./types/domain";
+import { BALANCES, FILLS, ORDERBOOK, ORDERS } from "../store";
+import type { OrderRecord, PriceLevel } from "../types/domain";
 import { logger } from "./logger";
-import { cacheClient } from "./redis/client";
+import { cacheClient } from "../redis/client";
 
 const SNAPSHOT_VERSION = 1;
 const SNAPSHOT_PATH = "snapshots/snapshot.json";
@@ -20,31 +20,32 @@ function bigintReviver(_key: string, value: unknown) {
 
 export async function snapshot() {
 	const jobsLastId = (await cacheClient.get("engine:jobs:last_id")) ?? "0-0";
-	const ackLastId = (await cacheClient.get("engine:ack:last_id")) ?? "0-0";
 
 	const snapshotData = {
 		metadata: {
 			version: SNAPSHOT_VERSION,
 			snapshotAt: Date.now(),
 			jobsLastId,
-			ackLastId,
 		},
 		balances: { ...BALANCES },
 		orderbook: {
 			BTC_USD: {
-				...ORDERBOOK.BTC_USD,
-				bids: Object.fromEntries(new Map(ORDERBOOK.BTC_USD.bids)),
-				asks: Object.fromEntries(new Map(ORDERBOOK.BTC_USD.asks)),
+				bestBid: ORDERBOOK.BTC_USD.bestBid,
+				bestAsk: ORDERBOOK.BTC_USD.bestAsk,
+				bids: Object.fromEntries(ORDERBOOK.BTC_USD.bids),
+				asks: Object.fromEntries(ORDERBOOK.BTC_USD.asks),
 			},
 			SOL_USD: {
-				...ORDERBOOK.SOL_USD,
-				bids: Object.fromEntries(new Map(ORDERBOOK.SOL_USD.bids)),
-				asks: Object.fromEntries(new Map(ORDERBOOK.SOL_USD.asks)),
+				bestBid: ORDERBOOK.SOL_USD.bestBid,
+				bestAsk: ORDERBOOK.SOL_USD.bestAsk,
+				bids: Object.fromEntries(ORDERBOOK.SOL_USD.bids),
+				asks: Object.fromEntries(ORDERBOOK.SOL_USD.asks),
 			},
 			ETH_USD: {
-				...ORDERBOOK.ETH_USD,
-				bids: Object.fromEntries(new Map(ORDERBOOK.ETH_USD.bids)),
-				asks: Object.fromEntries(new Map(ORDERBOOK.ETH_USD.asks)),
+				bestBid: ORDERBOOK.ETH_USD.bestBid,
+				bestAsk: ORDERBOOK.ETH_USD.bestAsk,
+				bids: Object.fromEntries(ORDERBOOK.ETH_USD.bids),
+				asks: Object.fromEntries(ORDERBOOK.ETH_USD.asks),
 			},
 		},
 		fills: [...FILLS],
@@ -93,7 +94,6 @@ export async function loadSnapshot() {
 
 		if (parsed.metadata) {
 			await cacheClient.set("engine:jobs:last_id", parsed.metadata.jobsLastId);
-			await cacheClient.set("engine:ack:last_id", parsed.metadata.ackLastId);
 		}
 
 		logger.info("Snapshot loaded", { metadata: parsed.metadata });

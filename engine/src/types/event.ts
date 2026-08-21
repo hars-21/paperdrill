@@ -28,3 +28,23 @@ export type StreamEventMessage =
 			event: "fill";
 			fill: Fill;
 	  };
+
+export interface OrderEvent {
+	type: "order.created" | "order.filled" | "order.partially_filled" | "order.cancelled";
+	order: OrderRecord;
+}
+
+export interface FillEvent {
+	type: "fill.created";
+	fill: Fill;
+}
+
+export interface DepthEvent {
+	type: "depth.changed";
+	symbol: Symbol;
+	side: "bids" | "asks";
+	price: bigint;
+	qty: bigint;
+}
+
+export type EngineEvent = OrderEvent | FillEvent | DepthEvent;

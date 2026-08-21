@@ -1,4 +1,4 @@
-import type { Fill, Market, OrderRecord, Symbol, UserBalance } from "./types/domain";
+import type { Fill, InternalOrder, Market, OrderStatus, Symbol, UserBalance } from "./types/domain";
 
 // --- In-memory state ---
 /*
@@ -110,7 +110,9 @@ export const ORDERBOOK: Record<Symbol, Market> = {
 		},
 	];
 */
-export const ORDERS = new Map<string, OrderRecord>();
+export const ORDERS = new Map<string, InternalOrder>();
+
+export const ARCHIVED_ORDERS = new Map<string, OrderStatus>();
 
 /*
 	FILLS = [
