@@ -1,9 +1,10 @@
 import "dotenv/config";
 import { pool } from "./db";
-import { cacheClient, connectRedis, disconnectRedis, sendAck, streamConsumer } from "./redis";
+import { cacheClient, connectRedis, disconnectRedis, streamConsumer } from "./redis";
+import { config } from "./config";
 import { logger } from "./logger";
 import { flushCandles } from "./candle";
-import { handleFill, handleOrder } from "./persistence";
+import { flushBatch, queueFill, queueOrder } from "./persistence";
 import type { StreamFill, StreamOrder } from "./types";
 
 const abortController = new AbortController();
@@ -23,7 +24,7 @@ logger.info("Worker started, listening for stream events");
 let lastFillId = (await cacheClient.get("worker:fill:last_id")) ?? "0-0";
 let lastOrderId = (await cacheClient.get("worker:order:last_id")) ?? "0-0";
 
-const flushInterval = setTimeout(
+const candleFlushInterval = setTimeout(
 	() => {
 		const id = setInterval(async () => {
 			if (abortController.signal.aborted) {
@@ -41,9 +42,39 @@ const flushInterval = setTimeout(
 	60000 - (Date.now() % 60000),
 );
 
-processMessages().catch((err) => logger.error("Worker process error", err));
+const batchInterval = setInterval(() => {
+	void flushAndCheckpoint();
+}, config.flushIntervalMs);
 
-async function processMessages() {
+let flushing = false;
+
+async function flushAndCheckpoint() {
+	if (flushing) return;
+	flushing = true;
+
+	const fillCursor = lastFillId;
+	const orderCursor = lastOrderId;
+
+	try {
+		await flushBatch();
+	} catch {
+		flushing = false;
+		return;
+	}
+
+	try {
+		await Promise.all([
+			cacheClient.set("worker:fill:last_id", fillCursor),
+			cacheClient.set("worker:order:last_id", orderCursor),
+		]);
+	} catch (err) {
+		logger.error("Failed to checkpoint stream cursors", err);
+	}
+
+	flushing = false;
+}
+
+async function main() {
 	const signal = abortController.signal;
 
 	for (;;) {
@@ -81,23 +112,19 @@ async function processMessages() {
 
 			for (const event of orderEvents) {
 				try {
-					await handleOrder(event.order);
+					queueOrder(event.order);
 					lastOrderId = event.id;
-					await cacheClient.set("worker:order:last_id", event.id);
-					await sendAck("order", [event.order.orderId]);
 				} catch (err) {
-					logger.error("Failed to process order event", err);
+					logger.error("Failed to queue order event", err);
 				}
 			}
 
 			for (const event of fillEvents) {
 				try {
-					await handleFill(event.fill);
+					queueFill(event.fill);
 					lastFillId = event.id;
-					await cacheClient.set("worker:fill:last_id", event.id);
-					await sendAck("fill", [event.fill.fillId]);
 				} catch (err) {
-					logger.error("Failed to process fill event", err);
+					logger.error("Failed to queue fill event", err);
 				}
 			}
 		} catch (err) {
@@ -106,6 +133,8 @@ async function processMessages() {
 		}
 	}
 }
+
+main().catch((err) => logger.error("Worker process error", err));
 
 async function gracefulShutdown(signal: string) {
 	logger.info(`Received ${signal}, shutting down...`);
@@ -116,9 +145,16 @@ async function gracefulShutdown(signal: string) {
 	}, 10000);
 
 	abortController.abort();
-	clearTimeout(flushInterval);
+	clearTimeout(candleFlushInterval);
+	clearInterval(batchInterval);
 
-	await flushCandles();
+	try {
+		await flushCandles();
+		await flushAndCheckpoint();
+	} catch (err) {
+		logger.error("Error during shutdown flush", err);
+	}
+
 	await disconnectRedis();
 	await pool.end();
 

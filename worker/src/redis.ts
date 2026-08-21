@@ -21,21 +21,3 @@ export async function connectRedis() {
 export async function disconnectRedis() {
 	await Promise.allSettled([publisher.quit(), streamConsumer.quit(), cacheClient.quit()]);
 }
-
-export async function sendAck(type: "fill" | "order", ids: string[]) {
-	if (!publisher.isOpen) return;
-	await publisher.xAdd(
-		"stream:ack",
-		"*",
-		{
-			data: JSON.stringify({ type, ids }),
-		},
-		{
-			TRIM: {
-				strategy: "MINID",
-				strategyModifier: "=",
-				threshold: Date.now() - config.streamRetentionMs,
-			},
-		},
-	);
-}

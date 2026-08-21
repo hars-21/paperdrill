@@ -11,6 +11,7 @@ import { logger } from "./util/logger";
 import { snapshot, loadSnapshot } from "./util/snapshot";
 import { dispatch } from "./core/dispatcher";
 import { bigintReplacer } from "./util";
+import "./core/events";
 
 const abortController = new AbortController();
 
