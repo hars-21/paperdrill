@@ -37,7 +37,7 @@ app.get("/health", async (_req: Request, res: Response) => {
 	}
 });
 
-app.use("/", appRouter);
+app.use("/v1", appRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 	logger.error("Unhandled error", err);

@@ -30,11 +30,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 		const promise = (async () => {
 			try {
 				const data = await api.getMe();
+				const balance = await api.getBalance();
 				const u = {
 					id: data.userId,
 					email: data.email,
 					name: data.name,
-					balance: data.balance,
+					balance,
 				};
 				userRef.current = u;
 				setUser(u);

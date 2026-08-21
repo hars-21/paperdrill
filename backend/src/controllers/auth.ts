@@ -4,9 +4,6 @@ import type { Request, Response } from "express";
 import { signupSchema, signinSchema } from "../types/auth";
 import { createToken } from "../utils/auth";
 import { sendValidationError } from "../utils/validation";
-import { getUserId } from "./exchange";
-import { sendToEngine } from "../utils/engineClient";
-import { formatBalance } from "../utils/formatter";
 import { logger } from "../utils/logger";
 import { config } from "../config";
 
@@ -90,38 +87,4 @@ export async function signout(_req: Request, res: Response) {
 		.status(200)
 		.clearCookie("token", config.cookie)
 		.json({ success: true, message: "Signed out successfully" });
-}
-
-export async function getUserData(req: Request, res: Response) {
-	const userId = getUserId(req);
-
-	try {
-		const user = await prisma.user.findUnique({
-			where: {
-				id: userId,
-			},
-		});
-
-		if (!user) {
-			res.status(400).json({ error: "User not found" });
-			return;
-		}
-
-		const engineResponse = await sendToEngine("get_user_balance", { userId });
-
-		if (!engineResponse.success) {
-			res.status(400).json({ error: engineResponse.error });
-			return;
-		}
-
-		res.status(200).json({
-			userId: user.id,
-			email: user.email,
-			name: user.name,
-			balance: formatBalance(engineResponse.data as Record<string, Record<string, unknown>>),
-		});
-	} catch (e) {
-		logger.error("getUserData failed", e);
-		res.status(500).json({ error: "Internal server error" });
-	}
 }

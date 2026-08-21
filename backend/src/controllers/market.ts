@@ -13,7 +13,6 @@ const intervalMap = {
 	"1D": "1 day",
 };
 
-// Markets
 export async function getMarkets(_req: Request, res: Response) {
 	try {
 		const markets = await prisma.market.findMany();

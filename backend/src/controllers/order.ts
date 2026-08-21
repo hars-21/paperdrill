@@ -5,11 +5,10 @@ import { sendValidationError } from "../utils/validation";
 import { marketStore } from "../store/market";
 import { toBigInt } from "../utils/convert";
 import { formatOrder, formatOrders, formatCancel } from "../utils/formatter";
-import { getUserId } from "./exchange";
+import { getUserId } from "./user";
 import { prisma } from "../db";
 import { logger } from "../utils/logger";
 
-// Orders
 export async function createOrder(req: Request, res: Response) {
 	const userId = getUserId(req);
 	const parsedBody = orderBodySchema.safeParse(req.body);

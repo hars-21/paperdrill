@@ -2,7 +2,7 @@ import type { CancelResult, DepthSnapshot, Fill, OrderResult, UserData } from "@
 import { config } from "./env";
 import type { Candle, Market, OrderRecord, UserBalance } from "@/types";
 
-const BASE = config.apiBaseUrl;
+const BASE = `${config.apiBaseUrl}/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	try {
@@ -38,25 +38,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
 	getMe(): Promise<UserData> {
-		return request<UserData>("/me");
+		return request<UserData>("/users/me");
 	},
 
 	signin(email: string, password: string): Promise<{ userId: string; name: string }> {
-		return request<{ userId: string; name: string }>("/signin", {
+		return request<{ userId: string; name: string }>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ email, password }),
 		});
 	},
 
 	signup(email: string, name: string, password: string): Promise<{ userId: string; name: string }> {
-		return request<{ userId: string; name: string }>("/signup", {
+		return request<{ userId: string; name: string }>("/auth/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
 		});
 	},
 
 	signout(): Promise<{ success: boolean; message: string }> {
-		return request<{ success: boolean; message: string }>("/signout", {
+		return request<{ success: boolean; message: string }>("/auth/logout", {
 			method: "POST",
 		});
 	},
@@ -66,7 +66,7 @@ export const api = {
 	},
 
 	getDepth(symbol: string): Promise<DepthSnapshot> {
-		return request<DepthSnapshot>(`/markets/${symbol}/depth`);
+		return request<DepthSnapshot>(`/markets/${symbol}/orderbook`);
 	},
 
 	getTrades(symbol: string, limit?: number): Promise<Fill[]> {
