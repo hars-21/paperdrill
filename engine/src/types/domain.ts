@@ -26,6 +26,7 @@ export interface InternalOrder {
 	filledQty: bigint;
 	status: OrderStatus;
 	lockedAmount: bigint | null;
+	spentAmount: bigint;
 	createdAt: number;
 }
 
@@ -39,6 +40,7 @@ export interface RestingOrder {
 	qty: bigint;
 	filledQty: bigint;
 	status: OrderStatus;
+	spentAmount: bigint;
 	createdAt: number;
 }
 

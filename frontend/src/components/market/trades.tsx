@@ -52,7 +52,7 @@ export function Trades({
 					id: String(data.id ?? ""),
 					price: String(data.price ?? "0"),
 					qty: String(data.qty ?? "0"),
-					side: (data.side === "BUY" || data.side === "SELL" ? data.side : "BUY") as "BUY" | "SELL",
+					side: data.maker ? "SELL" : "BUY",
 					timestamp: ts,
 				};
 				setTrades((prev) => [trade, ...prev].slice(0, 50));

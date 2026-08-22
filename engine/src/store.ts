@@ -1,4 +1,5 @@
 import type { Fill, InternalOrder, Market, OrderStatus, Symbol, UserBalance } from "./types/domain";
+import { config } from "./config";
 
 // --- In-memory state ---
 /*
@@ -115,17 +116,32 @@ export const ORDERS = new Map<string, InternalOrder>();
 export const ARCHIVED_ORDERS = new Map<string, OrderStatus>();
 
 /*
-	FILLS = [
-		{
-			fillId: "a4c96039-ba36-4491-8530-263c1e69f02e",
-			symbol: "SOL_USD",
-			price: 50,
-			qty: 10,
-			buyOrderId: "81dbd809-d762-4d34-9a86-2fdd635f917a",
-			sellOrderId: "9f592d5c-1856-4b72-9bcb-c19ef34408f9",
-			isBuyerMaker: true,
-			createdAt: 1782032853506,
-		},
-	];
+	RECENT_TRADES = {
+		SOL_USD: [
+			{
+				fillId: "a4c96039-ba36-4491-8530-263c1e69f02e",
+				symbol: "SOL_USD",
+				price: 50,
+				qty: 10,
+				buyOrderId: "81dbd809-d762-4d34-9a86-2fdd635f917a",
+				sellOrderId: "9f592d5c-1856-4b72-9bcb-c19ef34408f9",
+				isBuyerMaker: true,
+				createdAt: 1782032853506,
+			},
+		],
+	};
 */
-export const FILLS: Fill[] = [];
+export const RECENT_TRADES: Record<Symbol, Fill[]> = {
+	BTC_USD: [],
+	SOL_USD: [],
+	ETH_USD: [],
+};
+
+export function recordFill(fill: Fill) {
+	const trades = RECENT_TRADES[fill.symbol];
+	trades.push(fill);
+
+	if (trades.length > config.recentTradesLimit) {
+		trades.splice(0, trades.length - config.recentTradesLimit);
+	}
+}

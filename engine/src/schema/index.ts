@@ -1,4 +1,5 @@
 import z from "zod";
+import { config } from "../config";
 
 export const orderPayloadSchema = z.discriminatedUnion("type", [
 	z.object({
@@ -32,4 +33,8 @@ export const userPayloadSchema = z.object({
 export const orderIdPayloadSchema = z.object({
 	userId: z.string().trim().min(1, "userId is required"),
 	orderId: z.string().trim().min(1, "orderId is required"),
+});
+
+export const tradesPayloadSchema = symbolPayloadSchema.extend({
+	limit: z.coerce.number().positive().max(config.recentTradesLimit).optional(),
 });

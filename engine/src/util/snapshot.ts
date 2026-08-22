@@ -1,10 +1,10 @@
 import fs from "fs/promises";
-import { BALANCES, FILLS, ORDERBOOK, ORDERS } from "../store";
-import type { OrderRecord, PriceLevel } from "../types/domain";
+import { BALANCES, ORDERBOOK, ORDERS, RECENT_TRADES } from "../store";
+import type { Fill, InternalOrder, PriceLevel } from "../types/domain";
 import { logger } from "./logger";
 import { cacheClient } from "../redis/client";
 
-const SNAPSHOT_VERSION = 1;
+const SNAPSHOT_VERSION = 2;
 const SNAPSHOT_PATH = "snapshots/snapshot.json";
 
 function bigintReplacer(_key: string, value: unknown) {
@@ -48,7 +48,7 @@ export async function snapshot() {
 				asks: Object.fromEntries(ORDERBOOK.ETH_USD.asks),
 			},
 		},
-		fills: [...FILLS],
+		recentTrades: RECENT_TRADES,
 		orders: Object.fromEntries(ORDERS),
 	};
 
@@ -86,10 +86,14 @@ export async function loadSnapshot() {
 			);
 		}
 
-		FILLS.push(...parsed.fills);
-
 		for (const [key, value] of Object.entries(parsed.orders)) {
-			ORDERS.set(key, value as OrderRecord);
+			ORDERS.set(key, value as InternalOrder);
+		}
+
+		if (parsed.recentTrades) {
+			for (const symbol of ["BTC_USD", "SOL_USD", "ETH_USD"] as const) {
+				RECENT_TRADES[symbol] = (parsed.recentTrades[symbol] as Fill[]) ?? [];
+			}
 		}
 
 		if (parsed.metadata) {

@@ -8,6 +8,7 @@ export const envSchema = z.object({
 	LOG_LEVEL: z.enum(["debug", "info"]),
 	SNAPSHOT_INTERVAL: z.string().default("3600000"),
 	STREAM_RETENTION_MS: z.coerce.number().default(30 * 60 * 1000),
+	RECENT_TRADES_LIMIT: z.coerce.number().positive().default(50),
 });
 
 const env = envSchema.parse(process.env);
@@ -19,4 +20,5 @@ export const config = {
 	logLevel: env.LOG_LEVEL,
 	snapshotInterval: parseInt(env.SNAPSHOT_INTERVAL, 10),
 	streamRetentionMs: env.STREAM_RETENTION_MS,
+	recentTradesLimit: env.RECENT_TRADES_LIMIT,
 };

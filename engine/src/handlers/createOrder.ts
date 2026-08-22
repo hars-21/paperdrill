@@ -40,6 +40,7 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 		filledQty: 0n,
 		status: "OPEN",
 		lockedAmount: lockedResult.locked,
+		spentAmount: 0n,
 		createdAt: Date.now(),
 	};
 
@@ -99,7 +100,7 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 	}
 
 	if (order.status === "FILLED" || order.status === "CANCELLED") {
-		releaseBalance(order, matchResult.fills);
+		releaseBalance(order);
 	}
 
 	return {

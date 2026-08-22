@@ -38,21 +38,17 @@ export async function getTrades(req: Request, res: Response) {
 		return;
 	}
 
-	try {
-		const { symbol } = parsedParams.data;
-		const { limit = 50 } = parsedQueries.data;
+	const { symbol } = parsedParams.data;
+	const { limit = 50 } = parsedQueries.data;
 
-		const trades = await prisma.fill.findMany({
-			where: { symbol },
-			orderBy: { createdAt: "desc" },
-			take: limit,
-		});
+	const engineResponse = await sendToEngine("get_trades", { symbol, limit });
 
-		res.status(200).json(formatTrades(trades as Record<string, unknown>[]));
-	} catch (err) {
-		logger.error("Failed to fetch trades", err);
-		res.status(500).json({ error: "Internal server error" });
+	if (!engineResponse.success) {
+		res.status(400).json({ error: engineResponse.error });
+		return;
 	}
+
+	res.status(200).json(formatTrades(engineResponse.data as Record<string, unknown>[]));
 }
 
 export async function getDepth(req: Request, res: Response) {

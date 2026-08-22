@@ -1,4 +1,4 @@
-import { BALANCES, FILLS, ORDERBOOK, ORDERS, ARCHIVED_ORDERS } from "../src/store";
+import { BALANCES, ORDERBOOK, ORDERS, ARCHIVED_ORDERS, RECENT_TRADES } from "../src/store";
 import { createOrderHandler } from "../src/handlers/createOrder";
 import { cancelOrderHandler } from "../src/handlers/cancelOrder";
 
@@ -29,7 +29,9 @@ export function resetState() {
 	};
 
 	ORDERS.clear();
-	FILLS.length = 0;
+	RECENT_TRADES.BTC_USD = [];
+	RECENT_TRADES.SOL_USD = [];
+	RECENT_TRADES.ETH_USD = [];
 	ARCHIVED_ORDERS.clear();
 }
 

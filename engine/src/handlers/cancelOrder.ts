@@ -1,6 +1,6 @@
 import { releaseBalance } from "../modules/balance";
 import { removeOrderFromBook } from "../modules/orderbook";
-import { ORDERS, ARCHIVED_ORDERS, FILLS } from "../store";
+import { ORDERS, ARCHIVED_ORDERS } from "../store";
 import { emitEvent } from "../core/eventBus";
 import { orderIdPayloadSchema } from "../schema";
 
@@ -33,10 +33,7 @@ export async function cancelOrderHandler(payload: Record<string, unknown>) {
 
 	order.status = "CANCELLED";
 
-	const orderFills = FILLS.filter(
-		(f) => f.buyOrderId === orderId || f.sellOrderId === orderId,
-	);
-	releaseBalance(order, orderFills);
+	releaseBalance(order);
 
 	ORDERS.delete(orderId);
 	ARCHIVED_ORDERS.set(orderId, "CANCELLED");

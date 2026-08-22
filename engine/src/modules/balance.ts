@@ -125,8 +125,8 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 	return results;
 }
 
-export function releaseBalance(order: InternalOrder, fills: Fill[]): ReleaseResult {
-	const { side, symbol, qty, filledQty, lockedAmount } = order;
+export function releaseBalance(order: InternalOrder): ReleaseResult {
+	const { side, symbol, qty, filledQty, lockedAmount, spentAmount } = order;
 
 	const market = ORDERBOOK[symbol];
 	const userBalance = getUserBalance(order.userId);
@@ -135,9 +135,7 @@ export function releaseBalance(order: InternalOrder, fills: Fill[]): ReleaseResu
 	const base = userBalance[market.baseAsset];
 
 	if (side === "BUY") {
-		const scale = qtyScale(market.qtyPrecision);
-		const spent = fills.reduce((t, f) => t + f.price * f.qty, 0n) / scale;
-		const remaining = lockedAmount! - spent;
+		const remaining = lockedAmount! - spentAmount;
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");
 		if (quote.locked < remaining) throw new Error("Insufficient Locked Balance");

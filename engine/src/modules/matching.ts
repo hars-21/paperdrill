@@ -1,5 +1,5 @@
 import { recomputeBestPrice, addOrderToBook, type DepthChange } from "./orderbook";
-import { FILLS, ORDERBOOK } from "../store";
+import { ORDERBOOK, recordFill } from "../store";
 import type { Fill, InternalOrder, RestingOrder } from "../types/domain";
 
 export interface MatchResult {
@@ -60,7 +60,11 @@ export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
 				createdAt: Date.now(),
 			};
 
-			FILLS.push(fill);
+			const cost = (bestPrice * matchQty) / 10n ** BigInt(market.qtyPrecision);
+			if (side === "BUY") order.spentAmount += cost;
+			else restingOrder.spentAmount += cost;
+
+			recordFill(fill);
 			fills.push(fill);
 
 			priceLevel.totalQty -= matchQty;
