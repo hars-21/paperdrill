@@ -44,7 +44,7 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 		createdAt: Date.now(),
 	};
 
-	ORDERS.set(order.orderId, order);
+	ORDERS.set(order.id, order);
 
 	emitEvent({ type: "order.created", order: toWireOrder(order, [], null) });
 
@@ -52,7 +52,7 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 
 	for (const affected of matchResult.affectedOrders) {
 		const affectedFills = matchResult.fills.filter(
-			(f) => f.buyOrderId === affected.orderId || f.sellOrderId === affected.orderId,
+			(f) => f.buyOrderId === affected.id || f.sellOrderId === affected.id,
 		);
 
 		const eventType = affected.status === "FILLED" ? "order.filled" : "order.partially_filled";
@@ -67,8 +67,8 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 		});
 
 		if (affected.status === "FILLED") {
-			ORDERS.delete(affected.orderId);
-			ARCHIVED_ORDERS.set(affected.orderId, "FILLED");
+			ORDERS.delete(affected.id);
+			ARCHIVED_ORDERS.set(affected.id, "FILLED");
 		}
 	}
 
@@ -85,12 +85,12 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 	if (order.type === "MARKET" && matchResult.finalStatus === "PARTIALLY_FILLED") {
 		order.status = "CANCELLED";
 		emitEvent({ type: "order.cancelled", order: toWireOrder(order, [], null) });
-		ORDERS.delete(order.orderId);
-		ARCHIVED_ORDERS.set(order.orderId, "CANCELLED");
+		ORDERS.delete(order.id);
+		ARCHIVED_ORDERS.set(order.id, "CANCELLED");
 	} else if (matchResult.finalStatus === "FILLED") {
 		emitEvent({ type: "order.filled", order: toWireOrder(order, matchResult.fills, averagePrice) });
-		ORDERS.delete(order.orderId);
-		ARCHIVED_ORDERS.set(order.orderId, "FILLED");
+		ORDERS.delete(order.id);
+		ARCHIVED_ORDERS.set(order.id, "FILLED");
 	} else if (matchResult.finalStatus === "PARTIALLY_FILLED") {
 		emitEvent({ type: "order.partially_filled", order: toWireOrder(order, [], null) });
 	}
@@ -104,7 +104,7 @@ export async function createOrderHandler(payload: Record<string, unknown>) {
 	}
 
 	return {
-		orderId: order.orderId,
+		id: order.id,
 		symbol: order.symbol,
 		status: order.status,
 		filledQty: order.filledQty,

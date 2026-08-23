@@ -3,11 +3,8 @@ import type { orderPayloadSchema } from "../schema";
 
 export type Side = "BUY" | "SELL";
 export type OrderType = "LIMIT" | "MARKET";
-export type Symbol = "BTC_USD" | "ETH_USD" | "SOL_USD";
-export type Asset = "BTC" | "SOL" | "ETH" | "USD";
 export type OrderStatus = "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
-export type UserBalance = Record<Asset, Balance>;
-
+export type UserBalance = Record<string, Balance>;
 export type CreateOrderInput = z.infer<typeof orderPayloadSchema>;
 
 export interface Balance {
@@ -16,11 +13,11 @@ export interface Balance {
 }
 
 export interface InternalOrder {
-	orderId: string;
+	id: string;
 	userId: string;
 	side: Side;
 	type: OrderType;
-	symbol: Symbol;
+	symbol: string;
 	price: bigint | null;
 	qty: bigint;
 	filledQty: bigint;
@@ -31,11 +28,11 @@ export interface InternalOrder {
 }
 
 export interface RestingOrder {
-	orderId: string;
+	id: string;
 	userId: string;
 	side: Side;
 	type: "LIMIT";
-	symbol: Symbol;
+	symbol: string;
 	price: bigint;
 	qty: bigint;
 	filledQty: bigint;
@@ -45,24 +42,25 @@ export interface RestingOrder {
 }
 
 export interface OrderRecord {
-	orderId: string;
+	id: string;
 	userId: string;
 	side: Side;
 	type: OrderType;
-	symbol: Symbol;
+	symbol: string;
 	price: bigint | null;
 	qty: bigint;
 	filledQty: bigint;
 	status: OrderStatus;
 	lockedAmount: bigint | null;
+	spentAmount: bigint;
 	fills: Fill[];
 	averagePrice: bigint | null;
 	createdAt: number;
 }
 
 export interface Fill {
-	fillId: string;
-	symbol: Symbol;
+	id: string;
+	symbol: string;
 	price: bigint;
 	qty: bigint;
 	buyOrderId: string;
@@ -79,8 +77,8 @@ export interface PriceLevel {
 }
 
 export interface Market {
-	baseAsset: Asset;
-	quoteAsset: Asset;
+	baseAsset: string;
+	quoteAsset: string;
 
 	pricePrecision: number;
 	qtyPrecision: number;
@@ -98,7 +96,7 @@ export interface DepthLevel {
 }
 
 export interface Depth {
-	symbol: Symbol;
+	symbol: string;
 	bids: DepthLevel[];
 	asks: DepthLevel[];
 }

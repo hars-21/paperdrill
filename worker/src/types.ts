@@ -11,15 +11,15 @@ export interface Candle {
 export interface Trade {
 	event: "trade";
 	symbol: string;
+	id: string;
 	price: bigint;
 	qty: bigint;
 	maker: boolean;
-	id: number;
 	timestamp: number;
 }
 
 export interface StreamFill {
-	fillId: string;
+	id: string;
 	symbol: string;
 	price: string;
 	qty: string;
@@ -32,7 +32,7 @@ export interface StreamFill {
 }
 
 export interface StreamOrder {
-	orderId: string;
+	id: string;
 	userId: string;
 	symbol: string;
 	price: string | null;
@@ -41,7 +41,8 @@ export interface StreamOrder {
 	side: "BUY" | "SELL";
 	filledQty: string;
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
-	lockedAmount: string;
+	lockedAmount: string | null;
+	spentAmount: string;
 	fills: unknown[];
 	averagePrice: string | null;
 	createdAt: number;

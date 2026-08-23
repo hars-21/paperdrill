@@ -11,12 +11,12 @@ export async function cancelOrderHandler(payload: Record<string, unknown>) {
 		throw new Error(parsed.error.issues[0]?.message ?? "Invalid cancel payload");
 	}
 
-	const { userId, orderId } = parsed.data;
+	const { userId, id } = parsed.data;
 
-	const order = ORDERS.get(orderId);
+	const order = ORDERS.get(id);
 
 	if (!order || order.userId !== userId) {
-		const archivedStatus = ARCHIVED_ORDERS.get(orderId);
+		const archivedStatus = ARCHIVED_ORDERS.get(id);
 
 		if (archivedStatus === "FILLED") {
 			throw new Error("Filled orders cannot be cancelled");
@@ -35,8 +35,8 @@ export async function cancelOrderHandler(payload: Record<string, unknown>) {
 
 	releaseBalance(order);
 
-	ORDERS.delete(orderId);
-	ARCHIVED_ORDERS.set(orderId, "CANCELLED");
+	ORDERS.delete(id);
+	ARCHIVED_ORDERS.set(id, "CANCELLED");
 
 	emitEvent({
 		type: "order.cancelled",
@@ -48,7 +48,7 @@ export async function cancelOrderHandler(payload: Record<string, unknown>) {
 	}
 
 	return {
-		orderId: order.orderId,
+		id: order.id,
 		symbol: order.symbol,
 		status: order.status,
 		qty: order.qty,

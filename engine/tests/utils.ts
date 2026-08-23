@@ -3,6 +3,9 @@ import { createOrderHandler } from "../src/handlers/createOrder";
 import { cancelOrderHandler } from "../src/handlers/cancelOrder";
 
 export function resetState() {
+	for (const symbol of Object.keys(ORDERBOOK)) delete ORDERBOOK[symbol];
+	for (const symbol of Object.keys(RECENT_TRADES)) delete RECENT_TRADES[symbol];
+
 	ORDERBOOK.BTC_USD = {
 		baseAsset: "BTC",
 		quoteAsset: "USD",
@@ -30,23 +33,21 @@ export function resetState() {
 
 	ORDERS.clear();
 	RECENT_TRADES.BTC_USD = [];
-	RECENT_TRADES.SOL_USD = [];
-	RECENT_TRADES.ETH_USD = [];
 	ARCHIVED_ORDERS.clear();
 }
 
 export async function placeOrder(input: {
-	orderId: string;
+	id: string;
 	userId: string;
 	side: "BUY" | "SELL";
 	type: "LIMIT" | "MARKET";
-	symbol: "BTC_USD" | "ETH_USD" | "SOL_USD";
+	symbol: string;
 	price: bigint | null;
 	qty: bigint;
 }) {
 	return createOrderHandler(input);
 }
 
-export async function cancelOrder(userId: string, orderId: string) {
-	return cancelOrderHandler({ userId, orderId });
+export async function cancelOrder(userId: string, id: string) {
+	return cancelOrderHandler({ userId, id });
 }

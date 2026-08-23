@@ -3,7 +3,7 @@ export const config = {
 	email: process.env.BOT_EMAIL ?? "bot@paperdrill.dev",
 	password: process.env.BOT_PASSWORD ?? "bot123",
 
-	market: (process.env.MARKET ?? "SOL_USD") as "BTC_USD" | "ETH_USD" | "SOL_USD",
+	market: process.env.MARKET ?? "SOL_USD",
 	pricePrecision: 2,
 	qtyPrecision: 2,
 

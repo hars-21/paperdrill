@@ -16,7 +16,7 @@ async function seed() {
 			baseAsset: "BTC",
 			quoteAsset: "USD",
 			pricePrecision: 2,
-			quantityPrecision: 4,
+			qtyPrecision: 4,
 		},
 		{
 			name: "Solana",
@@ -24,7 +24,7 @@ async function seed() {
 			baseAsset: "SOL",
 			quoteAsset: "USD",
 			pricePrecision: 2,
-			quantityPrecision: 2,
+			qtyPrecision: 2,
 		},
 		{
 			name: "Ethereum",
@@ -32,7 +32,7 @@ async function seed() {
 			baseAsset: "ETH",
 			quoteAsset: "USD",
 			pricePrecision: 2,
-			quantityPrecision: 3,
+			qtyPrecision: 3,
 		},
 	];
 

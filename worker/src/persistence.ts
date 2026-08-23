@@ -7,21 +7,21 @@ const orderBucket = new Map<string, StreamOrder>();
 const fillBucket = new Map<string, StreamFill>();
 
 export function queueOrder(order: StreamOrder) {
-	orderBucket.set(order.orderId, order);
+	orderBucket.set(order.id, order);
 }
 
 export function queueFill(fill: StreamFill) {
 	deriveData({
 		event: "trade",
 		symbol: fill.symbol,
+		id: fill.id,
 		price: BigInt(fill.price),
 		qty: BigInt(fill.qty),
 		maker: fill.isBuyerMaker,
-		id: 0,
 		timestamp: fill.createdAt,
 	});
 
-	fillBucket.set(fill.fillId, fill);
+	fillBucket.set(fill.id, fill);
 }
 
 export async function flushBatch() {
@@ -51,9 +51,9 @@ export async function flushBatch() {
 async function insertOrders(orders: StreamOrder[]) {
 	const values: unknown[] = [];
 	const rows = orders.map((order, i) => {
-		const b = i * 11;
+		const b = i * 13;
 		values.push(
-			order.orderId,
+			order.id,
 			order.userId,
 			order.symbol,
 			order.price != null ? BigInt(order.price) : null,
@@ -62,19 +62,23 @@ async function insertOrders(orders: StreamOrder[]) {
 			order.side,
 			BigInt(order.filledQty),
 			order.status,
+			order.lockedAmount != null ? BigInt(order.lockedAmount) : null,
+			BigInt(order.spentAmount),
 			order.averagePrice != null ? BigInt(order.averagePrice) : null,
 			new Date(order.createdAt),
 		);
 		const p = (n: number) => `$${b + n}`;
-		return `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ${p(7)}, ${p(8)}, ${p(9)}, ${p(10)}, ${p(11)})`;
+		return `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ${p(7)}, ${p(8)}, ${p(9)}, ${p(10)}, ${p(11)}, ${p(12)}, ${p(13)})`;
 	});
 
 	await pool.query(
-		`INSERT INTO "Order" (id, "userId", symbol, price, qty, type, side, "filledQty", status, "averagePrice", "createdAt")
+		`INSERT INTO "Order" (id, "userId", symbol, price, qty, type, side, "filledQty", status, "lockedAmount", "spentAmount", "averagePrice", "createdAt")
          VALUES ${rows.join(", ")}
          ON CONFLICT (id) DO UPDATE SET
            "filledQty" = EXCLUDED."filledQty",
            status = EXCLUDED.status,
+           "lockedAmount" = EXCLUDED."lockedAmount",
+           "spentAmount" = EXCLUDED."spentAmount",
            "averagePrice" = EXCLUDED."averagePrice"`,
 		values,
 	);
@@ -85,11 +89,11 @@ async function insertFills(fills: StreamFill[]) {
 	const rows = fills.map((fill, i) => {
 		const b = i * 10;
 		values.push(
-			fill.fillId,
+			fill.id,
 			fill.symbol,
 			BigInt(fill.price),
 			BigInt(fill.qty),
-			fill.isBuyerMaker ? "SELL" : "BUY",
+			fill.isBuyerMaker,
 			fill.buyOrderId,
 			fill.sellOrderId,
 			fill.buyerId,
@@ -101,7 +105,7 @@ async function insertFills(fills: StreamFill[]) {
 	});
 
 	await pool.query(
-		`INSERT INTO "Fill" (id, symbol, price, qty, side, "buyOrderId", "sellOrderId", "buyerId", "sellerId", "createdAt")
+		`INSERT INTO "Fill" (id, symbol, price, qty, "isBuyerMaker", "buyOrderId", "sellOrderId", "buyerId", "sellerId", "createdAt")
          VALUES ${rows.join(", ")}
          ON CONFLICT (id) DO NOTHING`,
 		values,

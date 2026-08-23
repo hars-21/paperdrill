@@ -7,7 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MarketType {
+enum OrderType {
   LIMIT
   MARKET
 }
@@ -36,46 +36,39 @@ model User {
 }
 
 model Order {
-  id            String   @id @default(uuid())
+  id            String   @id
   userId        String 
   symbol        String
   price         BigInt?
   qty           BigInt
-  type          MarketType 
+  type          OrderType 
   side          Side
   filledQty     BigInt
   status        Status
+  lockedAmount  BigInt?
+  spentAmount   BigInt
   averagePrice  BigInt?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime
 
   user          User     @relation(fields: [userId], references: [id])
-
-  buyFills      Fill[]   @relation("BuyOrder")
-  sellFills     Fill[]   @relation("SellOrder")
-
   market        Market   @relation(fields: [symbol], references: [symbol])
-
 }
 
 model Fill {
-  id          String   @id @default(uuid())
-  symbol      String
-  price       BigInt
-  qty         BigInt
-  side        Side
-  buyOrderId  String
-  sellOrderId String
-  buyerId     String
-  sellerId    String
-  createdAt   DateTime @default(now())
+  id            String   @id
+  symbol        String
+  price         BigInt
+  qty           BigInt
+  isBuyerMaker  Boolean
+  buyOrderId    String
+  sellOrderId   String
+  buyerId       String
+  sellerId      String
+  createdAt     DateTime
 
-  buyOrder    Order    @relation("BuyOrder", fields: [buyOrderId], references: [id])
-  sellOrder   Order    @relation("SellOrder", fields: [sellOrderId], references: [id])
-
-  buyer       User     @relation("FillBuyer",fields: [buyerId], references: [id])
-  seller      User     @relation("FillSeller",fields: [sellerId], references: [id])
-
-  market      Market   @relation(fields: [symbol], references: [symbol])
+  buyer         User     @relation("FillBuyer", fields: [buyerId], references: [id])
+  seller        User     @relation("FillSeller", fields: [sellerId], references: [id])
+  market        Market   @relation(fields: [symbol], references: [symbol])
 }
 
 model Market {
@@ -85,10 +78,10 @@ model Market {
   baseAsset         String
   quoteAsset        String
   pricePrecision    Int
-  quantityPrecision Int
+  qtyPrecision      Int
 
-  order Order[]
-  fills Fill[]
+  orders Order[]
+  fills  Fill[]
 }
 
 model Candle {
@@ -100,6 +93,6 @@ model Candle {
 	volume    BigInt
 	time      DateTime @db.Timestamptz()
 
-	@@unique([symbol, time])
+	@@id([symbol, time])
 	@@index([time])
 }

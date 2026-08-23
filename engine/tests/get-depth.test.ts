@@ -18,7 +18,7 @@ test("empty orderbook", async () => {
 
 test("bids sorted highest first", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -27,7 +27,7 @@ test("bids sorted highest first", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -36,7 +36,7 @@ test("bids sorted highest first", async () => {
 		qty: 30000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -69,7 +69,7 @@ test("bids sorted highest first", async () => {
 
 test("asks sorted lowest first", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -78,7 +78,7 @@ test("asks sorted lowest first", async () => {
 		qty: 30000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -87,7 +87,7 @@ test("asks sorted lowest first", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -120,7 +120,7 @@ test("asks sorted lowest first", async () => {
 
 test("same price orders should be grouped", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -129,7 +129,7 @@ test("same price orders should be grouped", async () => {
 		qty: 30000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -154,7 +154,7 @@ test("same price orders should be grouped", async () => {
 
 test("filled orders should not appear", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -163,7 +163,7 @@ test("filled orders should not appear", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -183,7 +183,7 @@ test("filled orders should not appear", async () => {
 
 test("cancelled orders should not appear", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -191,7 +191,7 @@ test("cancelled orders should not appear", async () => {
 		price: 10000n,
 		qty: 50000n,
 	});
-	await cancelOrder("1", order.orderId);
+	await cancelOrder("1", order.id);
 
 	const depth = await getDepth("BTC_USD");
 

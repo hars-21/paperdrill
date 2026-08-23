@@ -1,12 +1,11 @@
 import { cacheClient, publisher, streamProducer } from "./client";
 import type { PublishEventMessage, StreamEventMessage } from "../types/event";
-import type { Fill, Symbol } from "../types/domain";
+import type { Fill } from "../types/domain";
 import { logger } from "../util/logger";
 import { config } from "../config";
 import { bigintReplacer } from "../util";
 
 let localDepthId = 0;
-let localTradeId = 0;
 
 async function safeIncr(key: string, fallbackFn: () => number): Promise<number> {
 	try {
@@ -48,7 +47,7 @@ export async function publishDepth({
 	qty,
 	side,
 }: {
-	symbol: Symbol;
+	symbol: string;
 	price: bigint;
 	qty: bigint;
 	side: "bids" | "asks";
@@ -70,17 +69,15 @@ export async function publishDepth({
 }
 
 export async function publishFill(fill: Fill) {
-	const id = await safeIncr("engine:trade:last_id", () => ++localTradeId);
-
 	streamEvent({ event: "fill", fill });
 
 	const message: PublishEventMessage = {
 		event: "trade",
 		symbol: fill.symbol,
+		id: fill.id,
 		price: fill.price.toString(),
 		qty: fill.qty.toString(),
 		maker: fill.isBuyerMaker,
-		id,
 		timestamp: fill.createdAt,
 	};
 

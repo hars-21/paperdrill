@@ -1,46 +1,50 @@
 import { prisma } from "../db";
 import { logger } from "../utils/logger";
 
-interface Market {
+export interface MarketMetadata {
+	symbol: string;
+	baseAsset: string;
+	quoteAsset: string;
 	pricePrecision: number;
 	qtyPrecision: number;
 }
 
-export const marketStore = new Map<string, Market>();
+export const marketStore = new Map<string, MarketMetadata>();
 export const assetPrecision = new Map<string, number>();
 
-const FALLBACK_MARKETS: Record<string, Market> = {
-	BTC_USD: { pricePrecision: 2, qtyPrecision: 4 },
-	ETH_USD: { pricePrecision: 2, qtyPrecision: 3 },
-	SOL_USD: { pricePrecision: 2, qtyPrecision: 2 },
-};
-
-function setMarket(symbol: string, pricePrecision: number, qtyPrecision: number, baseAsset: string, quoteAsset: string) {
-	marketStore.set(symbol, { pricePrecision, qtyPrecision });
-	if (!assetPrecision.has(baseAsset)) assetPrecision.set(baseAsset, qtyPrecision);
-	if (!assetPrecision.has(quoteAsset)) assetPrecision.set(quoteAsset, pricePrecision);
+function setMarket(metadata: MarketMetadata) {
+	marketStore.set(metadata.symbol, metadata);
+	if (!assetPrecision.has(metadata.baseAsset)) {
+		assetPrecision.set(metadata.baseAsset, metadata.qtyPrecision);
+	}
+	if (!assetPrecision.has(metadata.quoteAsset)) {
+		assetPrecision.set(metadata.quoteAsset, metadata.pricePrecision);
+	}
 }
 
 export async function loadMarkets(): Promise<void> {
 	try {
 		const marketData = await prisma.market.findMany();
+		if (marketData.length === 0) {
+			throw new Error("No markets found in database");
+		}
+
+		marketStore.clear();
+		assetPrecision.clear();
+
 		for (const item of marketData) {
-			setMarket(item.symbol, item.pricePrecision, item.quantityPrecision, item.baseAsset, item.quoteAsset);
+			setMarket({
+				symbol: item.symbol,
+				baseAsset: item.baseAsset,
+				quoteAsset: item.quoteAsset,
+				pricePrecision: item.pricePrecision,
+				qtyPrecision: item.qtyPrecision,
+			});
 		}
 
-		if (marketData.length > 0) {
-			logger.info(`Loaded ${marketData.length} markets from database`);
-			return;
-		}
-
-		logger.warn("No markets found in database, using fallback defaults");
+		logger.info(`Loaded ${marketData.length} markets from database`);
 	} catch (err) {
-		logger.error("Failed to load markets from database, using fallback defaults", err);
+		logger.error("Failed to load markets from database", err);
+		throw err;
 	}
-
-	for (const [symbol, m] of Object.entries(FALLBACK_MARKETS)) {
-		const parts = symbol.split("_");
-		setMarket(symbol, m.pricePrecision, m.qtyPrecision, parts[0]!, parts[1]!);
-	}
-	logger.info(`Loaded ${marketStore.size} fallback markets`);
 }

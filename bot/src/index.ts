@@ -42,7 +42,7 @@ async function initMarket() {
 	if (!market) throw new Error(`Market ${config.market} not found`);
 
 	config.pricePrecision = market.pricePrecision;
-	config.qtyPrecision = market.quantityPrecision;
+	config.qtyPrecision = market.qtyPrecision;
 }
 
 async function seed(midPrice: number) {

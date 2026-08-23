@@ -49,7 +49,13 @@ export async function flushCandles() {
 				);
 
 				await pool.query(
-					`INSERT INTO "Candle" (symbol, open, high, low, close, volume, time) Values ($1, $2, $3, $4, $5, $6, $7)`,
+					`INSERT INTO "Candle" (symbol, open, high, low, close, volume, time) Values ($1, $2, $3, $4, $5, $6, $7)
+					 ON CONFLICT (symbol, time) DO UPDATE SET
+					   open = EXCLUDED.open,
+					   high = EXCLUDED.high,
+					   low = EXCLUDED.low,
+					   close = EXCLUDED.close,
+					   volume = EXCLUDED.volume`,
 					[
 						candle.symbol,
 						candle.open,
@@ -60,11 +66,11 @@ export async function flushCandles() {
 						timestamp,
 					],
 				);
-			} catch (err) {
-				logger.error("Failed to flush candle", { symbol: candle.symbol, key });
-			}
 
-			openCandles.delete(key);
+				openCandles.delete(key);
+			} catch (err) {
+				logger.error("Failed to flush candle, will retry next cycle", { symbol: candle.symbol, key });
+			}
 		}
 	}
 }

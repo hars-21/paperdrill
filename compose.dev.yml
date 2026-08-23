@@ -26,6 +26,7 @@ services:
       - ./engine:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
+      - postgres
       - redis
     networks:
       - paperdrill

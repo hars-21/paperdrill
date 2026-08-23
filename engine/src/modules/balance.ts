@@ -1,5 +1,6 @@
 import { BALANCES, ORDERBOOK } from "../store";
 import type { CreateOrderInput, InternalOrder, Fill, UserBalance } from "../types/domain";
+import { getMarket } from "./market";
 
 export interface LockResult {
 	asset: string;
@@ -7,7 +8,7 @@ export interface LockResult {
 }
 
 export interface SettleResult {
-	fillId: string;
+	id: string;
 	cost: bigint;
 	quoteAsset: string;
 	baseAsset: string;
@@ -22,19 +23,33 @@ function qtyScale(qtyPrecision: number): bigint {
 	return 10n ** BigInt(qtyPrecision);
 }
 
+function ensureMarketAssets(balance: UserBalance) {
+	const assets = new Set(
+		Object.values(ORDERBOOK).flatMap((market) => [market.baseAsset, market.quoteAsset]),
+	);
+
+	for (const asset of assets) {
+		balance[asset] ??= { available: 10000000n, locked: 0n };
+	}
+}
+
 function initializeBalance(): UserBalance {
-	return {
-		USD: { available: 10000000n, locked: 0n },
-		BTC: { available: 100000n, locked: 0n },
-		SOL: { available: 100000n, locked: 0n },
-		ETH: { available: 100000n, locked: 0n },
-	};
+	const balance: UserBalance = {};
+	ensureMarketAssets(balance);
+	return balance;
+}
+
+function getAssetBalance(balance: UserBalance, asset: string) {
+	const assetBalance = balance[asset];
+	if (!assetBalance) throw new Error(`Missing balance for asset: ${asset}`);
+	return assetBalance;
 }
 
 export function getUserBalance(userId: string): UserBalance {
 	if (!BALANCES[userId]) {
 		BALANCES[userId] = initializeBalance();
 	}
+	ensureMarketAssets(BALANCES[userId]);
 
 	return BALANCES[userId];
 }
@@ -42,11 +57,11 @@ export function getUserBalance(userId: string): UserBalance {
 export function lockBalance(order: CreateOrderInput): LockResult {
 	const { userId, side, type, symbol, price, qty } = order;
 
-	const market = ORDERBOOK[symbol];
+	const market = getMarket(symbol);
 	const userBalance = getUserBalance(userId);
 
-	const base = userBalance[market.baseAsset];
-	const quote = userBalance[market.quoteAsset];
+	const base = getAssetBalance(userBalance, market.baseAsset);
+	const quote = getAssetBalance(userBalance, market.quoteAsset);
 
 	if (side === "BUY") {
 		const scale = qtyScale(market.qtyPrecision);
@@ -94,16 +109,16 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 	for (const fill of fills) {
 		const { buyerId, sellerId, qty, price, symbol } = fill;
 
-		const market = ORDERBOOK[symbol];
+		const market = getMarket(symbol);
 
 		const buyerBalance = getUserBalance(buyerId);
 		const sellerBalance = getUserBalance(sellerId);
 
-		const buyerQuote = buyerBalance[market.quoteAsset];
-		const sellerQuote = sellerBalance[market.quoteAsset];
+		const buyerQuote = getAssetBalance(buyerBalance, market.quoteAsset);
+		const sellerQuote = getAssetBalance(sellerBalance, market.quoteAsset);
 
-		const buyerBase = buyerBalance[market.baseAsset];
-		const sellerBase = sellerBalance[market.baseAsset];
+		const buyerBase = getAssetBalance(buyerBalance, market.baseAsset);
+		const sellerBase = getAssetBalance(sellerBalance, market.baseAsset);
 
 		const scale = qtyScale(market.qtyPrecision);
 		const cost = (qty * price) / scale;
@@ -115,7 +130,7 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 		buyerBase.available += qty;
 
 		results.push({
-			fillId: fill.fillId,
+			id: fill.id,
 			cost,
 			quoteAsset: market.quoteAsset,
 			baseAsset: market.baseAsset,
@@ -128,11 +143,11 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 export function releaseBalance(order: InternalOrder): ReleaseResult {
 	const { side, symbol, qty, filledQty, lockedAmount, spentAmount } = order;
 
-	const market = ORDERBOOK[symbol];
+	const market = getMarket(symbol);
 	const userBalance = getUserBalance(order.userId);
 
-	const quote = userBalance[market.quoteAsset];
-	const base = userBalance[market.baseAsset];
+	const quote = getAssetBalance(userBalance, market.quoteAsset);
+	const base = getAssetBalance(userBalance, market.baseAsset);
 
 	if (side === "BUY") {
 		const remaining = lockedAmount! - spentAmount;

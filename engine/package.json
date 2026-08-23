@@ -10,13 +10,15 @@
 		"test": "bun test"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/pg": "^8.23.1"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
 	"dependencies": {
 		"dotenv": "^17.4.2",
+		"pg": "^8.23.0",
 		"redis": "^6.0.0",
 		"zod": "^4.4.3"
 	}

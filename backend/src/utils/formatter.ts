@@ -16,7 +16,7 @@ function getMarket(symbol: string) {
 export function formatOrder(order: Record<string, unknown>) {
 	const m = getMarket(order.symbol as string);
 
-	const orderId = (order.orderId ?? order.id) as string;
+	const orderId = order.id as string;
 	const createdAt = order.createdAt;
 
 	const formatted = {
@@ -102,7 +102,7 @@ export function formatBalance(balance: Record<string, Record<string, unknown>>) 
 export function formatCancel(result: Record<string, unknown>) {
 	const m = getMarket(result.symbol as string);
 	return {
-		id: (result.orderId ?? result.id) as string,
+		id: result.id as string,
 		symbol: result.symbol,
 		side: result.side,
 		qty: fmt(result.qty, m.qtyPrecision),

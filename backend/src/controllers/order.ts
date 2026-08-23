@@ -22,15 +22,18 @@ export async function createOrder(req: Request, res: Response) {
 
 	const market = marketStore.get(symbol);
 
-	if (!market) throw new Error(`Unknown market: ${symbol}`);
+	if (!market) {
+		res.status(400).json({ error: `Unknown market: ${symbol}` });
+		return;
+	}
 
 	const scaledQty = toBigInt(qty, market.qtyPrecision);
 	const scaledPrice =
 		type === "MARKET" ? null : toBigInt(parsedBody.data.price, market.pricePrecision);
-	const orderId = crypto.randomUUID();
+	const id = crypto.randomUUID();
 
 	const engineResponse = await sendToEngine("create_order", {
-		orderId,
+		id,
 		userId,
 		type,
 		side,
@@ -135,7 +138,7 @@ export async function cancelOrder(req: Request, res: Response) {
 	}
 
 	const { orderId } = parsedParams.data;
-	const engineResponse = await sendToEngine("cancel_order", { userId, orderId });
+	const engineResponse = await sendToEngine("cancel_order", { userId, id: orderId });
 
 	if (!engineResponse.success) {
 		res.status(400).json({ error: engineResponse.error });

@@ -8,7 +8,7 @@ beforeEach(() => {
 
 test("cancel open limit order", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -17,8 +17,8 @@ test("cancel open limit order", async () => {
 		qty: 100000n,
 	});
 
-	expect(await cancelOrder("1", order.orderId)).toMatchObject({
-		orderId: order.orderId,
+	expect(await cancelOrder("1", order.id)).toMatchObject({
+		id: order.id,
 		qty: 100000n,
 		filledQty: 0n,
 		status: "CANCELLED",
@@ -33,7 +33,7 @@ test("cancel open limit order", async () => {
 
 test("cancel partially filled order", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -43,7 +43,7 @@ test("cancel partially filled order", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
 		type: "LIMIT",
@@ -52,8 +52,8 @@ test("cancel partially filled order", async () => {
 		qty: 40000n,
 	});
 
-	expect(await cancelOrder("1", order.orderId)).toMatchObject({
-		orderId: order.orderId,
+	expect(await cancelOrder("1", order.id)).toMatchObject({
+		id: order.id,
 		qty: 100000n,
 		filledQty: 40000n,
 		status: "CANCELLED",
@@ -68,7 +68,7 @@ test("cancel partially filled order", async () => {
 
 test("cancel filled order", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -78,7 +78,7 @@ test("cancel filled order", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
 		type: "LIMIT",
@@ -87,14 +87,14 @@ test("cancel filled order", async () => {
 		qty: 50000n,
 	});
 
-	await expect(cancelOrder("1", order.orderId)).rejects.toThrow(
+	await expect(cancelOrder("1", order.id)).rejects.toThrow(
 		"Filled orders cannot be cancelled",
 	);
 });
 
 test("cancel already cancelled order", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -103,9 +103,9 @@ test("cancel already cancelled order", async () => {
 		qty: 50000n,
 	});
 
-	await cancelOrder("1", order.orderId);
+	await cancelOrder("1", order.id);
 
-	const result = await cancelOrder("1", order.orderId);
+	const result = await cancelOrder("1", order.id);
 	expect(result).toMatchObject({ message: "Order already cancelled" });
 });
 
@@ -115,7 +115,7 @@ test("cancel unknown order", async () => {
 
 test("user tries to cancel another user's order", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -124,5 +124,5 @@ test("user tries to cancel another user's order", async () => {
 		qty: 50000n,
 	});
 
-	await expect(cancelOrder("2", order.orderId)).rejects.toThrow("Order not found");
+	await expect(cancelOrder("2", order.id)).rejects.toThrow("Order not found");
 });

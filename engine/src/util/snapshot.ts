@@ -4,7 +4,7 @@ import type { Fill, InternalOrder, PriceLevel } from "../types/domain";
 import { logger } from "./logger";
 import { cacheClient } from "../redis/client";
 
-const SNAPSHOT_VERSION = 2;
+const SNAPSHOT_VERSION = 3;
 const SNAPSHOT_PATH = "snapshots/snapshot.json";
 
 function bigintReplacer(_key: string, value: unknown) {
@@ -28,26 +28,17 @@ export async function snapshot() {
 			jobsLastId,
 		},
 		balances: { ...BALANCES },
-		orderbook: {
-			BTC_USD: {
-				bestBid: ORDERBOOK.BTC_USD.bestBid,
-				bestAsk: ORDERBOOK.BTC_USD.bestAsk,
-				bids: Object.fromEntries(ORDERBOOK.BTC_USD.bids),
-				asks: Object.fromEntries(ORDERBOOK.BTC_USD.asks),
-			},
-			SOL_USD: {
-				bestBid: ORDERBOOK.SOL_USD.bestBid,
-				bestAsk: ORDERBOOK.SOL_USD.bestAsk,
-				bids: Object.fromEntries(ORDERBOOK.SOL_USD.bids),
-				asks: Object.fromEntries(ORDERBOOK.SOL_USD.asks),
-			},
-			ETH_USD: {
-				bestBid: ORDERBOOK.ETH_USD.bestBid,
-				bestAsk: ORDERBOOK.ETH_USD.bestAsk,
-				bids: Object.fromEntries(ORDERBOOK.ETH_USD.bids),
-				asks: Object.fromEntries(ORDERBOOK.ETH_USD.asks),
-			},
-		},
+		orderbook: Object.fromEntries(
+			Object.entries(ORDERBOOK).map(([symbol, market]) => [
+				symbol,
+				{
+					bestBid: market.bestBid,
+					bestAsk: market.bestAsk,
+					bids: Object.fromEntries(market.bids),
+					asks: Object.fromEntries(market.asks),
+				},
+			]),
+		),
 		recentTrades: RECENT_TRADES,
 		orders: Object.fromEntries(ORDERS),
 	};
@@ -73,15 +64,15 @@ export async function loadSnapshot() {
 
 		Object.assign(BALANCES, parsed.balances);
 
-		for (const symbol of ["BTC_USD", "SOL_USD", "ETH_USD"] as const) {
-			const saved = parsed.orderbook[symbol];
+		for (const [symbol, market] of Object.entries(ORDERBOOK)) {
+			const saved = parsed.orderbook?.[symbol];
 			if (!saved) continue;
-			ORDERBOOK[symbol].bestBid = saved.bestBid;
-			ORDERBOOK[symbol].bestAsk = saved.bestAsk;
-			ORDERBOOK[symbol].bids = new Map(
+			market.bestBid = saved.bestBid;
+			market.bestAsk = saved.bestAsk;
+			market.bids = new Map(
 				Object.entries(saved.bids).map(([k, v]) => [BigInt(k), v as PriceLevel]),
 			);
-			ORDERBOOK[symbol].asks = new Map(
+			market.asks = new Map(
 				Object.entries(saved.asks).map(([k, v]) => [BigInt(k), v as PriceLevel]),
 			);
 		}
@@ -91,7 +82,7 @@ export async function loadSnapshot() {
 		}
 
 		if (parsed.recentTrades) {
-			for (const symbol of ["BTC_USD", "SOL_USD", "ETH_USD"] as const) {
+			for (const symbol of Object.keys(ORDERBOOK)) {
 				RECENT_TRADES[symbol] = (parsed.recentTrades[symbol] as Fill[]) ?? [];
 			}
 		}

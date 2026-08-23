@@ -1,6 +1,7 @@
 import { recomputeBestPrice, addOrderToBook, type DepthChange } from "./orderbook";
-import { ORDERBOOK, recordFill } from "../store";
+import { recordFill } from "../store";
 import type { Fill, InternalOrder, RestingOrder } from "../types/domain";
+import { getMarket } from "./market";
 
 export interface MatchResult {
 	fills: Fill[];
@@ -11,10 +12,10 @@ export interface MatchResult {
 }
 
 export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
-	const { orderId, side, type, symbol, price, qty, filledQty } = order;
+	const { id, side, type, symbol, price, qty, filledQty } = order;
 
 	let remainingQty = qty - filledQty;
-	const market = ORDERBOOK[symbol]!;
+	const market = getMarket(symbol);
 	const affectedOrders: RestingOrder[] = [];
 	const fills: Fill[] = [];
 	const depthChanges: DepthChange[] = [];
@@ -35,8 +36,8 @@ export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
 		while (remainingQty > 0 && priceLevel.orders.length > 0) {
 			const restingOrder = priceLevel.orders[0]!;
 			const availableQty = restingOrder.qty - restingOrder.filledQty;
-			const buyOrderId = side === "BUY" ? orderId : restingOrder.orderId;
-			const sellOrderId = side === "BUY" ? restingOrder.orderId : orderId;
+			const buyOrderId = side === "BUY" ? id : restingOrder.id;
+			const sellOrderId = side === "BUY" ? restingOrder.id : id;
 			const matchQty = remainingQty >= availableQty ? availableQty : remainingQty;
 
 			restingOrder.filledQty += matchQty;
@@ -48,7 +49,7 @@ export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
 				restingOrder.qty === restingOrder.filledQty ? "FILLED" : "PARTIALLY_FILLED";
 
 			const fill: Fill = {
-				fillId: crypto.randomUUID(),
+				id: crypto.randomUUID(),
 				symbol,
 				price: bestPrice,
 				qty: matchQty,
@@ -73,7 +74,7 @@ export async function matchOrder(order: InternalOrder): Promise<MatchResult> {
 				priceLevel.orders.shift();
 			}
 
-			if (!affectedOrders.find((o) => o.orderId === restingOrder.orderId)) {
+			if (!affectedOrders.find((o) => o.id === restingOrder.id)) {
 				affectedOrders.push(restingOrder);
 			}
 		}

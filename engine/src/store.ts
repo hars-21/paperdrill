@@ -1,4 +1,4 @@
-import type { Fill, InternalOrder, Market, OrderStatus, Symbol, UserBalance } from "./types/domain";
+import type { Fill, InternalOrder, Market, OrderStatus, UserBalance } from "./types/domain";
 import { config } from "./config";
 
 // --- In-memory state ---
@@ -39,7 +39,7 @@ export const BALANCES: Record<string, UserBalance> = {};
 							userId: "1",
 							qty: 10,
 							filledQty: 5,
-							orderId: "10",
+							id: "10",
 							createdAt: 1780151880075,
 						},
 					],
@@ -53,7 +53,7 @@ export const BALANCES: Record<string, UserBalance> = {};
 							userId: "1",
 							qty: 20,
 							filledQty: 3,
-							orderId: "10",
+							id: "10",
 							createdAt: 1780151880075,
 						},
 					],
@@ -62,38 +62,7 @@ export const BALANCES: Record<string, UserBalance> = {};
 		},
 	};
 */
-export const ORDERBOOK: Record<Symbol, Market> = {
-	BTC_USD: {
-		baseAsset: "BTC",
-		quoteAsset: "USD",
-		pricePrecision: 2,
-		qtyPrecision: 4,
-		bestBid: null,
-		bestAsk: null,
-		bids: new Map(),
-		asks: new Map(),
-	},
-	SOL_USD: {
-		baseAsset: "SOL",
-		quoteAsset: "USD",
-		pricePrecision: 2,
-		qtyPrecision: 2,
-		bestBid: null,
-		bestAsk: null,
-		bids: new Map(),
-		asks: new Map(),
-	},
-	ETH_USD: {
-		baseAsset: "ETH",
-		quoteAsset: "USD",
-		pricePrecision: 2,
-		qtyPrecision: 3,
-		bestBid: null,
-		bestAsk: null,
-		bids: new Map(),
-		asks: new Map(),
-	},
-};
+export const ORDERBOOK: Record<string, Market> = {};
 
 /*
 	ORDERS = [
@@ -104,7 +73,7 @@ export const ORDERBOOK: Record<Symbol, Market> = {
 			symbol: "SOL_USD",
 			price: 50,
 			qty: 2,
-			orderId: "81dbd809-d762-4d34-9a86-2fdd635f917a",
+			id: "81dbd809-d762-4d34-9a86-2fdd635f917a",
 			filledQty: 0,
 			status: "OPEN",
 			createdAt: 1780151880075,
@@ -119,7 +88,7 @@ export const ARCHIVED_ORDERS = new Map<string, OrderStatus>();
 	RECENT_TRADES = {
 		SOL_USD: [
 			{
-				fillId: "a4c96039-ba36-4491-8530-263c1e69f02e",
+				id: "a4c96039-ba36-4491-8530-263c1e69f02e",
 				symbol: "SOL_USD",
 				price: 50,
 				qty: 10,
@@ -131,14 +100,10 @@ export const ARCHIVED_ORDERS = new Map<string, OrderStatus>();
 		],
 	};
 */
-export const RECENT_TRADES: Record<Symbol, Fill[]> = {
-	BTC_USD: [],
-	SOL_USD: [],
-	ETH_USD: [],
-};
+export const RECENT_TRADES: Record<string, Fill[]> = {};
 
 export function recordFill(fill: Fill) {
-	const trades = RECENT_TRADES[fill.symbol];
+	const trades = (RECENT_TRADES[fill.symbol] ??= []);
 	trades.push(fill);
 
 	if (trades.length > config.recentTradesLimit) {

@@ -16,7 +16,7 @@ test("no trades initially", async () => {
 
 test("trades returned newest first", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -26,7 +26,7 @@ test("trades returned newest first", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -36,7 +36,7 @@ test("trades returned newest first", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -54,7 +54,7 @@ test("trades returned newest first", async () => {
 
 test("limit returns most recent trades", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -64,7 +64,7 @@ test("limit returns most recent trades", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -74,7 +74,7 @@ test("limit returns most recent trades", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -102,7 +102,7 @@ test("buffer evicts oldest beyond cap", () => {
 	try {
 		for (let i = 0; i < 5; i++) {
 			recordFill({
-				fillId: String(i),
+				id: String(i),
 				symbol: "BTC_USD",
 				price: 10000n,
 				qty: 1000n,
@@ -115,7 +115,7 @@ test("buffer evicts oldest beyond cap", () => {
 			});
 		}
 
-		expect(RECENT_TRADES.BTC_USD.map((f) => f.fillId)).toEqual(["2", "3", "4"]);
+		expect(RECENT_TRADES.BTC_USD?.map((f) => f.id)).toEqual(["2", "3", "4"]);
 	} finally {
 		config.recentTradesLimit = original;
 	}

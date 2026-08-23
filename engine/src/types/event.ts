@@ -1,4 +1,4 @@
-import type { DepthLevel, Fill, OrderRecord, Symbol } from "./domain";
+import type { DepthLevel, Fill, OrderRecord } from "./domain";
 
 export type PublishEventMessage =
 	| {
@@ -11,8 +11,8 @@ export type PublishEventMessage =
 	  }
 	| {
 			event: "trade";
-			id: number;
-			symbol: Symbol;
+			id: string;
+			symbol: string;
 			price: string;
 			qty: string;
 			maker: boolean;
@@ -41,7 +41,7 @@ export interface FillEvent {
 
 export interface DepthEvent {
 	type: "depth.changed";
-	symbol: Symbol;
+	symbol: string;
 	side: "bids" | "asks";
 	price: bigint;
 	qty: bigint;

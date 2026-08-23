@@ -8,7 +8,7 @@ beforeEach(() => {
 
 test("limit buy order does not match", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -18,7 +18,7 @@ test("limit buy order does not match", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -55,7 +55,7 @@ test("limit buy order does not match", async () => {
 
 test("limit buy order matches best ask", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -65,7 +65,7 @@ test("limit buy order matches best ask", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -83,7 +83,7 @@ test("limit buy order matches best ask", async () => {
 
 test("limit buy order has better price than best ask", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -93,7 +93,7 @@ test("limit buy order has better price than best ask", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -111,7 +111,7 @@ test("limit buy order has better price than best ask", async () => {
 
 test("limit sell order does not match", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -121,7 +121,7 @@ test("limit sell order does not match", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
 		type: "LIMIT",
@@ -140,7 +140,7 @@ test("limit sell order does not match", async () => {
 
 test("limit sell order has better price than best bid", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -150,7 +150,7 @@ test("limit sell order has better price than best bid", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
 		type: "LIMIT",
@@ -168,7 +168,7 @@ test("limit sell order has better price than best bid", async () => {
 
 test("partial fill for limit order", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -178,7 +178,7 @@ test("partial fill for limit order", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -209,7 +209,7 @@ test("partial fill for limit order", async () => {
 
 test("match multiple price levels", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -218,7 +218,7 @@ test("match multiple price levels", async () => {
 		qty: 20000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -227,7 +227,7 @@ test("match multiple price levels", async () => {
 		qty: 30000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -237,7 +237,7 @@ test("match multiple price levels", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -255,7 +255,7 @@ test("match multiple price levels", async () => {
 
 test("limit buy orders should not cross above allowed price", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -264,7 +264,7 @@ test("limit buy orders should not cross above allowed price", async () => {
 		qty: 20000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -273,7 +273,7 @@ test("limit buy orders should not cross above allowed price", async () => {
 		qty: 30000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -283,7 +283,7 @@ test("limit buy orders should not cross above allowed price", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -319,7 +319,7 @@ test("limit buy orders should not cross above allowed price", async () => {
 
 test("market buy order fully filled", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -329,7 +329,7 @@ test("market buy order fully filled", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -347,7 +347,7 @@ test("market buy order fully filled", async () => {
 
 test("market buy order partially filled", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -357,7 +357,7 @@ test("market buy order partially filled", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "MARKET",
@@ -376,7 +376,7 @@ test("market buy order partially filled", async () => {
 test("market order with empty book", async () => {
 	await expect(
 		placeOrder({
-			orderId: crypto.randomUUID(),
+			id: crypto.randomUUID(),
 			userId: "2",
 			side: "BUY",
 			type: "MARKET",
@@ -389,7 +389,7 @@ test("market order with empty book", async () => {
 
 test("market buy order consumes first seller at price level", async () => {
 	const firstOrder = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -398,7 +398,7 @@ test("market buy order consumes first seller at price level", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -408,7 +408,7 @@ test("market buy order consumes first seller at price level", async () => {
 	});
 
 	const result = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -423,5 +423,5 @@ test("market buy order consumes first seller at price level", async () => {
 		averagePrice: 10000n,
 	});
 
-	expect(result.fills[0]?.sellOrderId).toBe(firstOrder.orderId);
+	expect(result.fills[0]?.sellOrderId).toBe(firstOrder.id);
 });

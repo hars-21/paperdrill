@@ -1,3 +1,4 @@
+import { getMarket } from "../modules/market";
 import { tradesPayloadSchema } from "../schema";
 import { RECENT_TRADES } from "../store";
 
@@ -9,6 +10,7 @@ export async function getTradesHandler(payload: Record<string, unknown>) {
 	}
 
 	const { symbol, limit } = parsed.data;
+	getMarket(symbol);
 	const trades = RECENT_TRADES[symbol] ?? [];
 
 	return {

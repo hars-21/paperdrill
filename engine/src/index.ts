@@ -10,12 +10,16 @@ import { config } from "./config";
 import { logger } from "./util/logger";
 import { snapshot, loadSnapshot } from "./util/snapshot";
 import { dispatch } from "./core/dispatcher";
+import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer } from "./util";
+import { initMarkets } from "./modules/market";
 import "./core/events";
 
 const abortController = new AbortController();
 
 await connectRedis();
+await connectDB();
+await initMarkets();
 await loadSnapshot();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
@@ -127,6 +131,7 @@ async function gracefulShutdown(signal: string) {
 
 	abortController.abort();
 	await disconnectRedis();
+	await disconnectDB();
 
 	clearTimeout(forceExit);
 	process.exit(0);

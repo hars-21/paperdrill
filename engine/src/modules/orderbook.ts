@@ -1,16 +1,16 @@
 import { getLastUpdateId } from "../redis/publish";
-import { ORDERBOOK } from "../store";
-import type { InternalOrder, RestingOrder, Symbol } from "../types/domain";
+import type { InternalOrder, RestingOrder } from "../types/domain";
+import { getMarket } from "./market";
 
 export interface DepthChange {
-	symbol: Symbol;
+	symbol: string;
 	side: "bids" | "asks";
 	price: bigint;
 	qty: bigint;
 }
 
-export function recomputeBestPrice(symbol: Symbol, side: "bids" | "asks") {
-	const market = ORDERBOOK[symbol]!;
+export function recomputeBestPrice(symbol: string, side: "bids" | "asks") {
+	const market = getMarket(symbol);
 	const prices = [...market[side].keys()];
 
 	if (prices.length === 0) {
@@ -32,7 +32,7 @@ export function addOrderToBook(order: InternalOrder): DepthChange | null {
 	if (type === "MARKET" || !price) return null;
 	if (qty <= 0 || price <= 0) throw new Error("Invalid qty or price");
 
-	const market = ORDERBOOK[symbol]!;
+	const market = getMarket(symbol);
 	const marketSide = side === "BUY" ? "bids" : "asks";
 	const remainingQty = qty - filledQty;
 	const priceLevel = market[marketSide].get(price);
@@ -56,19 +56,19 @@ export function addOrderToBook(order: InternalOrder): DepthChange | null {
 }
 
 export function removeOrderFromBook(order: InternalOrder): DepthChange | null {
-	const { orderId, side, type, symbol, price, qty, filledQty } = order;
+	const { id, side, type, symbol, price, qty, filledQty } = order;
 
 	if (type === "MARKET" || !price) return null;
 	if (qty <= 0 || price <= 0) throw new Error("Invalid qty or price");
 
-	const market = ORDERBOOK[symbol]!;
+	const market = getMarket(symbol);
 	const marketSide = side === "BUY" ? "bids" : "asks";
 	const priceLevel = market[marketSide].get(price);
 
 	if (!priceLevel) throw new Error("Invalid price");
 
 	priceLevel.orders = priceLevel.orders.filter(
-		(restingOrder: RestingOrder) => restingOrder.orderId !== orderId,
+		(restingOrder: RestingOrder) => restingOrder.id !== id,
 	);
 	priceLevel.totalQty -= qty - filledQty;
 
@@ -82,12 +82,8 @@ export function removeOrderFromBook(order: InternalOrder): DepthChange | null {
 	return { symbol, side: marketSide, price, qty: priceLevel.totalQty };
 }
 
-export async function getDepth(symbol: Symbol) {
-	const market = ORDERBOOK[symbol];
-
-	if (!market) {
-		throw new Error("Invalid symbol");
-	}
+export async function getDepth(symbol: string) {
+	const market = getMarket(symbol);
 
 	const bids = [...market.bids.entries()]
 		.map(([price, level]) => ({ price, qty: level.totalQty }))

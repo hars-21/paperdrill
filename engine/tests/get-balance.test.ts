@@ -23,7 +23,7 @@ test("new user balance", () => {
 
 test("buyer balance after fill", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -32,7 +32,7 @@ test("buyer balance after fill", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -57,7 +57,7 @@ test("buyer balance after fill", async () => {
 
 test("seller balance after fill", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "SELL",
 		type: "LIMIT",
@@ -66,7 +66,7 @@ test("seller balance after fill", async () => {
 		qty: 50000n,
 	});
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "BUY",
 		type: "LIMIT",
@@ -91,7 +91,7 @@ test("seller balance after fill", async () => {
 
 test("open order should lock balance", async () => {
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -101,7 +101,7 @@ test("open order should lock balance", async () => {
 	});
 
 	await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "2",
 		side: "SELL",
 		type: "LIMIT",
@@ -130,7 +130,7 @@ test("open order should lock balance", async () => {
 
 test("cancelled order should unlock balance", async () => {
 	const order = await placeOrder({
-		orderId: crypto.randomUUID(),
+		id: crypto.randomUUID(),
 		userId: "1",
 		side: "BUY",
 		type: "LIMIT",
@@ -146,7 +146,7 @@ test("cancelled order should unlock balance", async () => {
 		},
 	});
 
-	await cancelOrder("1", order.orderId);
+	await cancelOrder("1", order.id);
 
 	expect(getUserBalance("1")).toMatchObject({
 		USD: {
