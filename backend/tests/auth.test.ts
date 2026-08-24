@@ -1,5 +1,20 @@
 import { expect, test, mock } from "bun:test";
-import { createToken, requireAuth } from "../src/utils/auth";
+import { createToken, authenticate } from "../src/middleware/auth";
+
+function mockReq(headers: Record<string, string> = {}) {
+	return {
+		headers,
+		header: (name: string) => headers[name.toLowerCase()],
+	} as any;
+}
+
+function mockRes() {
+	const res = {
+		status: mock(() => res),
+		json: mock(() => undefined),
+	} as any;
+	return res;
+}
 
 test("createToken returns a valid JWT", () => {
 	const token = createToken({ id: "user-1" });
@@ -7,46 +22,49 @@ test("createToken returns a valid JWT", () => {
 	expect(token.split(".")).toHaveLength(3);
 });
 
-test("requireAuth returns 401 when no token provided", () => {
-	const req = { headers: {} } as any;
-	const res = {
-		status: mock(() => res),
-		json: mock(() => undefined),
-	} as any;
+test("authenticate passes through anonymously when no credentials", async () => {
+	const req = mockReq();
+	const res = mockRes();
 	const next = mock(() => undefined);
 
-	requireAuth(req, res, next);
+	await authenticate(req, res, next);
 
-	expect(res.status).toHaveBeenCalledWith(401);
-	expect(res.json).toHaveBeenCalledWith({ error: "Missing auth token" });
-	expect(next).not.toHaveBeenCalled();
+	expect(next).toHaveBeenCalled();
+	expect(req.principal).toBeUndefined();
 });
 
-test("requireAuth returns 401 for invalid token", () => {
-	const req = { headers: { cookie: "token=invalid-token" } } as any;
-	const res = {
-		status: mock(() => res),
-		json: mock(() => undefined),
-	} as any;
+test("authenticate returns 401 for invalid session cookie", async () => {
+	const req = mockReq({ cookie: "token=invalid-token" });
+	const res = mockRes();
 	const next = mock(() => undefined);
 
-	requireAuth(req, res, next);
+	await authenticate(req, res, next);
 
 	expect(res.status).toHaveBeenCalledWith(401);
 	expect(res.json).toHaveBeenCalledWith({ error: "Invalid auth token" });
 	expect(next).not.toHaveBeenCalled();
 });
 
-test("requireAuth calls next for valid token", () => {
+test("authenticate sets session principal for valid cookie", async () => {
 	const token = createToken({ id: "user-1" });
-	const req = { headers: { cookie: `token=${token}` } } as any;
-	const res = {
-		status: mock(() => res),
-		json: mock(() => undefined),
-	} as any;
+	const req = mockReq({ cookie: `token=${token}` });
+	const res = mockRes();
 	const next = mock(() => undefined);
 
-	requireAuth(req, res, next);
+	await authenticate(req, res, next);
 
 	expect(next).toHaveBeenCalled();
+	expect(req.principal).toEqual({ type: "session", userId: "user-1" });
+});
+
+test("authenticate returns 401 for malformed api key", async () => {
+	const req = mockReq({ "x-api-key": "not-a-key" });
+	const res = mockRes();
+	const next = mock(() => undefined);
+
+	await authenticate(req, res, next);
+
+	expect(res.status).toHaveBeenCalledWith(401);
+	expect(res.json).toHaveBeenCalledWith({ error: "Malformed API key" });
+	expect(next).not.toHaveBeenCalled();
 });

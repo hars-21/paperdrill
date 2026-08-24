@@ -1,6 +1,8 @@
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { UserType } from "../generated/prisma/enums";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) throw new Error("DATABASE_URL is required");
@@ -41,18 +43,34 @@ async function seed() {
 		skipDuplicates: true,
 	});
 
-	const password = await bcrypt.hash("demo123", 10);
-	const users = [
-		{ email: "alice@test.com", name: "alice", password },
-		{ email: "bob@test.com", name: "bob", password },
+	const password = await bcrypt.hash(crypto.randomUUID(), 10);
+	const services = [
+		{
+			name: "BTC Market Maker",
+			email: "btc.service@paperdrill.dev",
+			password,
+			type: UserType.SERVICE,
+		},
+		{
+			name: "SOL Market Maker",
+			email: "sol.service@paperdrill.dev",
+			password,
+			type: UserType.SERVICE,
+		},
+		{
+			name: "ETH Market Maker",
+			email: "eth.service@paperdrill.dev",
+			password,
+			type: UserType.SERVICE,
+		},
 	];
 
 	await prisma.user.createMany({
-		data: users,
+		data: services,
 		skipDuplicates: true,
 	});
 
-	console.log("Seeded: 3 markets, 2 users (alice@test.com, bob@test.com, password: demo123)");
+	console.log("Seeded: 3 markets, 3 services");
 	process.exit(0);
 }
 

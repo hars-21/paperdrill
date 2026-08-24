@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { candleQuerySchema, symbolParamSchema, tradesQuerySchema } from "../types/exchange";
+import { candleQuerySchema, symbolParamSchema, tradesQuerySchema } from "../schema/exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { prisma } from "../db";
 import { sendValidationError } from "../utils/validation";

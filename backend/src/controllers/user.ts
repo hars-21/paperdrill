@@ -5,10 +5,13 @@ import { formatBalance } from "../utils/formatter";
 import { logger } from "../utils/logger";
 
 export function getUserId(req: Request): string {
-	if (!req.userId) {
+	const userId = req.principal?.userId;
+
+	if (!userId) {
 		throw new Error("Missing authenticated user");
 	}
-	return req.userId;
+
+	return userId;
 }
 
 export async function getUserData(req: Request, res: Response) {

@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db";
 import type { Request, Response } from "express";
-import { signupSchema, signinSchema } from "../types/auth";
-import { createToken } from "../utils/auth";
+import { signupSchema, signinSchema } from "../schema/auth";
+import { createToken } from "../middleware/auth";
 import { sendValidationError } from "../utils/validation";
 import { logger } from "../utils/logger";
 import { config } from "../config";

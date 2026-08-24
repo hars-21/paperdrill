@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../utils/auth";
+import { requireAccess } from "../middleware/auth";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
 	getOpenOrders,
@@ -8,12 +8,22 @@ import {
 	cancelOrder,
 	getOrders,
 } from "../controllers/order";
-import { orderLimiter } from "../utils/rateLimit";
+import { orderLimiter } from "../middleware/rateLimit";
 
 export const orderRouter = Router();
 
-orderRouter.get("/", requireAuth, asyncHandler(getOrders));
-orderRouter.get("/open", requireAuth, asyncHandler(getOpenOrders));
-orderRouter.get("/:orderId", requireAuth, asyncHandler(getOrderById));
-orderRouter.post("/", requireAuth, orderLimiter, asyncHandler(createOrder));
-orderRouter.delete("/:orderId", requireAuth, orderLimiter, asyncHandler(cancelOrder));
+orderRouter.get("/", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOrders));
+orderRouter.get("/open", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOpenOrders));
+orderRouter.get("/:orderId", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOrderById));
+orderRouter.post(
+	"/",
+	requireAccess({ scopes: ["ORDER_CREATE"] }),
+	orderLimiter,
+	asyncHandler(createOrder),
+);
+orderRouter.delete(
+	"/:orderId",
+	requireAccess({ scopes: ["ORDER_CANCEL"] }),
+	orderLimiter,
+	asyncHandler(cancelOrder),
+);

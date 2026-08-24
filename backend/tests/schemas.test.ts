@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
-import { signupSchema, signinSchema } from "../src/types/auth";
+import { signupSchema, signinSchema } from "../src/schema/auth";
 import {
 	orderBodySchema,
 	orderIdParamSchema,
 	symbolParamSchema,
 	statusQuerySchema,
-} from "../src/types/exchange";
+} from "../src/schema/exchange";
 
 test("signup schema accepts valid input", () => {
 	const result = signupSchema.safeParse({

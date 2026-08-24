@@ -24,15 +24,44 @@ enum Status {
   CANCELLED
 }
 
+enum Scope {
+  ACCOUNT_READ  @map("account:read")
+  ORDER_READ    @map("order:read")
+  ORDER_CREATE  @map("order:create")
+  ORDER_CANCEL  @map("order:cancel")
+}
+
+enum UserType {
+  USER
+  SERVICE
+}
+
 model User {
   id        String  @id @default(uuid())
   email     String  @unique
   name      String
   password  String
+  type      UserType @default(USER)
 
+  apikeys   ApiKey[]
   orders    Order[]
   buyFills  Fill[]  @relation("FillBuyer")
   sellFills Fill[]  @relation("FillSeller")
+}
+
+model ApiKey {
+  id            String    @id @default(uuid())
+  userId        String
+  label         String
+  hashedSecret  String
+  scopes        Scope[]
+  lastUsedAt    DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Order {

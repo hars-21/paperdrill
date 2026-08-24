@@ -1,11 +1,12 @@
 import express, { type NextFunction, type Request, type Response } from "express";
+import cors from "cors";
 import { pingRedis } from "./redis";
 import { prisma } from "./db";
 import { appRouter } from "./routes";
 import { config } from "./config";
 import { logger } from "./utils/logger";
-import { apiLimiter } from "./utils/rateLimit";
-import cors from "cors";
+import { apiLimiter } from "./middleware/rateLimit";
+import { authenticate } from "./middleware/auth";
 
 export const app = express();
 
@@ -15,6 +16,7 @@ app.use(cors(config.cors));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(authenticate);
 app.use(apiLimiter);
 
 app.get("/", (_req: Request, res: Response) => {

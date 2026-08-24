@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { orderBodySchema, orderIdParamSchema, orderQuerySchema } from "../types/exchange";
+import { orderBodySchema, orderIdParamSchema, orderQuerySchema } from "../schema/exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { sendValidationError } from "../utils/validation";
 import { marketStore } from "../store/market";

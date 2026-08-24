@@ -11,6 +11,7 @@ const envSchema = z.object({
 	DATABASE_URL: z.string(),
 
 	JWT_SECRET: z.string(),
+	SERVICE_TOKEN_HASH: z.string().default(""),
 
 	INCOMING_STREAM: z.string().default("backend-to-engine-broker"),
 	BACKEND_QUEUE_ID: z.string().default(crypto.randomUUID()),
@@ -76,6 +77,7 @@ export const config = {
 
 	auth: {
 		jwtSecret: env.JWT_SECRET,
+		serviceTokenHash: env.SERVICE_TOKEN_HASH,
 	},
 
 	cors: {
