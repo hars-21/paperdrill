@@ -23,28 +23,36 @@ function setMarket(metadata: MarketMetadata) {
 }
 
 export async function loadMarkets(): Promise<void> {
-	try {
-		const marketData = await prisma.market.findMany();
-		if (marketData.length === 0) {
-			throw new Error("No markets found in database");
+	const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	while (true) {
+		try {
+			const marketData = await prisma.market.findMany();
+
+			if (marketData.length === 0) {
+				logger.warn("No markets found in database, retrying in 5 seconds...");
+				await wait(5000);
+				continue;
+			}
+
+			marketStore.clear();
+			assetPrecision.clear();
+
+			for (const item of marketData) {
+				setMarket({
+					symbol: item.symbol,
+					baseAsset: item.baseAsset,
+					quoteAsset: item.quoteAsset,
+					pricePrecision: item.pricePrecision,
+					qtyPrecision: item.qtyPrecision,
+				});
+			}
+
+			logger.info(`Loaded ${marketData.length} markets from database`);
+			break;
+		} catch (err) {
+			logger.warn("Failed to load markets from database, will retry", err);
+			await wait(5000);
 		}
-
-		marketStore.clear();
-		assetPrecision.clear();
-
-		for (const item of marketData) {
-			setMarket({
-				symbol: item.symbol,
-				baseAsset: item.baseAsset,
-				quoteAsset: item.quoteAsset,
-				pricePrecision: item.pricePrecision,
-				qtyPrecision: item.qtyPrecision,
-			});
-		}
-
-		logger.info(`Loaded ${marketData.length} markets from database`);
-	} catch (err) {
-		logger.error("Failed to load markets from database", err);
-		throw err;
 	}
 }

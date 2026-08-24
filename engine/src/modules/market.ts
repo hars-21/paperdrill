@@ -31,19 +31,26 @@ function applyMarkets(markets: MarketMetadata[]) {
 }
 
 export async function initMarkets() {
-	try {
-		const { rows } = await pool.query<MarketMetadata>(
-			`SELECT symbol, "baseAsset", "quoteAsset", "pricePrecision", "qtyPrecision" FROM "Market"`,
-		);
+	const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-		if (rows.length === 0) {
-			throw new Error("No markets found in database");
+	while (true) {
+		try {
+			const { rows } = await pool.query<MarketMetadata>(
+				`SELECT symbol, "baseAsset", "quoteAsset", "pricePrecision", "qtyPrecision" FROM "Market"`,
+			);
+
+			if (rows.length === 0) {
+				logger.warn("No markets found in database, retrying in 5 seconds...");
+				await wait(5000);
+				continue;
+			}
+
+			applyMarkets(rows);
+			break;
+		} catch (err) {
+			logger.error("Failed to load markets from database", err);
+			wait(5000);
 		}
-
-		applyMarkets(rows);
-	} catch (err) {
-		logger.error("Failed to load markets from database", err);
-		throw err;
 	}
 }
 
