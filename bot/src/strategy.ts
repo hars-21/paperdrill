@@ -1,4 +1,5 @@
 import { config } from "./config";
+import { MARKET } from "./client";
 
 interface Order {
 	side: "BUY" | "SELL";
@@ -7,12 +8,12 @@ interface Order {
 }
 
 function formatPrice(price: number): string {
-	return price.toFixed(config.pricePrecision);
+	return price.toFixed(MARKET.pricePrecision);
 }
 
 function randomQty(): string {
 	const maxQty = config.maxOrderQty ?? 0.5;
-	return (Math.random() * maxQty).toFixed(config.qtyPrecision);
+	return (Math.random() * maxQty).toFixed(MARKET.qtyPrecision);
 }
 
 export function generateOrders(midPrice: number): Order[] {

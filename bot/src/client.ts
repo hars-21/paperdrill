@@ -1,4 +1,5 @@
 import { config } from "./config";
+import { log } from "./util";
 
 interface DepthResponse {
 	symbol: string;
@@ -16,15 +17,18 @@ interface OrderResponse {
 	qty: string;
 }
 
-let cookie = "";
+export const MARKET: { pricePrecision: number; qtyPrecision: number } = {
+	pricePrecision: 0,
+	qtyPrecision: 0,
+};
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
 	const res = await fetch(`${config.baseUrl}${path}`, {
 		...options,
 		headers: {
 			"Content-Type": "application/json",
-			Cookie: cookie,
-			"X-Service": "true",
+			"X-Api-Key": config.serviceToken,
+			"X-Service-Email": config.serviceEmail,
 			...options?.headers,
 		},
 	});
@@ -34,26 +38,20 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 	return data as T;
 }
 
-export async function signin() {
-	const res = await fetch(`${config.baseUrl}/signin`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json", "X-Service": "true" },
-		body: JSON.stringify({ email: config.email, password: config.password }),
-	});
-
-	if (!res.ok) throw new Error(`Signin failed: ${res.status}`);
-
-	const setCookie = res.headers.get("set-cookie");
-	cookie = setCookie?.split(";")[0] ?? "";
-}
-
-export async function getMarkets(): Promise<any[]> {
+async function getMarkets(): Promise<any[]> {
 	const res = await api<{ data: any[] }>("/markets");
 	return res.data;
 }
 
-export async function getDepth(): Promise<DepthResponse> {
-	return api(`/markets/${config.market}/depth`);
+export async function initMarket() {
+	const markets = await getMarkets();
+	const market = markets.find((m: any) => m.symbol === config.market);
+	if (!market) throw new Error(`Market ${config.market} not found`);
+	MARKET.pricePrecision = market.pricePrecision;
+	MARKET.qtyPrecision = market.qtyPrecision;
+	log(
+		`Market ${config.market} initialized with pricePrecision=${MARKET.pricePrecision}, qtyPrecision=${MARKET.qtyPrecision}`,
+	);
 }
 
 export async function getOpenOrders(): Promise<OrderResponse[]> {

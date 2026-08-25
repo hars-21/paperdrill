@@ -1,13 +1,11 @@
 import { sleep } from "bun";
-import { signin, getOpenOrders, placeOrder, cancelOrder, getMarkets } from "./client";
+import { getOpenOrders, placeOrder, cancelOrder, initMarket } from "./client";
 import { config } from "./config";
 import { getMidPrice } from "./price";
 import { generateOrders } from "./strategy";
 import { log, randomInt, shuffle } from "./util";
 
-await signin();
 await initMarket();
-log("Signed in, starting bot");
 
 for (;;) {
 	try {
@@ -33,16 +31,6 @@ for (;;) {
 
 	const [min, max] = config.cycleIntervalMs as [number, number];
 	await sleep(randomInt(min, max));
-}
-
-async function initMarket() {
-	const markets = await getMarkets();
-	const market = markets.find((m: any) => m.symbol === config.market);
-
-	if (!market) throw new Error(`Market ${config.market} not found`);
-
-	config.pricePrecision = market.pricePrecision;
-	config.qtyPrecision = market.qtyPrecision;
 }
 
 async function seed(midPrice: number) {
