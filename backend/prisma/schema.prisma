@@ -37,16 +37,19 @@ enum UserType {
 }
 
 model User {
-  id        String  @id @default(uuid())
-  email     String  @unique
-  name      String
-  password  String
-  type      UserType @default(USER)
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String
+  password      String
+  type          UserType  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  apikeys   ApiKey[]
-  orders    Order[]
-  buyFills  Fill[]  @relation("FillBuyer")
-  sellFills Fill[]  @relation("FillSeller")
+  apikeys       ApiKey[]
+  orders        Order[]
+  buyFills      Fill[]    @relation("FillBuyer")
+  sellFills     Fill[]    @relation("FillSeller")
 }
 
 model ApiKey {
@@ -124,4 +127,15 @@ model Candle {
 
 	@@id([symbol, time])
 	@@index([time])
+}
+
+model VerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }

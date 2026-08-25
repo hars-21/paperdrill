@@ -48,18 +48,21 @@ async function seed() {
 		{
 			name: "BTC Market Maker",
 			email: "btc.service@paperdrill.dev",
+			emailVerified: true,
 			password,
 			type: UserType.SERVICE,
 		},
 		{
 			name: "SOL Market Maker",
 			email: "sol.service@paperdrill.dev",
+			emailVerified: true,
 			password,
 			type: UserType.SERVICE,
 		},
 		{
 			name: "ETH Market Maker",
 			email: "eth.service@paperdrill.dev",
+			emailVerified: true,
 			password,
 			type: UserType.SERVICE,
 		},

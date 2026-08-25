@@ -1,10 +1,7 @@
-import type { UserBalance } from ".";
-
 export type UserData = {
-	userId: string;
+	id: string;
 	email: string;
 	name: string;
-	balance: UserBalance;
 };
 
 export type OrderResult = {

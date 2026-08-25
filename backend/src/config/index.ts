@@ -13,6 +13,9 @@ const envSchema = z.object({
 	JWT_SECRET: z.string(),
 	SERVICE_TOKEN_HASH: z.string().default(""),
 
+	RESEND_API_KEY: z.string(),
+	EMAIL_FROM: z.string(),
+
 	INCOMING_STREAM: z.string().default("backend-to-engine-broker"),
 	BACKEND_QUEUE_ID: z.string().default(crypto.randomUUID()),
 	ENGINE_TIMEOUT_MS: z.coerce.number().default(30000),
@@ -42,6 +45,11 @@ export const config = {
 		env: env.NODE_ENV,
 		port: env.PORT,
 		logLevel: env.LOG_LEVEL,
+	},
+
+	resend: {
+		apiKey: env.RESEND_API_KEY,
+		from: env.EMAIL_FROM,
 	},
 
 	engine: {

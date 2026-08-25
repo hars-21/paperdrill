@@ -10,3 +10,11 @@ export const signinSchema = z.object({
 	email: z.email().trim().min(1, "email is required"),
 	password: z.string().min(1, "password is required"),
 });
+
+export const verifyEmailSchema = z.object({
+	token: z.string().min(1, "token is required"),
+});
+
+export const resendVerificationEmailSchema = z.object({
+	email: z.email().trim().min(1, "email is required"),
+});

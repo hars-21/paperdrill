@@ -4,27 +4,44 @@ import type { Candle, Market, OrderRecord, UserBalance } from "@/types";
 
 const BASE = `${config.apiBaseUrl}/v1`;
 
+export class ApiError extends Error {
+	constructor(
+		message: string,
+		public status: number,
+	) {
+		super(message);
+		this.name = "ApiError";
+	}
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	try {
 		const res = await fetch(`${BASE}${path}`, {
 			credentials: "include",
-			headers: { "Content-Type": "application/json", ...options.headers },
+			headers: {
+				"Content-Type": "application/json",
+				...options.headers,
+			},
 			...options,
 		});
 
 		let data: Record<string, unknown>;
+
 		try {
 			data = await res.json();
 		} catch {
-			throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+			throw new ApiError(`Server returned ${res.status}: ${res.statusText}`, res.status);
 		}
 
 		if (!res.ok) {
 			const message =
-				(typeof data?.error === "string" ? data.error : undefined) ??
-				(typeof data?.message === "string" ? data.message : undefined) ??
-				`Request failed: ${res.status}`;
-			throw new Error(message);
+				typeof data?.error === "string"
+					? data.error
+					: typeof data?.message === "string"
+						? data.message
+						: `Request failed: ${res.status}`;
+
+			throw new ApiError(message, res.status);
 		}
 
 		return data as T;
@@ -32,26 +49,47 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 		if (err instanceof TypeError && err.message === "Failed to fetch") {
 			throw new Error("Network error: unable to reach the server");
 		}
+
 		throw err;
 	}
 }
 
 export const api = {
-	getMe(): Promise<UserData> {
+	getCurrentUser() {
 		return request<UserData>("/users/me");
 	},
 
-	signin(email: string, password: string): Promise<{ userId: string; name: string }> {
-		return request<{ userId: string; name: string }>("/auth/login", {
+	signin(email: string, password: string): Promise<{ id: string; name: string; email: string }> {
+		return request<{ id: string; name: string; email: string }>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ email, password }),
 		});
 	},
 
-	signup(email: string, name: string, password: string): Promise<{ userId: string; name: string }> {
-		return request<{ userId: string; name: string }>("/auth/signup", {
+	signup(
+		email: string,
+		name: string,
+		password: string,
+	): Promise<{ success: boolean; message: string }> {
+		return request<{ success: boolean; message: string }>("/auth/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
+		});
+	},
+
+	verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+		return request<{ success: boolean; message: string }>(
+			`/auth/verify-email?token=${encodeURIComponent(token)}`,
+			{
+				method: "POST",
+			},
+		);
+	},
+
+	resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
+		return request<{ success: boolean; message: string }>("/auth/resend-verification-email", {
+			method: "POST",
+			body: JSON.stringify({ email }),
 		});
 	},
 
@@ -123,3 +161,7 @@ export const api = {
 		return request<CancelResult>(`/orders/${orderId}`, { method: "DELETE" });
 	},
 };
+
+export function isUnauthorized(error: unknown): boolean {
+	return error instanceof ApiError && error.status === 401;
+}

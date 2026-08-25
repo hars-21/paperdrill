@@ -3,6 +3,7 @@ import { Routes, Route, Link } from "react-router-dom";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { SignupPage } from "./pages/signup";
+import { VerifyEmailPage } from "./pages/verify-email";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
@@ -64,6 +65,7 @@ export function App() {
 						</PublicOnly>
 					}
 				/>
+				<Route path="verify-email" element={<VerifyEmailPage />} />
 				<Route path="*" element={<NotFound />} />
 			</Route>
 		</Routes>

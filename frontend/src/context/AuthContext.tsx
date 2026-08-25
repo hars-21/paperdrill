@@ -1,67 +1,48 @@
-import type { UserBalance } from "@/types";
-import React, { createContext, useCallback, useContext, useRef, useState } from "react";
-import { api } from "@/lib/api";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { api, isUnauthorized } from "@/lib/api";
 
 type User = {
 	id: string;
 	email: string;
 	name: string;
-	balance: UserBalance;
-} | null;
-
-type AuthContext = {
-	user: User;
-	setUser: (user: User) => void;
-	loading: boolean;
-	refreshUser: () => Promise<void>;
 };
 
-export const AuthContext = createContext<AuthContext | undefined>(undefined);
+type AuthContext = {
+	user: User | null;
+	loading: boolean;
+	authenticated: boolean;
+	refreshUser: () => Promise<void>;
+	setUser: (user: User | null) => void;
+};
+
+export const AuthContext = createContext<AuthContext | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-	const [user, setUser] = useState<User>(null);
+	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
-	const userRef = useRef<User>(null);
-	const inflightRef = useRef<Promise<void> | null>(null);
 
 	const refreshUser = useCallback(async () => {
-		if (inflightRef.current) return inflightRef.current;
-
-		const promise = (async () => {
-			try {
-				const data = await api.getMe();
-				const balance = await api.getBalance();
-				const u = {
-					id: data.userId,
-					email: data.email,
-					name: data.name,
-					balance,
-				};
-				userRef.current = u;
-				setUser(u);
-			} catch (err) {
-				console.error("Failed to refresh user:", err);
-				userRef.current = null;
-				setUser(null);
-			}
-		})();
-
-		inflightRef.current = promise;
 		try {
-			await promise;
+			const user = await api.getCurrentUser();
+			setUser(user);
+		} catch (err) {
+			if (isUnauthorized(err)) {
+				setUser(null);
+				return;
+			}
+
+			console.error("Failed to fetch current user:", err);
 		} finally {
-			inflightRef.current = null;
 			setLoading(false);
 		}
 	}, []);
 
-	const setUserAndCache = useCallback((u: User) => {
-		userRef.current = u;
-		setUser(u);
-	}, []);
+	useEffect(() => {
+		refreshUser();
+	}, [refreshUser]);
 
 	return (
-		<AuthContext.Provider value={{ user, setUser: setUserAndCache, loading, refreshUser }}>
+		<AuthContext.Provider value={{ user, loading, authenticated: !!user, refreshUser, setUser }}>
 			{children}
 		</AuthContext.Provider>
 	);
@@ -69,6 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
 	const context = useContext(AuthContext);
-	if (!context) throw new Error("useAuth must be inside AuthProvider");
+	if (!context) throw new Error("useAuth must be used within AuthProvider");
 	return context;
 };
