@@ -8,7 +8,7 @@ export async function cancelOrderHandler(payload: Record<string, unknown>) {
 	const parsed = orderIdPayloadSchema.safeParse(payload);
 
 	if (!parsed.success) {
-		throw new Error(parsed.error.issues[0]?.message ?? "Invalid cancel payload");
+		throw new Error(parsed.error.issues[0]?.message ?? "Invalid payload");
 	}
 
 	const { userId, id } = parsed.data;

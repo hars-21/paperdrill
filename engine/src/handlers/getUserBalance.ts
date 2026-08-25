@@ -1,12 +1,14 @@
 import { getUserBalance } from "../modules/balance";
-import { userPayloadSchema } from "../schema";
+import { balancePayloadSchema } from "../schema";
 
 export async function getUserBalanceHandler(payload: Record<string, unknown>) {
-	const parsed = userPayloadSchema.safeParse(payload);
+	const parsed = balancePayloadSchema.safeParse(payload);
 
 	if (!parsed.success) {
-		throw new Error(parsed.error.issues[0]?.message ?? "Invalid userId");
+		throw new Error(parsed.error.issues[0]?.message ?? "Invalid payload");
 	}
 
-	return getUserBalance(parsed.data.userId);
+	const { userId, asset } = parsed.data;
+
+	return getUserBalance(userId, asset);
 }

@@ -38,3 +38,12 @@ export const orderIdPayloadSchema = z.object({
 export const tradesPayloadSchema = symbolPayloadSchema.extend({
 	limit: z.coerce.number().positive().max(config.recentTradesLimit).optional(),
 });
+
+export const balancePayloadSchema = userPayloadSchema.extend({
+	asset: z.string().trim().optional(),
+});
+
+export const depositPayloadSchema = userPayloadSchema.extend({
+	amount: z.coerce.bigint().positive("amount must be a positive number"),
+	asset: z.string().trim().min(1, "asset is required"),
+});

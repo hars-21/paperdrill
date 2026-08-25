@@ -1,12 +1,6 @@
 import { config } from "./config";
 import { log } from "./util";
 
-interface DepthResponse {
-	symbol: string;
-	bids: { price: string; qty: string }[];
-	asks: { price: string; qty: string }[];
-}
-
 interface OrderResponse {
 	id: string;
 	symbol: string;
@@ -72,4 +66,11 @@ export async function placeOrder(
 
 export async function cancelOrder(orderId: string): Promise<void> {
 	await api(`/orders/${orderId}`, { method: "DELETE" });
+}
+
+export async function depositFunds(amount: string, asset: string): Promise<void> {
+	await api("/deposits", {
+		method: "POST",
+		body: JSON.stringify({ amount, asset }),
+	});
 }

@@ -47,3 +47,12 @@ export const orderQuerySchema = z.object({
 export const tradesQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(500).optional(),
 });
+
+export const balanceQuerySchema = z.object({
+	asset: z.string().trim().optional(),
+});
+
+export const depositBodySchema = z.object({
+	amount: decimalString,
+	asset: z.string().trim().min(1, "asset is required"),
+});

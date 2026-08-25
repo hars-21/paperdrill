@@ -1,5 +1,5 @@
 import { sleep } from "bun";
-import { getOpenOrders, placeOrder, cancelOrder, initMarket } from "./client";
+import { getOpenOrders, placeOrder, cancelOrder, initMarket, depositFunds } from "./client";
 import { config } from "./config";
 import { getMidPrice } from "./price";
 import { generateOrders } from "./strategy";
@@ -88,6 +88,9 @@ async function maintain(midPrice: number) {
 			try {
 				await placeOrder(o.side, "LIMIT", o.price, o.qty);
 			} catch {
+				depositFunds(o.qty, "USD").catch((e) => {
+					log(`Failed to deposit funds: ${e}`);
+				});
 				log(`Failed to place order: ${o.side} ${o.price} ${o.qty}`);
 			}
 		}

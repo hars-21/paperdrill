@@ -3,6 +3,8 @@ import type { Request, Response } from "express";
 import { sendToEngine } from "../utils/engineClient";
 import { formatBalance } from "../utils/formatter";
 import { logger } from "../utils/logger";
+import { balanceQuerySchema, depositBodySchema } from "../schema/exchange";
+import { sendValidationError } from "../utils/validation";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
@@ -43,8 +45,16 @@ export async function getUserData(req: Request, res: Response) {
 // Balances
 export async function getBalance(req: Request, res: Response) {
 	const userId = getUserId(req);
+	const parsedQuery = balanceQuerySchema.safeParse(req.query);
 
-	const engineResponse = await sendToEngine("get_user_balance", { userId });
+	if (!parsedQuery.success) {
+		sendValidationError(res, parsedQuery.error);
+		return;
+	}
+
+	const { asset } = parsedQuery.data;
+
+	const engineResponse = await sendToEngine("get_user_balance", { userId, asset });
 
 	if (!engineResponse.success) {
 		res.status(400).json({ error: engineResponse.error });
@@ -54,4 +64,25 @@ export async function getBalance(req: Request, res: Response) {
 	res
 		.status(200)
 		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
+}
+
+export async function createDeposit(req: Request, res: Response) {
+	const userId = getUserId(req);
+	const parsedBody = depositBodySchema.safeParse(req.body);
+
+	if (!parsedBody.success) {
+		sendValidationError(res, parsedBody.error);
+		return;
+	}
+
+	const { amount, asset } = parsedBody.data;
+
+	const engineResponse = await sendToEngine("create_deposit", { userId, amount, asset });
+
+	if (!engineResponse.success) {
+		res.status(400).json({ error: engineResponse.error });
+		return;
+	}
+
+	res.status(200).json(engineResponse.data);
 }

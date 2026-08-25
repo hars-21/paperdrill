@@ -19,23 +19,20 @@ export interface ReleaseResult {
 	released: bigint;
 }
 
+const ASSETS = new Set(
+	Object.values(ORDERBOOK).flatMap((market) => [market.baseAsset, market.quoteAsset]),
+);
+
 function qtyScale(qtyPrecision: number): bigint {
 	return 10n ** BigInt(qtyPrecision);
 }
 
-function ensureMarketAssets(balance: UserBalance) {
-	const assets = new Set(
-		Object.values(ORDERBOOK).flatMap((market) => [market.baseAsset, market.quoteAsset]),
-	);
-
-	for (const asset of assets) {
-		balance[asset] ??= { available: 10000000n, locked: 0n };
-	}
-}
-
 function initializeBalance(): UserBalance {
 	const balance: UserBalance = {};
-	ensureMarketAssets(balance);
+	for (const asset of ASSETS) {
+		balance[asset] ??= { available: 10000000n, locked: 0n };
+	}
+
 	return balance;
 }
 
@@ -45,11 +42,32 @@ function getAssetBalance(balance: UserBalance, asset: string) {
 	return assetBalance;
 }
 
-export function getUserBalance(userId: string): UserBalance {
+export function addBalance(userId: string, asset: string, amount: bigint) {
+	if (!ASSETS.has(asset)) {
+		throw new Error(`Unknown asset: ${asset}`);
+	}
+
 	if (!BALANCES[userId]) {
 		BALANCES[userId] = initializeBalance();
 	}
-	ensureMarketAssets(BALANCES[userId]);
+
+	const userBalance = BALANCES[userId];
+
+	if (!userBalance[asset]) {
+		userBalance[asset] = { available: 0n, locked: 0n };
+	}
+
+	userBalance[asset].available += amount;
+}
+
+export function getUserBalance(userId: string, asset: string | null = null): UserBalance {
+	if (!BALANCES[userId]) {
+		BALANCES[userId] = initializeBalance();
+	}
+
+	if (asset) {
+		return { [asset]: getAssetBalance(BALANCES[userId], asset) };
+	}
 
 	return BALANCES[userId];
 }
