@@ -2,33 +2,33 @@ services:
   btc-bot:
     build: ./
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: .env.prod
     environment:
       MARKET: BTC_USD
-      BOT_EMAIL: bot.btc@paperdrill.dev
+      SERVICE_EMAIL: btc.service@paperdrill.dev
+      MAX_ORDER_QTY: 0.1
     networks:
       - paperdrill
 
   sol-bot:
     build: ./
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: .env.prod
     environment:
       MARKET: SOL_USD
-      BOT_EMAIL: bot.sol@paperdrill.dev
+      SERVICE_EMAIL: sol.service@paperdrill.dev
+      MAX_ORDER_QTY: 10
     networks:
       - paperdrill
 
   eth-bot:
     build: ./
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: .env.prod
     environment:
       MARKET: ETH_USD
-      BOT_EMAIL: bot.eth@paperdrill.dev
+      SERVICE_EMAIL: eth.service@paperdrill.dev
+      MAX_ORDER_QTY: 1
     networks:
       - paperdrill
 
