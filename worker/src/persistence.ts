@@ -6,7 +6,17 @@ import type { StreamFill, StreamOrder } from "./types";
 const orderBucket = new Map<string, StreamOrder>();
 const fillBucket = new Map<string, StreamFill>();
 
+let serviceUserIds = new Set<string>();
+
+export async function loadServiceUserIds() {
+	const result = await pool.query('SELECT id FROM "User" WHERE type = $1', ["SERVICE"]);
+	serviceUserIds = new Set(result.rows.map((row) => row.id));
+	logger.info(`Loaded ${serviceUserIds.size} service accounts for order filtering`);
+}
+
 export function queueOrder(order: StreamOrder) {
+	if (serviceUserIds.has(order.userId)) return;
+
 	orderBucket.set(order.id, order);
 }
 

@@ -4,7 +4,7 @@ import { cacheClient, connectRedis, disconnectRedis, streamConsumer } from "./re
 import { config } from "./config";
 import { logger } from "./logger";
 import { flushCandles } from "./candle";
-import { flushBatch, queueFill, queueOrder } from "./persistence";
+import { flushBatch, queueFill, queueOrder, loadServiceUserIds } from "./persistence";
 import type { StreamFill, StreamOrder } from "./types";
 
 const abortController = new AbortController();
@@ -16,6 +16,11 @@ await connectRedis().catch((err) => {
 
 await pool.query("SELECT 1").catch((err) => {
 	logger.error("Database connection error", err);
+	process.exit(1);
+});
+
+await loadServiceUserIds().catch((err) => {
+	logger.error("Failed to load service accounts", err);
 	process.exit(1);
 });
 

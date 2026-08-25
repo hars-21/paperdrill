@@ -137,8 +137,7 @@ export function requireAccess({ types, scopes }: AccessOptions) {
 		}
 
 		if (scopes?.length && principal.type !== "session") {
-			const authorized =
-				principal.type === "api_key" && scopes.every((scope) => principal.scopes?.includes(scope));
+			const authorized = scopes.every((scope) => principal.scopes?.includes(scope));
 
 			if (!authorized) {
 				res.status(403).json({ error: "You do not have permission to perform this action" });
