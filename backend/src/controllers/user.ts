@@ -84,5 +84,7 @@ export async function createDeposit(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(engineResponse.data);
+	res
+		.status(200)
+		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
 }

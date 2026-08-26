@@ -73,8 +73,8 @@ export async function cancelOrder(orderId: string): Promise<void> {
 	await api(`/orders/${orderId}`, { method: "DELETE" });
 }
 
-export async function depositFunds(amount: string, asset: string): Promise<void> {
-	await api("/deposits", {
+export async function depositFunds(amount: string, asset: string) {
+	return api<{ [asset: string]: { available: string; locked: string } }>("/deposits", {
 		method: "POST",
 		body: JSON.stringify({ amount, asset }),
 	});

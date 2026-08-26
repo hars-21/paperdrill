@@ -7,6 +7,19 @@ import { log, randomInt, shuffle } from "./util";
 
 await initMarket();
 
+const [baseAsset, quoteAsset] = config.market.split("_") as [string, string];
+const depositAmount = "1000000";
+
+async function ensureFunds() {
+	const basebalance = await depositFunds(depositAmount, baseAsset);
+	const quoteBalance = await depositFunds(depositAmount, quoteAsset);
+	log(`Deposited ${depositAmount} ${baseAsset} and ${depositAmount} ${quoteAsset}`);
+	log(`Updated ${baseAsset} balance: ${basebalance[baseAsset]?.available}`);
+	log(`Updated ${quoteAsset} balance: ${quoteBalance[quoteAsset]?.available}`);
+}
+
+await ensureFunds();
+
 for (;;) {
 	try {
 		const midPrice = await getMidPrice();
@@ -42,7 +55,19 @@ async function seed(midPrice: number) {
 			await placeOrder(o.side, "LIMIT", o.price, o.qty);
 			placed++;
 		} catch (e) {
-			log(`Seed order failed: ${e}`);
+			const msg = String(e);
+			if (msg.includes("Insufficient balance")) {
+				log("Insufficient balance, re-depositing funds");
+				await ensureFunds();
+				try {
+					await placeOrder(o.side, "LIMIT", o.price, o.qty);
+					placed++;
+				} catch (e2) {
+					log(`Seed order failed after re-deposit: ${e2}`);
+				}
+			} else {
+				log(`Seed order failed: ${e}`);
+			}
 		}
 	}
 	log(`Seeded ${placed} orders`);
@@ -88,9 +113,6 @@ async function maintain(midPrice: number) {
 			try {
 				await placeOrder(o.side, "LIMIT", o.price, o.qty);
 			} catch {
-				depositFunds(o.qty, "USD").catch((e) => {
-					log(`Failed to deposit funds: ${e}`);
-				});
 				log(`Failed to place order: ${o.side} ${o.price} ${o.qty}`);
 			}
 		}

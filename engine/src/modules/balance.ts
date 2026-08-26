@@ -54,6 +54,8 @@ export function addBalance(userId: string, asset: string, amount: bigint) {
 	}
 
 	userBalance[asset].available += amount;
+
+	return { [asset]: userBalance[asset] };
 }
 
 export function getUserBalance(userId: string, asset?: string): UserBalance {
