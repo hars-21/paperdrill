@@ -1,6 +1,6 @@
 services:
   btc-bot:
-    build: ./
+    build: ./bot
     restart: unless-stopped
     env_file: .env.prod
     environment:
@@ -11,7 +11,7 @@ services:
       - paperdrill
 
   sol-bot:
-    build: ./
+    build: ./bot
     restart: unless-stopped
     env_file: .env.prod
     environment:
@@ -22,7 +22,7 @@ services:
       - paperdrill
 
   eth-bot:
-    build: ./
+    build: ./bot
     restart: unless-stopped
     env_file: .env.prod
     environment:
