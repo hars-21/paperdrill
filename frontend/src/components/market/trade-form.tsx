@@ -22,14 +22,6 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 	const { authenticated, loading } = useAuth();
 	const [balance, setBalance] = useState<UserBalance>({});
 
-	if (loading) {
-		return <TradeFormSkeleton />;
-	}
-
-	const [base, quote] = symbol.split("_") as [string, string];
-	const baseLogo = COIN_LOGOS[base];
-	const quoteLogo = COIN_LOGOS[quote];
-
 	useEffect(() => {
 		if (authenticated) {
 			api
@@ -41,6 +33,14 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 				});
 		}
 	}, [authenticated, onOrderPlaced]);
+
+	if (loading) {
+		return <TradeFormSkeleton />;
+	}
+
+	const [base, quote] = symbol.split("_") as [string, string];
+	const baseLogo = COIN_LOGOS[base];
+	const quoteLogo = COIN_LOGOS[quote];
 
 	const handlePlaceOrder = async (e: React.SubmitEvent) => {
 		e.preventDefault();
