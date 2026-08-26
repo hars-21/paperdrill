@@ -21,6 +21,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 	const [submitting, setSubmitting] = useState(false);
 	const { authenticated, loading } = useAuth();
 	const [balance, setBalance] = useState<UserBalance>({});
+	const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
 
 	useEffect(() => {
 		if (authenticated) {
@@ -32,7 +33,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 					toast.error("Failed to fetch balance");
 				});
 		}
-	}, [authenticated, onOrderPlaced]);
+	}, [authenticated, balanceRefreshKey]);
 
 	if (loading) {
 		return <TradeFormSkeleton />;
@@ -75,6 +76,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 			toast.success(statusMsg);
 			setPrice("");
 			setQuantity("");
+			setBalanceRefreshKey((k) => k + 1);
 			onOrderPlaced?.();
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Order failed");
