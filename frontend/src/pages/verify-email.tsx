@@ -1,42 +1,54 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export function VerifyEmailPage() {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get("token");
+	const { setUser } = useAuth();
+	const navigate = useNavigate();
 
-	const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+	const [status, setStatus] = useState<"loading" | "success" | "no-token" | "api-error">("loading");
 
 	useEffect(() => {
 		if (!token) {
-			setStatus("error");
-			toast.error("No verification token provided.");
+			setStatus("no-token");
 			return;
 		}
 
 		let cancelled = false;
 
-		api
-			.verifyEmail(token)
-			.then(() => {
+		(async () => {
+			try {
+				const user = await api.verifyEmail(token);
+				setUser(user);
 				if (!cancelled) setStatus("success");
-			})
-			.catch((err) => {
+			} catch (err) {
 				if (!cancelled) {
-					setStatus("error");
-					toast.error(err instanceof Error ? err.message : "Verification failed.");
+					setStatus("api-error");
+					toast.error(
+						err instanceof Error ? err.message : "An error occurred while verifying your email.",
+					);
 				}
-			});
+			}
+		})();
 
 		return () => {
 			cancelled = true;
 		};
-	}, [token]);
+	}, [token, setUser]);
+
+	useEffect(() => {
+		if (status === "success") {
+			const id = setTimeout(() => navigate("/markets"), 1500);
+			return () => clearTimeout(id);
+		}
+	}, [status, navigate]);
 
 	return (
 		<div className="flex w-full flex-1 items-center justify-center px-6">
@@ -56,16 +68,27 @@ export function VerifyEmailPage() {
 							<>
 								<CardTitle className="text-2xl tracking-tight">You&apos;re all set</CardTitle>
 								<CardDescription className="mt-2">
-									Your email has been verified successfully. Your account is ready to use.
+									Your email has been verified successfully. Redirecting you shortly.
 								</CardDescription>
 							</>
 						)}
 
-						{status === "error" && (
+						{status === "no-token" && (
 							<>
-								<CardTitle className="text-2xl tracking-tight">Verification link expired</CardTitle>
+								<CardTitle className="text-2xl tracking-tight">Unable to verify</CardTitle>
 								<CardDescription className="mt-2">
-									This verification link is no longer valid. Please request a new one to continue.
+									We&apos;re unable to process your verification request. Please try signing in and
+									request a new verification email.
+								</CardDescription>
+							</>
+						)}
+
+						{status === "api-error" && (
+							<>
+								<CardTitle className="text-2xl tracking-tight">Verification failed</CardTitle>
+								<CardDescription className="mt-2">
+									This verification link is invalid or has expired. Please sign in and request a new
+									one.
 								</CardDescription>
 							</>
 						)}
@@ -80,29 +103,16 @@ export function VerifyEmailPage() {
 						)}
 
 						{status === "success" && (
-							<div className="space-y-3">
-								<Link to="/trade/BTC_USD" className="block">
-									<Button className="w-full">Continue to trading</Button>
-								</Link>
-
-								<p className="text-center text-xs text-muted-foreground">
-									Your account is verified and ready to use.
-								</p>
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<Loader2 className="h-4 w-4 animate-spin" />
+								<span>Redirecting to markets...</span>
 							</div>
 						)}
 
-						{status === "error" && (
-							<div className="space-y-3">
-								<Link to="/signup" className="block">
-									<Button className="w-full">Create a new account</Button>
-								</Link>
-
-								<Link to="/login" className="block">
-									<Button variant="ghost" className="w-full">
-										Back to login
-									</Button>
-								</Link>
-							</div>
+						{(status === "no-token" || status === "api-error") && (
+							<Link to="/login" className="block">
+								<Button className="w-full">Sign in</Button>
+							</Link>
 						)}
 					</CardContent>
 				</Card>

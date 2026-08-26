@@ -10,13 +10,30 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Page, PageHeader, PageContent } from "@/components/ui/page";
 import { OrdersTable } from "@/components/market/orders-table";
+import { useEffect, useState } from "react";
+import type { UserBalance } from "@/types";
 
 export function ProfilePage() {
 	const { user, setUser, loading } = useAuth();
 	const navigate = useNavigate();
+	const [balances, setBalances] = useState<UserBalance>({});
 
 	if (loading) return <Loader />;
 	if (!user) return <Navigate to="/" replace />;
+
+	useEffect(() => {
+		const fetchBalances = async () => {
+			try {
+				const data = await api.getBalance();
+				setBalances(data);
+			} catch (err) {
+				console.error("Failed to fetch balances:", err);
+				toast.error(err instanceof Error ? err.message : "Failed to fetch balances");
+			}
+		};
+
+		fetchBalances();
+	}, []);
 
 	const handleLogout = async () => {
 		try {
@@ -30,8 +47,7 @@ export function ProfilePage() {
 		}
 	};
 
-	const balances = Object.entries(user.balance || {});
-	const assetCount = balances.length;
+	const assetCount = Object.keys(balances).length;
 
 	return (
 		<Page>
@@ -98,12 +114,12 @@ export function ProfilePage() {
 								<div className="py-6 text-center">
 									<p className="text-sm text-medium-emphasis">No balances yet</p>
 									<p className="mt-1 text-xs text-low-emphasis">
-										Funds are credited when you place your first order.
+										You can deposit sandbox assets from the Markets page to start trading.
 									</p>
 								</div>
 							) : (
 								<div className="grid gap-2 sm:grid-cols-2">
-									{balances.map(([currency, bal]) => (
+									{Object.entries(balances).map(([currency, bal]) => (
 										<div
 											key={currency}
 											className="flex items-center justify-between gap-3 rounded-xl border border-border/30 bg-muted/20 px-3.5 py-3 transition-colors hover:border-border/60"

@@ -46,8 +46,8 @@ export interface Trade {
 	id: string;
 	price: string;
 	qty: string;
-	side: "BUY" | "SELL";
-	timestamp: string | number;
+	maker: boolean;
+	timestamp: number;
 }
 
 export interface Market {

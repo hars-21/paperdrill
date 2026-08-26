@@ -59,26 +59,22 @@ export const api = {
 		return request<UserData>("/users/me");
 	},
 
-	signin(email: string, password: string): Promise<{ id: string; name: string; email: string }> {
+	signin(email: string, password: string) {
 		return request<{ id: string; name: string; email: string }>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ email, password }),
 		});
 	},
 
-	signup(
-		email: string,
-		name: string,
-		password: string,
-	): Promise<{ success: boolean; message: string }> {
+	signup(email: string, name: string, password: string) {
 		return request<{ success: boolean; message: string }>("/auth/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
 		});
 	},
 
-	verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
-		return request<{ success: boolean; message: string }>(
+	verifyEmail(token: string) {
+		return request<{ id: string; name: string; email: string }>(
 			`/auth/verify-email?token=${encodeURIComponent(token)}`,
 			{
 				method: "POST",
@@ -93,48 +89,41 @@ export const api = {
 		});
 	},
 
-	signout(): Promise<{ success: boolean; message: string }> {
+	signout() {
 		return request<{ success: boolean; message: string }>("/auth/logout", {
 			method: "POST",
 		});
 	},
 
-	getMarkets(): Promise<{ data: Market[] }> {
+	getMarkets() {
 		return request<{ data: Market[] }>("/markets");
 	},
 
-	getDepth(symbol: string): Promise<DepthSnapshot> {
+	getDepth(symbol: string) {
 		return request<DepthSnapshot>(`/markets/${symbol}/orderbook`);
 	},
 
-	getTrades(symbol: string, limit?: number): Promise<Fill[]> {
+	getTrades(symbol: string, limit?: number) {
 		const params = limit ? `?limit=${limit}` : "";
 		return request<Fill[]>(`/markets/${symbol}/trades${params}`);
 	},
 
-	getCandles(
-		symbol: string,
-		interval: string,
-	): Promise<{ data: Omit<Candle, "symbol" | "event">[] }> {
+	getCandles(symbol: string, interval: string) {
 		return request<{ data: Omit<Candle, "symbol" | "event">[] }>(
 			`/markets/${symbol}/candles?interval=${interval}`,
 		);
 	},
 
-	getBalance(): Promise<UserBalance> {
-		return request<UserBalance>("/balances");
+	getBalance(asset?: string) {
+		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
+		return request<UserBalance>(`/balances${params}`);
 	},
 
-	getOpenOrders(): Promise<OrderRecord[]> {
+	getOpenOrders() {
 		return request<OrderRecord[]>("/orders/open");
 	},
 
-	getOrders(params?: {
-		symbol?: string;
-		status?: string;
-		limit?: number;
-		page?: number;
-	}): Promise<OrderRecord[]> {
+	getOrders(params?: { symbol?: string; status?: string; limit?: number; page?: number }) {
 		const q = new URLSearchParams();
 		if (params?.symbol) q.set("symbol", params.symbol);
 		if (params?.status) q.set("status", params.status);
@@ -150,14 +139,14 @@ export const api = {
 		symbol: string,
 		qty: string,
 		price?: string | null,
-	): Promise<OrderResult> {
+	) {
 		return request<OrderResult>("/orders", {
 			method: "POST",
 			body: JSON.stringify({ side, type, symbol, qty, price: price ?? null }),
 		});
 	},
 
-	cancelOrder(orderId: string): Promise<CancelResult> {
+	cancelOrder(orderId: string) {
 		return request<CancelResult>(`/orders/${orderId}`, { method: "DELETE" });
 	},
 };

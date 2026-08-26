@@ -13,8 +13,5 @@ export async function getTradesHandler(payload: Record<string, unknown>) {
 	getMarket(symbol);
 	const trades = RECENT_TRADES[symbol] ?? [];
 
-	return {
-		symbol,
-		trades: [...trades].reverse().slice(0, limit ?? trades.length),
-	};
+	return trades.reverse().slice(0, limit ?? trades.length);
 }

@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import type { Trade } from "@/types";
-import { api } from "@/lib/api";
-import { wsManager } from "@/lib/ws";
-import { toast } from "sonner";
 
 function formatTime(ts: string | number) {
 	return new Date(ts).toLocaleTimeString("en-US", { hour12: false });
@@ -12,60 +8,12 @@ function formatTime(ts: string | number) {
 export function Trades({
 	symbol,
 	loading,
-	compact,
+	trades,
 }: {
 	symbol: string;
 	loading?: boolean;
-	compact?: boolean;
+	trades: Trade[];
 }) {
-	const [trades, setTrades] = useState<Trade[]>([]);
-	const limit = compact ? 25 : 50;
-
-	useEffect(() => {
-		setTrades([]);
-
-		api
-			.getTrades(symbol, limit)
-			.then((data) => {
-				const mapped = (Array.isArray(data) ? data : []).map((f) => ({
-					id: f.id,
-					price: f.price,
-					qty: f.qty,
-					side: f.side,
-					timestamp: f.createdAt,
-				}));
-				setTrades(mapped);
-			})
-			.catch((err) => {
-				console.error("Failed to load trades:", err);
-				toast.error("Failed to load trades");
-			});
-
-		const handleTrade = (msg: unknown) => {
-			const data = msg as Record<string, unknown>;
-			if (data.event === "trade") {
-				const ts =
-					typeof data.timestamp === "number"
-						? data.timestamp
-						: Number(data.timestamp) || Date.now();
-				const trade: Trade = {
-					id: String(data.id ?? ""),
-					price: String(data.price ?? "0"),
-					qty: String(data.qty ?? "0"),
-					side: data.maker ? "SELL" : "BUY",
-					timestamp: ts,
-				};
-				setTrades((prev) => [trade, ...prev].slice(0, 50));
-			}
-		};
-
-		const unsubscribe = wsManager.subscribe(`trade:${symbol}`, handleTrade);
-
-		return () => {
-			unsubscribe();
-		};
-	}, [symbol]);
-
 	if (loading) {
 		return (
 			<div className="flex h-full flex-col p-4 gap-2">
@@ -101,7 +49,7 @@ export function Trades({
 							<div className="flex h-full w-[30%] items-center">
 								<span
 									className={`text-left text-xs font-normal tabular-nums ${
-										t.side === "BUY" ? "text-green-text/90" : "text-red-text/90"
+										t.maker ? "text-green-text/90" : "text-red-text/90"
 									}`}
 								>
 									{t.price}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { COIN_LOGOS } from "@/utils/misc";
 import { TradeFormSkeleton } from "./skeletons";
+import type { UserBalance } from "@/types";
 
 interface TradeFormProps {
 	symbol: string;
@@ -18,7 +19,8 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 	const [price, setPrice] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [submitting, setSubmitting] = useState(false);
-	const { user, loading, refreshUser } = useAuth();
+	const { authenticated, loading } = useAuth();
+	const [balance, setBalance] = useState<UserBalance>({});
 
 	if (loading) {
 		return <TradeFormSkeleton />;
@@ -28,12 +30,25 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 	const baseLogo = COIN_LOGOS[base];
 	const quoteLogo = COIN_LOGOS[quote];
 
-	const handlePlaceOrder = async (e: React.FormEvent) => {
+	useEffect(() => {
+		if (authenticated) {
+			api
+				.getBalance()
+				.then(setBalance)
+				.catch((err) => {
+					console.error("Failed to fetch balance:", err);
+					toast.error("Failed to fetch balance");
+				});
+		}
+	}, [authenticated, onOrderPlaced]);
+
+	const handlePlaceOrder = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		if (!quantity || Number(quantity) <= 0) {
 			toast.error("Enter a valid quantity");
 			return;
 		}
+
 		if (orderType === "LIMIT" && (!price || Number(price) <= 0)) {
 			toast.error("Enter a valid price for limit orders");
 			return;
@@ -60,8 +75,6 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 			toast.success(statusMsg);
 			setPrice("");
 			setQuantity("");
-
-			await refreshUser();
 			onOrderPlaced?.();
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Order failed");
@@ -134,9 +147,11 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 						<div className="flex justify-between flex-row">
 							<span className="text-medium-emphasis text-xs">Balance</span>
 							<span className="text-high-emphasis text-xs font-medium">
-								{side === "BUY"
-									? `${user?.balance[quote]?.available ?? 0} ${quote}`
-									: `${user?.balance[base]?.available ?? 0} ${base}`}
+								{authenticated
+									? side === "BUY"
+										? `${balance[quote]?.available ?? "-"} ${quote}`
+										: `${balance[base]?.available ?? "-"} ${base}`
+									: "-"}
 							</span>
 						</div>
 
@@ -232,7 +247,7 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 							</div>
 						)}
 
-						{user ? (
+						{authenticated ? (
 							<div className="flex flex-col gap-2 pt-1">
 								<Button type="submit" variant="inverted" disabled={submitting}>
 									{submitting

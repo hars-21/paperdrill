@@ -27,6 +27,7 @@ import { config } from "./config";
 	};
 */
 export const BALANCES: Record<string, UserBalance> = {};
+export const ASSETS = new Set<string>();
 
 /*
 	ORDERBOOK = {

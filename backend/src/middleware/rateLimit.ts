@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { rateLimit } from "express-rate-limit";
+import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { config } from "../config";
 import { rateLimiterClient } from "../redis";
@@ -18,7 +18,7 @@ function bucketKey(req: Request): string {
 	if (principal?.type === "session") return `u:${principal.userId}`;
 	if (principal?.type === "api_key") return `k:${principal.keyId}`;
 
-	return `ip:${req.ip ?? "unknown"}`;
+	return `ip:${ipKeyGenerator(req.ip ?? "unknown")}`;
 }
 
 function createLimiter(prefix: string, windowMs: number, limit: number) {

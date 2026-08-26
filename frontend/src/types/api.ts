@@ -17,12 +17,12 @@ export type Fill = {
 	symbol: string;
 	price: string;
 	qty: string;
-	side: "BUY" | "SELL";
+	isBuyerMaker: boolean;
 	buyOrderId: string;
 	sellOrderId: string;
 	buyerId: string;
 	sellerId: string;
-	createdAt: string;
+	createdAt: number;
 };
 
 export type DepthSnapshot = {

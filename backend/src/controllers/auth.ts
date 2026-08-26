@@ -149,15 +149,16 @@ export async function verifyEmail(req: Request, res: Response) {
 			data: { usedAt: new Date() },
 		});
 
-		await prisma.user.update({
+		const user = await prisma.user.update({
 			where: { id: verification.userId },
 			data: { emailVerified: true },
+			select: { id: true, name: true, email: true },
 		});
 
 		res
 			.status(200)
 			.cookie("token", createToken({ id: verification.userId }), config.cookie)
-			.json({ success: true, message: "Email verified successfully" });
+			.json(user);
 	} catch (e) {
 		logger.error("Email verification failed", e);
 		res.status(500).json({ error: "Internal server error" });

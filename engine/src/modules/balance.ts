@@ -1,4 +1,4 @@
-import { BALANCES, ORDERBOOK } from "../store";
+import { ASSETS, BALANCES } from "../store";
 import type { CreateOrderInput, InternalOrder, Fill, UserBalance } from "../types/domain";
 import { getMarket } from "./market";
 
@@ -18,10 +18,6 @@ export interface ReleaseResult {
 	asset: string;
 	released: bigint;
 }
-
-const ASSETS = new Set(
-	Object.values(ORDERBOOK).flatMap((market) => [market.baseAsset, market.quoteAsset]),
-);
 
 function qtyScale(qtyPrecision: number): bigint {
 	return 10n ** BigInt(qtyPrecision);
@@ -60,7 +56,7 @@ export function addBalance(userId: string, asset: string, amount: bigint) {
 	userBalance[asset].available += amount;
 }
 
-export function getUserBalance(userId: string, asset: string | null = null): UserBalance {
+export function getUserBalance(userId: string, asset?: string): UserBalance {
 	if (!BALANCES[userId]) {
 		BALANCES[userId] = initializeBalance();
 	}

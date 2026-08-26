@@ -8,7 +8,7 @@ import { Chart } from "../components/market/chart";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "../components/ui/skeleton";
-import type { DepthLevel, OrderBook, StreamResponse } from "@/types";
+import type { DepthLevel, OrderBook, StreamResponse, Trade } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 import { Page } from "@/components/ui/page";
@@ -26,7 +26,9 @@ export function TradePage() {
 	});
 	const bufferRef = useRef<StreamResponse[]>([]);
 	const [leftTab, setLeftTab] = useState<"book" | "trades">("book");
+	const [trades, setTrades] = useState<Trade[]>([]);
 
+	// Fetch initial orderbook and subscribe to updates
 	useEffect(() => {
 		setLoading(true);
 		setOrderbook({ bids: {}, asks: {} });
@@ -62,6 +64,48 @@ export function TradePage() {
 				toast.error("Failed to load orderbook");
 			})
 			.finally(() => setLoading(false));
+
+		return () => {
+			unsubscribe();
+		};
+	}, [symbol]);
+
+	// Fetch initial trades and subscribe to updates
+	useEffect(() => {
+		setTrades([]);
+
+		api
+			.getTrades(symbol)
+			.then((data) => {
+				const mapped = data.map((f) => ({
+					id: f.id,
+					price: f.price,
+					qty: f.qty,
+					maker: f.isBuyerMaker,
+					timestamp: f.createdAt,
+				}));
+				setTrades(mapped);
+			})
+			.catch((err) => {
+				console.error("Failed to load trades:", err);
+				toast.error("Failed to load trades");
+			});
+
+		const handleTrade = (msg: unknown) => {
+			const data = msg as Record<string, unknown>;
+			if (data.event === "trade") {
+				const trade: Trade = {
+					id: String(data.id ?? ""),
+					price: String(data.price ?? "0"),
+					qty: String(data.qty ?? "0"),
+					maker: Boolean(data.maker),
+					timestamp: Number(data.timestamp) || Date.now(),
+				};
+				setTrades((prev) => [trade, ...prev].slice(0, 50));
+			}
+		};
+
+		const unsubscribe = wsManager.subscribe(`trade:${symbol}`, handleTrade);
 
 		return () => {
 			unsubscribe();
@@ -145,7 +189,7 @@ export function TradePage() {
 										symbol={symbol}
 									/>
 								) : (
-									<Trades symbol={symbol} loading={isDataLoading} />
+									<Trades symbol={symbol} loading={isDataLoading} trades={trades} />
 								)}
 							</div>
 						</div>
@@ -199,7 +243,7 @@ export function TradePage() {
 								symbol={symbol}
 							/>
 						) : (
-							<Trades compact symbol={symbol} loading={isDataLoading} />
+							<Trades symbol={symbol} loading={isDataLoading} trades={trades.slice(0, 25)} />
 						)}
 					</div>
 				</div>

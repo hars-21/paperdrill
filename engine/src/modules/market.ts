@@ -1,5 +1,5 @@
 import { pool } from "../db";
-import { ORDERBOOK } from "../store";
+import { ASSETS, ORDERBOOK } from "../store";
 import type { Market } from "../types/domain";
 import { logger } from "../util/logger";
 
@@ -25,6 +25,9 @@ function applyMarkets(markets: MarketMetadata[]) {
 			bids: new Map(),
 			asks: new Map(),
 		};
+
+		ASSETS.add(metadata.baseAsset);
+		ASSETS.add(metadata.quoteAsset);
 	}
 
 	logger.info(`Loaded ${markets.length} markets from database`);

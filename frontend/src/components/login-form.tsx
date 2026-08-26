@@ -13,7 +13,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const { refreshUser } = useAuth();
+	const { setUser } = useAuth();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
@@ -25,8 +25,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
 		setIsLoading(true);
 		try {
-			await api.signin(email, password);
-			await refreshUser();
+			const user = await api.signin(email, password);
+			setUser(user);
 			toast.success("Successfully logged in");
 			navigate("/markets");
 		} catch (err) {
