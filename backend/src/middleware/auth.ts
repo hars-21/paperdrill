@@ -118,7 +118,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 		next();
 	} catch (e) {
 		logger.warn("Auth token verification failed", { error: (e as Error).message });
-		res.status(401).json({ error: "Invalid auth token" });
+		res.status(401).clearCookie("token", config.cookie).json({ error: "Invalid auth token" });
 	}
 }
 
