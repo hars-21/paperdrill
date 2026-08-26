@@ -1,4 +1,4 @@
-<!DOCTYPE html
+export const emailVerificationTemplate = (name: string, verifyUrl: string) => `<!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" lang="en">
 
@@ -44,7 +44,7 @@
                                     </h1>
                                     <p
                                         style="margin:0;padding:0;font-size:16px;padding-top:0.5em;padding-bottom:0.5em;color:#52525b;margin-top:0px;margin-bottom:12px;line-height:1.6;text-align:left">
-                                        Hi {{{name}}},
+                                        Hi ${name},
                                     </p>
                                     <p
                                         style="margin:0;padding:0;font-size:16px;padding-top:0.5em;padding-bottom:0.5em;color:#52525b;margin-top:0px;margin-bottom:32px;line-height:1.6;text-align:left">
@@ -56,7 +56,7 @@
                                         <tbody style="width:100%">
                                             <tr style="width:100%">
                                                 <td align="left" data-id="__react-email-column">
-                                                    <a class="button" href="{{{verification_url}}}"
+                                                    <a class="button" href="${verifyUrl}"
                                                         style="line-height:100%;text-decoration:none;display:inline-block;max-width:100%;margin:0;padding:0;padding-top:14px;padding-right:28px;padding-bottom:14px;padding-left:28px;background-color:#E11D48;color:#ffffff;border-radius:10px;font-weight:600;font-size:15px;text-align:center;box-sizing:border-box"
                                                         target="_blank"><span
                                                             style="max-width:100%;display:inline-block;line-height:120%">Verify
@@ -71,9 +71,9 @@
                                     </p>
                                     <p
                                         style="margin:0;padding:0;font-size:13px;padding-top:0.5em;padding-bottom:0.5em;margin-top:0px;margin-bottom:32px;word-break:break-all;line-height:1.5;text-align:left">
-                                        <a href="{{{verification_url}}}" rel="noopener noreferrer nofollow"
+                                        <a href="${verifyUrl}" rel="noopener noreferrer nofollow"
                                             style="color:#E11D48;text-decoration-line:none;text-decoration:underline"
-                                            target="_blank">{{{verification_url}}}</a>
+                                            target="_blank">${verifyUrl}</a>
                                     </p>
                                     <hr class="divider"
                                         style="width:100%;border:none;border-color:transparent;border-top:1px solid #eaeaea;padding-bottom:1em;border-style:solid;border-width:0;border-top-width:1px;border-top-style:solid;border-top-color:#e4e4e7;margin-top:8px;margin-bottom:24px" />
@@ -101,4 +101,4 @@
     <!--/$-->
 </body>
 
-</html>
+</html>`;
