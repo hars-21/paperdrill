@@ -17,7 +17,7 @@ export const MARKET: { pricePrecision: number; qtyPrecision: number } = {
 };
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-	const res = await fetch(`${config.baseUrl}${path}`, {
+	const res = await fetch(`${config.baseUrl}/v1${path}`, {
 		...options,
 		headers: {
 			"Content-Type": "application/json",
@@ -27,9 +27,14 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 		},
 	});
 
-	const data = await res.json();
-	if (!res.ok) throw new Error((data as any)?.error || `API ${res.status}`);
-	return data as T;
+	try {
+		const data = await res.json();
+		if (!res.ok) throw new Error((data as any)?.error || `API ${res.status}`);
+		return data as T;
+	} catch (err) {
+		log(`API error: ${err}`);
+		throw err;
+	}
 }
 
 async function getMarkets(): Promise<any[]> {

@@ -1,7 +1,7 @@
 services:
   btc-bot:
     build: ./bot
-    restart: unless-stopped
+    restart: on-failure:5
     env_file: .env.prod
     environment:
       MARKET: BTC_USD
@@ -12,7 +12,7 @@ services:
 
   sol-bot:
     build: ./bot
-    restart: unless-stopped
+    restart: on-failure:5
     env_file: .env.prod
     environment:
       MARKET: SOL_USD
@@ -23,7 +23,7 @@ services:
 
   eth-bot:
     build: ./bot
-    restart: unless-stopped
+    restart: on-failure:5
     env_file: .env.prod
     environment:
       MARKET: ETH_USD
