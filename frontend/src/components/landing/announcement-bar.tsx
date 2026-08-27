@@ -16,7 +16,7 @@ const AnnouncementBar = () => {
 				<Rocket className="size-3.5 text-red-text" />
 			</span>
 			<span>
-				<strong>PaperDrill Beta v0.1</strong>
+				<strong>PaperDrill Beta v0.2</strong>
 				<span className="hidden sm:inline"> is live - real matching engine, real order book.</span>
 				<span className="sm:hidden"> is live.</span>{" "}
 				<Link to="/signup" className="font-medium text-primary hover:underline">
