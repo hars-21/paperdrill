@@ -1,0 +1,14 @@
+{
+	"name": "benchmarks",
+	"private": true,
+	"scripts": {
+		"bench:api": "bun run api.bench.ts",
+		"bench:engine": "bun run engine.bench.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}
