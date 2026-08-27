@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,31 +10,18 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import type { Market } from "@/types";
-import { ASSET_NAMES, COIN_LOGOS, MARKET_STATS } from "@/utils/misc";
-import { api } from "@/lib/api";
+import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
+import { formatPrice, formatVolume, formatChange } from "@/utils/market";
+import { useTickers } from "@/hooks/use-tickers";
 import { Page, PageContent, PageHeader } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
 
 const TABS = ["Spot"];
 
 export function MarketsPage() {
-	const [markets, setMarkets] = useState<Market[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const { markets, tickers, loading, error } = useTickers();
 	const [activeTab, setActiveTab] = useState("Spot");
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		api
-			.getMarkets()
-			.then((res) => setMarkets(res.data ?? []))
-			.catch((err) => {
-				console.error("Failed to load markets:", err);
-				setError(err instanceof Error ? err.message : "Failed to load markets");
-			})
-			.finally(() => setLoading(false));
-	}, []);
 
 	return (
 		<Page>
@@ -65,9 +52,6 @@ export function MarketsPage() {
 								</Button>
 							))}
 						</div>
-						<span className="hidden sm:block text-xs text-low-emphasis">
-							{loading ? "…" : `${markets.length} markets`}
-						</span>
 					</div>
 
 					{error ? (
@@ -83,7 +67,7 @@ export function MarketsPage() {
 										<TableHead className="text-left">Name</TableHead>
 										<TableHead className="w-[17%] text-right">Price</TableHead>
 										<TableHead className="w-[17%] text-right hidden lg:table-cell">
-											24h Volume
+											24h Volume(USD)
 										</TableHead>
 										<TableHead className="w-[17%] text-right">24h Change</TableHead>
 										<TableHead className="w-20 text-right hidden lg:table-cell">
@@ -118,12 +102,8 @@ export function MarketsPage() {
 										: markets.map((m) => {
 												const [quote, base] = m.symbol.split("_") as [string, string];
 												const assetName = ASSET_NAMES[quote] || m.name || quote;
-												const stats = MARKET_STATS[m.symbol] || {
-													price: "—",
-													change: "0.00%",
-													isUp: true,
-													volume: "—",
-												};
+												const ticker = tickers[m.symbol];
+												const change = formatChange(ticker);
 
 												return (
 													<TableRow
@@ -165,22 +145,22 @@ export function MarketsPage() {
 															</Link>
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
-															{stats.price}
+															{formatPrice(ticker)}
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">
-															{stats.volume}
+															{formatVolume(ticker)}
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
 															<span
 																className={
-																	stats.change === "0.00%"
+																	change.text === "0.00%"
 																		? "text-medium-emphasis"
-																		: stats.isUp
+																		: change.isUp
 																			? "text-green-text"
 																			: "text-red-text"
 																}
 															>
-																{stats.change}
+																{change.text}
 															</span>
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">

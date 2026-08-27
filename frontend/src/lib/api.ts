@@ -1,6 +1,6 @@
 import type { CancelResult, DepthSnapshot, Fill, OrderResult, UserData } from "@/types/api";
 import { config } from "./env";
-import type { Candle, Market, OrderRecord, UserBalance } from "@/types";
+import type { Candle, Market, OrderRecord, Ticker, UserBalance } from "@/types";
 
 const BASE = `${config.apiBaseUrl}/v1`;
 
@@ -97,6 +97,10 @@ export const api = {
 
 	getMarkets() {
 		return request<{ data: Market[] }>("/markets");
+	},
+
+	getTicker(symbol: string) {
+		return request<Ticker>(`/markets/${symbol}/ticker`);
 	},
 
 	getDepth(symbol: string) {

@@ -20,6 +20,12 @@ export const marketSubscriber = createClient({ url: config.redis.url }).on("erro
 	}),
 );
 
+export const cacheClient = createClient({ url: config.redis.url }).on("error", (err) =>
+	logger.error("Redis cache client error", {
+		error: err instanceof Error ? err.message : String(err),
+	}),
+);
+
 export const rateLimiterClient = createClient({ url: config.redis.url }).on("error", (err) =>
 	logger.error("Redis rate limiter error", {
 		error: err instanceof Error ? err.message : String(err),
@@ -31,6 +37,7 @@ export async function connectRedis() {
 		publisher.connect(),
 		responsesubscriber.connect(),
 		marketSubscriber.connect(),
+		cacheClient.connect(),
 		rateLimiterClient.isOpen ? Promise.resolve() : rateLimiterClient.connect(),
 	]);
 }
@@ -40,12 +47,15 @@ export async function pingRedis() {
 }
 
 export async function disconnectRedis() {
-	await Promise.allSettled([marketSubscriber.pUnsubscribe(["depth:*", "trade:*", "candle:*"])]);
+	await Promise.allSettled([
+		marketSubscriber.pUnsubscribe(["depth:*", "trade:*", "candle:*", "ticker:*"]),
+	]);
 
 	await Promise.allSettled([
 		publisher.quit(),
 		responsesubscriber.quit(),
 		marketSubscriber.quit(),
+		cacheClient.quit(),
 		rateLimiterClient.quit(),
 	]);
 }

@@ -71,6 +71,43 @@ export function formatDepth(depth: Record<string, unknown>, symbol: string) {
 	};
 }
 
+export function formatTicker(ticker: Record<string, unknown>) {
+	const m = getMarket(ticker.symbol as string);
+
+	const last = ticker.lastPrice;
+	const open = ticker.openPrice;
+
+	let priceChange: string | null = null;
+	let priceChangePercent: number | null = null;
+
+	if (last != null && open != null) {
+		const lastN = BigInt(last as string);
+		const openN = BigInt(open as string);
+		const diff = lastN - openN;
+		const sign = diff < 0n ? "-" : "+";
+		const abs = diff < 0n ? -diff : diff;
+		priceChange = `${sign}${fromBigInt(abs, m.pricePrecision)}`;
+		const lastNum = Number(lastN);
+		const openNum = Number(openN);
+		priceChangePercent =
+			openNum !== 0 ? Math.round(((lastNum - openNum) / openNum) * 10000) / 100 : 0;
+	}
+
+	return {
+		event: "ticker",
+		symbol: ticker.symbol,
+		lastPrice: fmt(last, m.pricePrecision),
+		openPrice: fmt(open, m.pricePrecision),
+		high: fmt(ticker.high, m.pricePrecision),
+		low: fmt(ticker.low, m.pricePrecision),
+		volume: fmt(ticker.volume, m.qtyPrecision),
+		quoteVolume: fmt(ticker.quoteVolume, m.pricePrecision + m.qtyPrecision),
+		priceChange,
+		priceChangePercent,
+		timestamp: new Date(Number(ticker.timestamp)).toISOString(),
+	};
+}
+
 export function formatCandle(candle: Record<string, unknown>) {
 	const m = getMarket(candle.symbol as string);
 	return {

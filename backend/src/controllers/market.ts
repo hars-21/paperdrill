@@ -2,8 +2,9 @@ import type { Request, Response } from "express";
 import { candleQuerySchema, symbolParamSchema, tradesQuerySchema } from "../schema/exchange";
 import { sendToEngine } from "../utils/engineClient";
 import { prisma } from "../db";
+import { cacheClient } from "../redis";
 import { sendValidationError } from "../utils/validation";
-import { formatTrades, formatDepth, formatCandles } from "../utils/formatter";
+import { formatTrades, formatDepth, formatCandles, formatTicker } from "../utils/formatter";
 import { logger } from "../utils/logger";
 
 const intervalMap = {
@@ -116,6 +117,31 @@ export async function getCandles(req: Request, res: Response) {
 		});
 	} catch (err) {
 		logger.error("Failed to fetch candles", err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+}
+
+export async function getTicker(req: Request, res: Response) {
+	const parsedParams = symbolParamSchema.safeParse(req.params);
+
+	if (!parsedParams.success) {
+		sendValidationError(res, parsedParams.error);
+		return;
+	}
+
+	const { symbol } = parsedParams.data;
+
+	try {
+		const raw = await cacheClient.get(`market:ticker:${symbol}`);
+
+		if (!raw) {
+			res.status(404).json({ error: "Ticker unavailable" });
+			return;
+		}
+
+		res.status(200).json(formatTicker(JSON.parse(raw) as Record<string, unknown>));
+	} catch (err) {
+		logger.error("Failed to fetch ticker", err);
 		res.status(500).json({ error: "Internal server error" });
 	}
 }

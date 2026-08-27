@@ -56,6 +56,19 @@ export interface Market {
 	name: string;
 }
 
+export interface Ticker {
+	symbol: string;
+	lastPrice: string;
+	openPrice: string;
+	high: string;
+	low: string;
+	volume: string;
+	quoteVolume: string;
+	priceChange: string;
+	priceChangePercent: number;
+	timestamp: string;
+}
+
 export interface Candle {
 	event?: string;
 	time: number;

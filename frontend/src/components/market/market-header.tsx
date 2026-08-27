@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Search } from "lucide-react";
-import type { Market } from "@/types";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { ASSET_NAMES, COIN_LOGOS, MARKET_STATS } from "@/utils/misc";
-import { api } from "@/lib/api";
+import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
+import { useTickers } from "@/hooks/use-tickers";
+import { formatPrice, formatChange } from "@/utils/market";
 
 interface MarketHeaderProps {
 	market: string;
@@ -13,16 +13,9 @@ interface MarketHeaderProps {
 
 export function MarketHeader({ market }: MarketHeaderProps) {
 	const navigate = useNavigate();
-	const [markets, setMarkets] = useState<Market[]>([]);
+	const { markets, tickers } = useTickers();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [base, quote] = market.split("_") as [string, string];
-
-	useEffect(() => {
-		api
-			.getMarkets()
-			.then((res) => setMarkets(res.data ?? []))
-			.catch(() => {});
-	}, []);
 
 	const filteredMarkets = markets.filter((m) => {
 		const symbolStr = m.symbol.toLowerCase().replace("_", "/");
@@ -31,7 +24,8 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 		return symbolStr.includes(query) || nameStr.includes(query);
 	});
 
-	const currentStats = MARKET_STATS[market];
+	const ticker = tickers[market];
+	const currentChange = formatChange(ticker);
 
 	return (
 		<div className="flex flex-wrap items-center justify-between bg-card rounded-xl border border-border/40 px-5 py-3 gap-4 shrink-0 select-none">
@@ -54,9 +48,6 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 							<div className="flex flex-col gap-1">
 								<span className="flex items-center gap-1.5 text-md font-bold text-high-emphasis tracking-tight leading-none">
 									{base}/{quote}
-								</span>
-								<span className="text-[11px] text-low-emphasis leading-none">
-									{ASSET_NAMES[base] ?? base} · {quote}
 								</span>
 							</div>
 
@@ -91,7 +82,8 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 								filteredMarkets.map((m) => {
 									const [b, q] = m.symbol.split("_") as [string, string];
 									const isCurrent = m.symbol === market;
-									const stats = MARKET_STATS[m.symbol];
+									const mTicker = tickers[m.symbol];
+									const mChange = formatChange(mTicker);
 
 									return (
 										<button
@@ -127,22 +119,22 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 												</p>
 											</div>
 
-											{stats ? (
+											{mTicker ? (
 												<div className="flex flex-col items-end gap-0.5">
 													<span className="text-xs font-medium text-high-emphasis">
-														{stats.price}
+														{formatPrice(mTicker)}
 													</span>
 													<span
 														className={cn(
 															"text-[11px] leading-none",
-															stats.change === "0.00%"
+															mChange.text === "0.00%"
 																? "text-medium-emphasis"
-																: stats.isUp
+																: mChange.isUp
 																	? "text-green-text"
 																	: "text-red-text",
 														)}
 													>
-														{stats.change}
+														{mChange.text}
 													</span>
 												</div>
 											) : null}
@@ -154,25 +146,53 @@ export function MarketHeader({ market }: MarketHeaderProps) {
 					</PopoverContent>
 				</Popover>
 
-				{currentStats ? (
+				{ticker ? (
 					<>
-						<div className="hidden sm:block h-8 w-px bg-border/40" />
+						<div className="hidden sm:block h-8 w-px bg-border" />
 						<div className="hidden sm:flex flex-col gap-0.5">
-							<span className="text-sm font-bold text-high-emphasis leading-none">
-								{currentStats.price}
-							</span>
-							<span
-								className={cn(
-									"text-xs leading-none",
-									currentStats.change === "0.00%"
-										? "text-medium-emphasis"
-										: currentStats.isUp
-											? "text-green-text"
-											: "text-red-text",
-								)}
-							>
-								{currentStats.change}
-							</span>
+							<div className="flex flex-wrap items-center gap-8 text-xs">
+								<div>
+									<span
+										className={cn(
+											"text-lg font-bold",
+											currentChange.text === "0.00%"
+												? "text-medium-emphasis"
+												: currentChange.isUp
+													? "text-green-text"
+													: "text-red-text",
+										)}
+									>
+										{formatPrice(ticker)}
+									</span>
+								</div>
+								<div className="flex flex-col gap-1">
+									<span className="text-muted-foreground">24h Change</span>
+									<span
+										className={cn(
+											"font-medium",
+											currentChange.text === "0.00%"
+												? "text-medium-emphasis"
+												: currentChange.isUp
+													? "text-green-text"
+													: "text-red-text",
+										)}
+									>
+										{ticker.priceChange}
+									</span>
+								</div>
+								<div className="flex flex-col gap-1">
+									<span className="text-muted-foreground">24h High</span>
+									<span className="font-medium text-high-emphasis">{ticker.high}</span>
+								</div>
+								<div className="flex flex-col gap-1">
+									<span className="text-muted-foreground">24h Low</span>
+									<span className="font-medium text-high-emphasis">{ticker.low}</span>
+								</div>
+								<div className="flex flex-col gap-1">
+									<span className="text-muted-foreground">24h Volume</span>
+									<span className="font-medium text-high-emphasis">{ticker.volume}</span>
+								</div>
+							</div>
 						</div>
 					</>
 				) : null}

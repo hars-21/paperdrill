@@ -4,6 +4,7 @@ import { cacheClient, connectRedis, disconnectRedis, streamConsumer } from "./re
 import { config } from "./config";
 import { logger } from "./logger";
 import { flushCandles } from "./candle";
+import { warmUpTickers } from "./ticker";
 import { flushBatch, queueFill, queueOrder, loadServiceUserIds } from "./persistence";
 import type { StreamFill, StreamOrder } from "./types";
 
@@ -23,6 +24,8 @@ await loadServiceUserIds().catch((err) => {
 	logger.error("Failed to load service accounts", err);
 	process.exit(1);
 });
+
+await warmUpTickers();
 
 logger.info("Worker started, listening for stream events");
 

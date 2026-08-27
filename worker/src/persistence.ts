@@ -1,4 +1,5 @@
 import { deriveData } from "./candle";
+import { deriveTicker } from "./ticker";
 import { pool } from "./db";
 import { logger } from "./logger";
 import type { StreamFill, StreamOrder } from "./types";
@@ -21,15 +22,18 @@ export function queueOrder(order: StreamOrder) {
 }
 
 export function queueFill(fill: StreamFill) {
-	deriveData({
-		event: "trade",
+	const trade = {
+		event: "trade" as const,
 		symbol: fill.symbol,
 		id: fill.id,
 		price: BigInt(fill.price),
 		qty: BigInt(fill.qty),
 		maker: fill.isBuyerMaker,
 		timestamp: fill.createdAt,
-	});
+	};
+
+	deriveData(trade);
+	deriveTicker(trade);
 
 	fillBucket.set(fill.id, fill);
 }
