@@ -13,7 +13,7 @@ import { dispatch } from "./core/dispatcher";
 import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer } from "./util";
 import { initMarkets } from "./modules/market";
-import "./core/events";
+import { registerEventHandlers } from "./core/events";
 
 const abortController = new AbortController();
 
@@ -21,6 +21,7 @@ await connectRedis();
 await connectDB();
 await initMarkets();
 await loadSnapshot();
+registerEventHandlers();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
