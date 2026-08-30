@@ -11,7 +11,7 @@ beforeEach(() => {
 test("no trades initially", async () => {
 	const result = await getTradesHandler({ symbol: "BTC_USD" });
 
-	expect(result).toMatchObject({ symbol: "BTC_USD", trades: [] });
+	expect(result).toHaveLength(0);
 });
 
 test("trades returned newest first", async () => {
@@ -47,9 +47,9 @@ test("trades returned newest first", async () => {
 
 	const result = await getTradesHandler({ symbol: "BTC_USD" });
 
-	expect(result.trades).toHaveLength(2);
-	expect(result.trades[0]).toMatchObject({ price: 10000n, qty: 30000n });
-	expect(result.trades[1]).toMatchObject({ price: 10000n, qty: 20000n });
+	expect(result).toHaveLength(2);
+	expect(result[0]).toMatchObject({ price: 10000n, qty: 30000n });
+	expect(result[1]).toMatchObject({ price: 10000n, qty: 20000n });
 });
 
 test("limit returns most recent trades", async () => {
@@ -85,8 +85,8 @@ test("limit returns most recent trades", async () => {
 
 	const result = await getTradesHandler({ symbol: "BTC_USD", limit: "1" });
 
-	expect(result.trades).toHaveLength(1);
-	expect(result.trades[0]).toMatchObject({ qty: 20000n });
+	expect(result).toHaveLength(1);
+	expect(result[0]).toMatchObject({ qty: 20000n });
 });
 
 test("limit above buffer cap rejected", () => {

@@ -12,6 +12,7 @@ function mockRes() {
 	const res = {
 		status: mock(() => res),
 		json: mock(() => undefined),
+		clearCookie: mock(() => res),
 	} as any;
 	return res;
 }
