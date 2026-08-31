@@ -3,7 +3,9 @@ import AsksIcon from "../icons/asks-icon";
 import BidsAsksIcon from "../icons/bids-asks-icon";
 import BidsIcon from "../icons/bids-icon";
 import { Button } from "../ui/button";
+import { useMarket } from "@/context/MarketContext";
 import { OrderbookSkeleton } from "./skeletons";
+import { formatPrice, formatQty } from "@/utils/format";
 
 interface OrderbookProps {
 	bids: Record<string, string>;
@@ -11,17 +13,33 @@ interface OrderbookProps {
 	loading?: boolean;
 	symbol: string;
 	compact?: boolean;
+	lastPrice?: string | null;
 }
 
 const DESKTOP_ROWS = 18;
 const MOBILE_ROWS = 10;
 
-export function Orderbook({ bids, asks, loading, symbol, compact = false }: OrderbookProps) {
+export function Orderbook({
+	bids,
+	asks,
+	loading,
+	symbol,
+	compact = false,
+	lastPrice,
+}: OrderbookProps) {
 	const DISPLAY_ROWS = compact ? MOBILE_ROWS : DESKTOP_ROWS;
+
+	const market = useMarket(symbol);
+	const base = market?.baseAsset ?? symbol.split("_")[0];
+	const quote = market?.quoteAsset ?? symbol.split("_")[1];
+	const pricePrecision = market?.pricePrecision ?? 2;
+	const qtyPrecision = market?.qtyPrecision ?? 4;
 
 	const [displayMode, setDisplayMode] = useState<"both" | "asks" | "bids">("both");
 	const [isCentered, setIsCentered] = useState(true);
+	const [priceDirection, setPriceDirection] = useState<"up" | "down">("up");
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const prevLastPriceRef = useRef<string | null>(null);
 
 	const handleScroll = () => {
 		const el = scrollRef.current;
@@ -45,6 +63,22 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 		}
 	}, [loading, displayMode]);
 
+	useEffect(() => {
+		const prev = prevLastPriceRef.current;
+		prevLastPriceRef.current = lastPrice ?? null;
+		if (prev == null || lastPrice == null) {
+			setPriceDirection("up");
+			return;
+		}
+		const cur = Number(lastPrice);
+		const old = Number(prev);
+		if (!Number.isFinite(cur) || !Number.isFinite(old) || cur === old || cur > old) {
+			setPriceDirection("up");
+		} else {
+			setPriceDirection("down");
+		}
+	}, [lastPrice]);
+
 	if (loading) {
 		return <OrderbookSkeleton />;
 	}
@@ -62,7 +96,6 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 	const bestAsk = sortedAsks.length > 0 ? sortedAsks[0]?.price : 0;
 	const bestBid = sortedBids.length > 0 ? sortedBids[0]?.price : 0;
 	const spread = bestAsk && bestBid ? bestAsk - bestBid : 0;
-	const midPrice = bestAsk && bestBid ? (bestAsk + bestBid) / 2 : 0;
 
 	let accAsk = 0;
 	const asksSliced = sortedAsks
@@ -106,21 +139,17 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 					</div>
 					<div className="flex items-center justify-center flex-row gap-2">
 						<p className="text-high-emphasis truncate text-[10px]">
-							Spread: {spread > 0 ? spread.toFixed(2) : "—"}
+							Spread: {spread > 0 ? formatPrice(spread, pricePrecision) : "—"}
 						</p>
 					</div>
 				</div>
 
 				<div className="flex flex-row min-w-0 gap-1 px-3 py-2">
 					<div className="flex justify-between flex-row w-2/3 min-w-0 gap-1">
-						<p className="text-high-emphasis truncate text-xs">Price (USD)</p>
-						<p className="text-medium-emphasis truncate text-right text-xs">
-							Size ({symbol.split("_")[0]})
-						</p>
+						<p className="text-high-emphasis truncate text-xs">Price ({quote})</p>
+						<p className="text-medium-emphasis truncate text-right text-xs">Size ({base})</p>
 					</div>
-					<p className="text-medium-emphasis w-1/3 truncate text-right text-xs">
-						Total ({symbol.split("_")[0]})
-					</p>
+					<p className="text-medium-emphasis w-1/3 truncate text-right text-xs">Total ({base})</p>
 				</div>
 
 				<div
@@ -155,17 +184,17 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 												/>
 												<div className="flex h-full w-[30%] items-center">
 													<p className="text-left text-xs font-normal tabular-nums text-red-text/90 z-10">
-														{ask.price}
+														{formatPrice(ask.price, pricePrecision)}
 													</p>
 												</div>
 												<div className="flex h-full w-[35%] items-center justify-end">
 													<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-														{ask.qty}
+														{formatQty(ask.qty, qtyPrecision)}
 													</p>
 												</div>
 												<div className="flex h-full w-[35%] items-center justify-end">
 													<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-														{ask.total.toFixed(4)}
+														{formatQty(ask.total, qtyPrecision)}
 													</p>
 												</div>
 											</div>
@@ -178,8 +207,10 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 					<div className="bg-card sticky z-10 flex-0 snap-center px-3 py-1 border-y border-border/20">
 						<div className="flex items-center justify-between flex-row">
 							<div className="flex items-center flex-row gap-1.5">
-								<p className="font-medium tabular-nums text-sm text-high-emphasis">
-									{midPrice > 0 ? midPrice.toFixed(2) : "—"}
+								<p
+									className={`font-bold ${priceDirection === "up" ? "text-green-text" : "text-red-text"}`}
+								>
+									{formatPrice(lastPrice ?? "0", pricePrecision)}
 								</p>
 							</div>
 
@@ -219,17 +250,17 @@ export function Orderbook({ bids, asks, loading, symbol, compact = false }: Orde
 												/>
 												<div className="flex h-full w-[30%] items-center">
 													<p className="text-left text-xs font-normal tabular-nums text-green-text/90 z-10">
-														{bid.price}
+														{formatPrice(bid.price, pricePrecision)}
 													</p>
 												</div>
 												<div className="flex h-full w-[35%] items-center justify-end">
 													<p className="text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-														{bid.qty}
+														{formatQty(bid.qty, qtyPrecision)}
 													</p>
 												</div>
 												<div className="flex h-full w-[35%] items-center justify-end">
 													<p className="pr-2 text-right text-xs font-normal tabular-nums text-high-emphasis z-10">
-														{bid.total.toFixed(4)}
+														{formatQty(bid.total, qtyPrecision)}
 													</p>
 												</div>
 											</div>

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { OpenOrderSkeleton } from "./skeletons";
 import { useAuth } from "@/context/AuthContext";
-import { COIN_LOGOS } from "@/utils/misc";
+import { AssetIcon } from "../icons/asset-icon";
 
 type Tab = "open" | "history" | "balance";
 
@@ -376,22 +376,12 @@ export function DataPanel({ loading, refreshKey, symbol }: OpenOrdersProps) {
 										const avail = Number(bal.available);
 										const locked = Number(bal.locked);
 										const total = avail + locked;
-										const logo = COIN_LOGOS[asset];
+
 										return (
 											<TableRow key={asset}>
 												<TableCell className="font-medium">
 													<div className="flex items-center gap-2">
-														{logo ? (
-															<img
-																src={logo}
-																alt={asset}
-																className="size-5 object-contain shrink-0"
-															/>
-														) : (
-															<div className="size-4 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[7px] shrink-0">
-																{asset[0]}
-															</div>
-														)}
+														<AssetIcon asset={asset} className="size-6 shrink-0" />
 														<span className="text-xs lg:text-sm">{asset}</span>
 													</div>
 												</TableCell>

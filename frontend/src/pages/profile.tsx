@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Loader from "@/components/ui/loader";
-import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
+import { assetNames, AssetIcon } from "../components/icons/asset-icon";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Page, PageHeader, PageContent } from "@/components/ui/page";
@@ -119,27 +119,17 @@ export function ProfilePage() {
 								</div>
 							) : (
 								<div className="grid gap-2 sm:grid-cols-2">
-									{Object.entries(balances).map(([currency, bal]) => (
+									{Object.entries(balances).map(([asset, bal]) => (
 										<div
-											key={currency}
+											key={asset}
 											className="flex items-center justify-between gap-3 rounded-xl border border-border/30 bg-muted/20 px-3.5 py-3 transition-colors hover:border-border/60"
 										>
 											<div className="flex items-center gap-3 min-w-0">
-												{COIN_LOGOS[currency] ? (
-													<img
-														src={COIN_LOGOS[currency]}
-														alt={currency}
-														className="h-8 w-8 object-contain shrink-0"
-													/>
-												) : (
-													<div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0">
-														{currency[0]}
-													</div>
-												)}
+												<AssetIcon asset={asset} />
 												<div className="flex flex-col min-w-0">
-													<span className="font-semibold text-high-emphasis">{currency}</span>
+													<span className="font-semibold text-high-emphasis">{asset}</span>
 													<span className="text-[10px] text-low-emphasis truncate">
-														{ASSET_NAMES[currency] || currency}
+														{assetNames[asset] || asset}
 													</span>
 												</div>
 											</div>

@@ -103,6 +103,10 @@ export const api = {
 		return request<Ticker>(`/markets/${symbol}/ticker`);
 	},
 
+	getAllTickers() {
+		return request<Ticker[]>("/markets/tickers");
+	},
+
 	getDepth(symbol: string) {
 		return request<DepthSnapshot>(`/markets/${symbol}/orderbook`);
 	},

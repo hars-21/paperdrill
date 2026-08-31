@@ -54,6 +54,10 @@ export interface Market {
 	id: string;
 	symbol: string;
 	name: string;
+	baseAsset: string;
+	quoteAsset: string;
+	pricePrecision: number;
+	qtyPrecision: number;
 }
 
 export interface Ticker {

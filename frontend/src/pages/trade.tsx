@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { MarketHeader } from "../components/market/market-header";
 import { Orderbook } from "../components/market/orderbook";
@@ -5,146 +6,28 @@ import { Trades } from "../components/market/trades";
 import { TradeForm } from "../components/market/trade-form";
 import { DataPanel } from "../components/market/data-panel";
 import { Chart } from "../components/market/chart";
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "../components/ui/skeleton";
-import type { DepthLevel, OrderBook, StreamResponse, Trade } from "@/types";
-import { api } from "@/lib/api";
-import { wsManager } from "@/lib/ws";
-import { Page } from "@/components/ui/page";
-import { toast } from "sonner";
+import { Page } from "../components/ui/page";
+import { useAuth } from "@/context/AuthContext";
+import { useOrderbook } from "@/hooks/use-orderbook";
+import { useTrades } from "@/hooks/use-trades";
+import { useTicker } from "@/hooks/use-tickers";
 
 export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
 	const { loading: authLoading } = useAuth();
-	const [loading, setLoading] = useState(true);
 	const [orderbookRefreshKey, setOrderbookRefreshKey] = useState(0);
-
-	const [orderbook, setOrderbook] = useState<OrderBook>({
-		bids: {},
-		asks: {},
-	});
-	const bufferRef = useRef<StreamResponse[]>([]);
 	const [leftTab, setLeftTab] = useState<"book" | "trades">("book");
-	const [trades, setTrades] = useState<Trade[]>([]);
 
-	// Fetch initial orderbook and subscribe to updates
-	useEffect(() => {
-		setLoading(true);
-		setOrderbook({ bids: {}, asks: {} });
-		bufferRef.current = [];
-
-		let orderbookInitialized = false;
-
-		const handleDepth = (raw: unknown) => {
-			const data = raw as StreamResponse;
-			if (!orderbookInitialized) {
-				bufferRef.current.push(data);
-			} else {
-				updateOrderbook(data.bids, data.asks);
-			}
-		};
-
-		const unsubscribe = wsManager.subscribe(`depth:${symbol}`, handleDepth);
-
-		api
-			.getDepth(symbol)
-			.then(({ bids, asks, lastUpdateId }) => {
-				initializeOrderbook(bids, asks);
-				orderbookInitialized = true;
-				bufferRef.current.forEach((msg) => {
-					if (msg.lastUpdateId > lastUpdateId) {
-						updateOrderbook(msg.bids, msg.asks);
-					}
-				});
-				bufferRef.current = [];
-			})
-			.catch((err) => {
-				console.error("Failed to load depth:", err);
-				toast.error("Failed to load orderbook");
-			})
-			.finally(() => setLoading(false));
-
-		return () => {
-			unsubscribe();
-		};
-	}, [symbol]);
-
-	// Fetch initial trades and subscribe to updates
-	useEffect(() => {
-		setTrades([]);
-
-		api
-			.getTrades(symbol)
-			.then((data) => {
-				const mapped = data.map((f) => ({
-					id: f.id,
-					price: f.price,
-					qty: f.qty,
-					maker: f.isBuyerMaker,
-					timestamp: f.createdAt,
-				}));
-				setTrades(mapped);
-			})
-			.catch((err) => {
-				console.error("Failed to load trades:", err);
-				toast.error("Failed to load trades");
-			});
-
-		const handleTrade = (msg: unknown) => {
-			const data = msg as Record<string, unknown>;
-			if (data.event === "trade") {
-				const trade: Trade = {
-					id: String(data.id ?? ""),
-					price: String(data.price ?? "0"),
-					qty: String(data.qty ?? "0"),
-					maker: Boolean(data.maker),
-					timestamp: Number(data.timestamp) || Date.now(),
-				};
-				setTrades((prev) => [trade, ...prev].slice(0, 50));
-			}
-		};
-
-		const unsubscribe = wsManager.subscribe(`trade:${symbol}`, handleTrade);
-
-		return () => {
-			unsubscribe();
-		};
-	}, [symbol]);
-
-	const initializeOrderbook = (bids: DepthLevel[], asks: DepthLevel[]) => {
-		const bidsMap: Record<string, string> = {};
-		const asksMap: Record<string, string> = {};
-		bids.forEach(({ price, qty }) => {
-			bidsMap[price] = qty;
-		});
-		asks.forEach(({ price, qty }) => {
-			asksMap[price] = qty;
-		});
-		setOrderbook({ bids: bidsMap, asks: asksMap });
-	};
-
-	const updateOrderbook = (updatedBids: DepthLevel[], updatedAsks: DepthLevel[]) => {
-		setOrderbook((prev) => {
-			const bids = { ...prev.bids };
-			const asks = { ...prev.asks };
-			updatedBids.forEach(({ price, qty }) => {
-				if (qty === "0") delete bids[price];
-				else bids[price] = qty;
-			});
-			updatedAsks.forEach(({ price, qty }) => {
-				if (qty === "0") delete asks[price];
-				else asks[price] = qty;
-			});
-			return { bids, asks };
-		});
-	};
+	const { orderbook, loading: orderbookLoading, bestBid, bestAsk } = useOrderbook(symbol);
+	const { trades, loading: tradesLoading } = useTrades(symbol);
+	const { ticker, loading: tickerLoading } = useTicker(symbol);
 
 	const handleOrderPlaced = () => {
 		setOrderbookRefreshKey((k) => k + 1);
 	};
 
-	const isDataLoading = loading || authLoading;
+	const isDataLoading = authLoading || orderbookLoading || tradesLoading || tickerLoading;
 
 	const bookTradesTabs = (
 		<div className="flex items-center justify-start flex-row gap-1">
@@ -173,7 +56,7 @@ export function TradePage() {
 
 	return (
 		<Page fixed className="px-4 gap-4 mb-2">
-			<MarketHeader market={symbol} />
+			<MarketHeader symbol={symbol} />
 
 			<div className="hidden lg:flex gap-3 min-h-0">
 				<div className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar gap-3 rounded-lg">
@@ -187,6 +70,7 @@ export function TradePage() {
 										asks={orderbook.asks}
 										loading={isDataLoading}
 										symbol={symbol}
+										lastPrice={ticker?.lastPrice}
 									/>
 								) : (
 									<Trades symbol={symbol} loading={isDataLoading} trades={trades} />
@@ -226,7 +110,13 @@ export function TradePage() {
 				</div>
 
 				<div className="flex flex-row max-w-86 min-w-70 flex-[0.8] bg-card rounded-lg border border-border/40 shadow-sm overflow-y-auto no-scrollbar">
-					<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
+					<TradeForm
+						symbol={symbol}
+						lastPrice={ticker?.lastPrice}
+						bestBid={bestBid}
+						bestAsk={bestAsk}
+						onOrderPlaced={handleOrderPlaced}
+					/>
 				</div>
 			</div>
 
@@ -241,6 +131,7 @@ export function TradePage() {
 								asks={orderbook.asks}
 								loading={isDataLoading}
 								symbol={symbol}
+								lastPrice={ticker?.lastPrice}
 							/>
 						) : (
 							<Trades symbol={symbol} loading={isDataLoading} trades={trades.slice(0, 25)} />
@@ -272,7 +163,13 @@ export function TradePage() {
 				)}
 
 				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0">
-					<TradeForm symbol={symbol} onOrderPlaced={handleOrderPlaced} />
+					<TradeForm
+						symbol={symbol}
+						lastPrice={ticker?.lastPrice}
+						bestBid={bestBid}
+						bestAsk={bestAsk}
+						onOrderPlaced={handleOrderPlaced}
+					/>
 				</div>
 
 				<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0">

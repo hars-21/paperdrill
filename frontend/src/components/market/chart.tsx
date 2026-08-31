@@ -8,20 +8,15 @@ import {
 	ColorType,
 	type Time,
 	type IPriceLine,
+	type ISeriesApi,
 } from "lightweight-charts";
 import type { Candle } from "@/types";
-import { api } from "@/lib/api";
-import { wsManager } from "@/lib/ws";
-
-const INTERVALS = ["15M", "1H", "4H", "1D"] as const;
-type Interval = (typeof INTERVALS)[number];
-
-const INTERVAL_MS: Record<Interval, number> = {
-	"15M": 15 * 60 * 1000,
-	"1H": 60 * 60 * 1000,
-	"4H": 4 * 60 * 60 * 1000,
-	"1D": 24 * 60 * 60 * 1000,
-};
+import { useMarket } from "@/context/MarketContext";
+import {
+	useCandles,
+	CANDLE_INTERVALS,
+	type CandleInterval,
+} from "@/hooks/use-candles";
 
 function resolveThemeColor(v: string) {
 	return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -72,68 +67,6 @@ function fmtChange(pct?: number | null) {
 	return (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
 }
 
-function getBucketStart(ms: number, intMs: number) {
-	return ms - (ms % intMs);
-}
-
-function fillCandleGaps(candles: Candle[], intMs: number): Candle[] {
-	if (candles.length < 2) return candles;
-	const s = [...candles].sort((a, b) => a.time - b.time);
-	const f = s[0];
-	if (!f) return candles;
-	const r: Candle[] = [f];
-	for (let i = 1; i < s.length; i++) {
-		const p = r[r.length - 1]!;
-		const c = s[i]!;
-		let g = p.time + intMs;
-		while (g < c.time) {
-			r.push({
-				time: g,
-				open: p.close,
-				high: p.close,
-				low: p.close,
-				close: p.close,
-				volume: "0",
-				symbol: p.symbol || "",
-			});
-			g += intMs;
-		}
-		r.push(c);
-	}
-	return r;
-}
-
-function mergeMinuteCandle(into: Candle[], inc: Candle, intMs: number): Candle[] {
-	const bs = getBucketStart(inc.time, intMs);
-	const c = [...into];
-	const l = c[c.length - 1];
-	if (l) {
-		let g = l.time + intMs;
-		while (g < bs) {
-			c.push({
-				time: g,
-				open: l.close,
-				high: l.close,
-				low: l.close,
-				close: l.close,
-				volume: "0",
-				symbol: inc.symbol,
-			});
-			g += intMs;
-		}
-	}
-	const b = c.find((x) => x.time === bs);
-	if (b) {
-		b.high = Number(inc.high) > Number(b.high) ? inc.high : b.high;
-		b.low = Number(inc.low) < Number(b.low) ? inc.low : b.low;
-		b.close = inc.close;
-		b.volume = String(Number(b.volume) + Number(inc.volume));
-	} else {
-		c.push({ ...inc, time: bs });
-	}
-	return c;
-}
-
 function computeMarketStats(candles: Candle[]) {
 	if (candles.length === 0) return null;
 	const s = [...candles].sort((a, b) => a.time - b.time);
@@ -174,13 +107,20 @@ const tzLabel = (() => {
 export function Chart({ symbol }: { symbol: string }) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [hc, setHc] = useState<Partial<Candle> | null>(null);
-	const [lc, setLc] = useState<Partial<Candle> | null>(null);
 	const [hasData, setHasData] = useState(false);
-	const [interval, setInterval] = useState<Interval>("1H");
+	const [interval, setInterval] = useState<CandleInterval>("1H");
 	const [now, setNow] = useState(new Date());
-	const cref = useRef<Candle[]>([]);
-	const iref = useRef(interval);
-	iref.current = interval;
+
+	const market = useMarket(symbol);
+	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;
+	const quote = market?.quoteAsset ?? symbol.split("_")[1] ?? "USD";
+
+	const csRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+	const vsRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+	const colorsRef = useRef(getChartColors());
+	const priceLineRef = useRef<IPriceLine | null>(null);
+
+	const { candles, lastCandle, hasData: hookHasData } = useCandles(symbol, interval);
 
 	useEffect(() => {
 		const t = window.setInterval(() => setNow(new Date()), 1000);
@@ -188,9 +128,14 @@ export function Chart({ symbol }: { symbol: string }) {
 	}, []);
 
 	useEffect(() => {
+		setHasData(hookHasData);
+	}, [hookHasData]);
+
+	useEffect(() => {
 		if (!containerRef.current) return;
 
 		const colors = getChartColors();
+		colorsRef.current = colors;
 		const w = containerRef.current.clientWidth || 600;
 		const h = containerRef.current.clientHeight || 260;
 
@@ -240,62 +185,9 @@ export function Chart({ symbol }: { symbol: string }) {
 
 		chart.priceScale("").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
 
-		const curInt = iref.current;
-		const intMs = INTERVAL_MS[curInt];
-
-		let priceLine: IPriceLine | null = null;
-		const updatePriceLine = (c: Candle) => {
-			const up = Number(c.close) >= Number(c.open);
-			if (priceLine) {
-				priceLine.applyOptions({
-					price: Number(c.close),
-					color: up ? colors.candleUp : colors.candleDown,
-				});
-			} else {
-				priceLine = cs.createPriceLine({
-					price: Number(c.close),
-					color: up ? colors.candleUp : colors.candleDown,
-					lineWidth: 1,
-					lineStyle: LineStyle.Dotted,
-					axisLabelVisible: true,
-				});
-			}
-		};
-
-		api
-			.getCandles(symbol, curInt)
-			.then((res) => {
-				const data = res?.data ?? [];
-				if (data.length > 0) {
-					const last = data[data.length - 1];
-					if (!last) return;
-					setLc({ ...last, time: last.time });
-					setHasData(true);
-
-					const raw: Candle[] = data.map((c) => ({ ...c, symbol, time: c.time }));
-					const filled = fillCandleGaps(raw, intMs);
-					cref.current = filled;
-
-					cs.setData(
-						filled.map((c) => ({
-							time: Math.floor(c.time / 1000) as Time,
-							open: Number(c.open),
-							high: Number(c.high),
-							low: Number(c.low),
-							close: Number(c.close),
-						})),
-					);
-					vs.setData(
-						filled.map((c) => ({
-							time: Math.floor(c.time / 1000) as Time,
-							value: Number(c.volume),
-							color: Number(c.close) >= Number(c.open) ? colors.volumeUp : colors.volumeDown,
-						})),
-					);
-					updatePriceLine({ ...last, symbol });
-				}
-			})
-			.catch(() => {});
+		csRef.current = cs;
+		vsRef.current = vs;
+		priceLineRef.current = null;
 
 		chart.subscribeCrosshairMove((p) => {
 			if (p.point === undefined || !p.time || p.point.x < 0 || p.point.y < 0) {
@@ -317,35 +209,6 @@ export function Chart({ symbol }: { symbol: string }) {
 			else setHc(null);
 		});
 
-		const unsub = wsManager.subscribe(`candle:${symbol}`, (raw: unknown) => {
-			if (!raw) return;
-			const candle = raw as Candle;
-			if (!candle.time || candle.open === undefined || candle.close === undefined) return;
-			const m = INTERVAL_MS[iref.current];
-			cref.current = mergeMinuteCandle(cref.current, candle, m);
-			const merged = cref.current;
-			cs.setData(
-				merged.map((c) => ({
-					time: Math.floor(c.time / 1000) as Time,
-					open: Number(c.open),
-					high: Number(c.high),
-					low: Number(c.low),
-					close: Number(c.close),
-				})),
-			);
-			vs.setData(
-				merged.map((c) => ({
-					time: Math.floor(c.time / 1000) as Time,
-					value: Number(c.volume),
-					color: Number(c.close) >= Number(c.open) ? colors.volumeUp : colors.volumeDown,
-				})),
-			);
-			const lastMerged = merged[merged.length - 1];
-			if (lastMerged) updatePriceLine(lastMerged);
-			setLc(candle);
-			if (!hasData) setHasData(true);
-		});
-
 		const ro = new ResizeObserver((entries) => {
 			for (const e of entries) {
 				const { width, height } = e.contentRect;
@@ -355,16 +218,64 @@ export function Chart({ symbol }: { symbol: string }) {
 		ro.observe(containerRef.current);
 
 		return () => {
-			unsub();
 			ro.disconnect();
 			chart.remove();
+			csRef.current = null;
+			vsRef.current = null;
+			priceLineRef.current = null;
 		};
 	}, [symbol, interval]);
 
-	const dc = hc || lc;
+	useEffect(() => {
+		const cs = csRef.current;
+		const vs = vsRef.current;
+		if (!cs || !vs) return;
+		const colors = colorsRef.current;
+
+		cs.setData(
+			candles.map((c) => ({
+				time: Math.floor(c.time / 1000) as Time,
+				open: Number(c.open),
+				high: Number(c.high),
+				low: Number(c.low),
+				close: Number(c.close),
+			})),
+		);
+		vs.setData(
+			candles.map((c) => ({
+				time: Math.floor(c.time / 1000) as Time,
+				value: Number(c.volume),
+				color: Number(c.close) >= Number(c.open) ? colors.volumeUp : colors.volumeDown,
+			})),
+		);
+
+		const last = candles[candles.length - 1];
+		if (last) {
+			const up = Number(last.close) >= Number(last.open);
+			if (priceLineRef.current) {
+				priceLineRef.current.applyOptions({
+					price: Number(last.close),
+					color: up ? colors.candleUp : colors.candleDown,
+				});
+			} else {
+				priceLineRef.current = cs.createPriceLine({
+					price: Number(last.close),
+					color: up ? colors.candleUp : colors.candleDown,
+					lineWidth: 1,
+					lineStyle: LineStyle.Dotted,
+					axisLabelVisible: true,
+				});
+			}
+		} else if (priceLineRef.current) {
+			cs.removePriceLine(priceLineRef.current);
+			priceLineRef.current = null;
+		}
+	}, [candles]);
+
+	const dc = hc || (lastCandle ?? null);
 	const up = dc ? Number(dc.close ?? 0) >= Number(dc.open ?? 0) : true;
 	const vc = up ? "text-green-text" : "text-red-text";
-	const stats = computeMarketStats(cref.current);
+	const stats = computeMarketStats(candles);
 
 	const ts = now.toLocaleTimeString([], {
 		hour12: false,
@@ -378,12 +289,12 @@ export function Chart({ symbol }: { symbol: string }) {
 			<div className="flex items-center justify-between gap-4 px-4 pt-3 pb-2 shrink-0">
 				<div className="flex items-center gap-2.5 min-w-0">
 					<span className="text-sm text-high-emphasis whitespace-nowrap">
-						{symbol.replace("_", "/")}
+						{base}/{quote}
 					</span>
 				</div>
 
 				<div className="flex items-center bg-card border border-border/40 rounded-lg p-0.5 shrink-0">
-					{INTERVALS.map((int) => (
+					{CANDLE_INTERVALS.map((int) => (
 						<button
 							key={int}
 							onClick={() => setInterval(int)}
@@ -468,7 +379,7 @@ export function Chart({ symbol }: { symbol: string }) {
 						<span className="text-[9px] text-low-emphasis">{tzLabel}</span>
 					</div>
 
-					{!hasData && !lc && (
+					{!hasData && !lastCandle && (
 						<div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none select-none">
 							<div className="flex flex-col items-center gap-2">
 								<span className="text-xs text-medium-emphasis">No chart data available</span>
