@@ -108,6 +108,10 @@ export function formatTicker(ticker: Record<string, unknown>) {
 	};
 }
 
+export function formatTickers(tickers: Record<string, unknown>[]) {
+	return tickers.map(formatTicker);
+}
+
 export function formatCandle(candle: Record<string, unknown>) {
 	const m = getMarket(candle.symbol as string);
 	return {

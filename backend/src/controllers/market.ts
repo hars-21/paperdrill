@@ -4,8 +4,15 @@ import { sendToEngine } from "../utils/engineClient";
 import { prisma } from "../db";
 import { cacheClient } from "../redis";
 import { sendValidationError } from "../utils/validation";
-import { formatTrades, formatDepth, formatCandles, formatTicker } from "../utils/formatter";
+import {
+	formatTrades,
+	formatDepth,
+	formatCandles,
+	formatTicker,
+	formatTickers,
+} from "../utils/formatter";
 import { logger } from "../utils/logger";
+import { marketStore } from "../store/market";
 
 const intervalMap = {
 	"15M": "15 minutes",
@@ -142,6 +149,31 @@ export async function getTicker(req: Request, res: Response) {
 		res.status(200).json(formatTicker(JSON.parse(raw) as Record<string, unknown>));
 	} catch (err) {
 		logger.error("Failed to fetch ticker", err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+}
+
+export async function getTickers(_req: Request, res: Response) {
+	try {
+		const tickers: Record<string, unknown>[] = [];
+
+		await Promise.all(
+			Array.from(marketStore.entries()).map(async ([symbol, _metadata]) => {
+				const raw = await cacheClient.get(`market:ticker:${symbol}`);
+				if (raw) {
+					tickers.push(JSON.parse(raw));
+				}
+			}),
+		);
+
+		if (tickers.length === 0) {
+			res.status(404).json({ error: "Tickers unavailable" });
+			return;
+		}
+
+		res.status(200).json(formatTickers(tickers));
+	} catch (err) {
+		logger.error("Failed to fetch tickers", err);
 		res.status(500).json({ error: "Internal server error" });
 	}
 }
