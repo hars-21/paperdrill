@@ -58,6 +58,23 @@ export function formatTrades(trades: Record<string, unknown>[]) {
 	return trades.map(formatTrade);
 }
 
+export function formatUserTrade(trade: Record<string, unknown>, userId: string) {
+	const formatted = formatTrade(trade);
+	const isBuyer = trade.buyerId === userId;
+	const buyerIsMaker = Boolean(trade.isBuyerMaker);
+	const createdAt = trade.createdAt;
+	return {
+		id: trade.id,
+		symbol: trade.symbol,
+		price: formatted.price,
+		qty: formatted.qty,
+		side: isBuyer ? "BUY" : "SELL",
+		isMaker: isBuyer ? buyerIsMaker : !buyerIsMaker,
+		orderId: isBuyer ? trade.buyOrderId : trade.sellOrderId,
+		createdAt: createdAt instanceof Date ? createdAt.toISOString() : createdAt,
+	};
+}
+
 export function formatDepth(depth: Record<string, unknown>, symbol: string) {
 	const m = getMarket(symbol);
 	const formatLevel = (level: { price: string; qty: string }) => ({

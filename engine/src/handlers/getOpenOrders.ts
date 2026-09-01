@@ -10,5 +10,8 @@ export async function getOpenOrdersHandler(payload: Record<string, unknown>) {
 
 	const { userId } = parsed.data;
 
-	return [...ORDERS.values()].filter((order) => order.userId === userId && order.status === "OPEN");
+	return [...ORDERS.values()].filter(
+		(order) =>
+			order.userId === userId && (order.status === "OPEN" || order.status === "PARTIALLY_FILLED"),
+	);
 }

@@ -83,6 +83,7 @@ export async function getOrders(req: Request, res: Response) {
 			},
 			take: limit,
 			skip: (page - 1) * limit,
+			orderBy: { createdAt: "desc" },
 		});
 
 		if (!orders) {
