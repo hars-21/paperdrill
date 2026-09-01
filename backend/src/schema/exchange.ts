@@ -48,6 +48,10 @@ export const tradesQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(500).optional(),
 });
 
+export const tradeHistoryQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
 export const balanceQuerySchema = z.object({
 	asset: z.string().trim().optional(),
 });

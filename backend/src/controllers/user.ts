@@ -1,9 +1,9 @@
 import { prisma } from "../db";
 import type { Request, Response } from "express";
 import { sendToEngine } from "../utils/engineClient";
-import { formatBalance } from "../utils/formatter";
+import { formatBalance, formatUserTrade } from "../utils/formatter";
 import { logger } from "../utils/logger";
-import { balanceQuerySchema, depositBodySchema } from "../schema/exchange";
+import { balanceQuerySchema, depositBodySchema, tradeHistoryQuerySchema } from "../schema/exchange";
 import { sendValidationError } from "../utils/validation";
 
 export function getUserId(req: Request): string {
@@ -38,6 +38,35 @@ export async function getUserData(req: Request, res: Response) {
 		});
 	} catch (e) {
 		logger.error("getUserData failed", e);
+		res.status(500).json({ error: "Internal server error" });
+	}
+}
+
+export async function getTradeHistory(req: Request, res: Response) {
+	const userId = getUserId(req);
+	const parsedQueries = tradeHistoryQuerySchema.safeParse(req.query);
+
+	if (!parsedQueries.success) {
+		sendValidationError(res, parsedQueries.error);
+		return;
+	}
+
+	try {
+		const { limit = 100 } = parsedQueries.data;
+
+		const fills = await prisma.fill.findMany({
+			where: { OR: [{ buyerId: userId }, { sellerId: userId }] },
+			orderBy: { createdAt: "desc" },
+			take: limit,
+		});
+
+		res
+			.status(200)
+			.json(
+				fills.map((fill) => formatUserTrade(fill as unknown as Record<string, unknown>, userId)),
+			);
+	} catch (err) {
+		logger.error("Failed to fetch trade history", err);
 		res.status(500).json({ error: "Internal server error" });
 	}
 }

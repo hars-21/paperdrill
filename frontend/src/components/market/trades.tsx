@@ -1,9 +1,7 @@
 import { Skeleton } from "../ui/skeleton";
 import type { Trade } from "@/types";
-
-function formatTime(ts: string | number) {
-	return new Date(ts).toLocaleTimeString("en-US", { hour12: false });
-}
+import { useMarket } from "@/context/MarketContext";
+import { formatPrice, formatQty, formatTime } from "@/utils/format";
 
 export function Trades({
 	symbol,
@@ -14,6 +12,10 @@ export function Trades({
 	loading?: boolean;
 	trades: Trade[];
 }) {
+	const market = useMarket(symbol);
+	const base = market?.baseAsset ?? symbol.split("_")[0];
+	const quote = market?.quoteAsset ?? symbol.split("_")[1];
+
 	if (loading) {
 		return (
 			<div className="flex h-full flex-col p-4 gap-2">
@@ -28,10 +30,8 @@ export function Trades({
 		<div className="flex h-full flex-col select-none">
 			<div className="flex flex-row min-w-0 gap-1 px-3 py-2">
 				<div className="flex justify-between flex-row w-2/3 min-w-0 gap-1">
-					<p className="text-high-emphasis truncate text-xs">Price (USD)</p>
-					<p className="text-medium-emphasis truncate text-right text-xs">
-						Size ({symbol.split("_")[0]})
-					</p>
+					<p className="text-high-emphasis truncate text-xs">Price ({quote})</p>
+					<p className="text-medium-emphasis truncate text-right text-xs">Size ({base})</p>
 				</div>
 			</div>
 
@@ -52,12 +52,12 @@ export function Trades({
 										t.maker ? "text-green-text/90" : "text-red-text/90"
 									}`}
 								>
-									{t.price}
+									{formatPrice(t.price, market?.pricePrecision)}
 								</span>
 							</div>
 							<div className="flex h-full w-[35%] items-center justify-end">
 								<span className="text-right text-xs font-normal tabular-nums text-high-emphasis/90">
-									{t.qty}
+									{formatQty(t.qty, market?.qtyPrecision)}
 								</span>
 							</div>
 							<div className="flex h-full w-[35%] items-center justify-end">

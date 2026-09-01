@@ -3,11 +3,14 @@ import { Navbar } from "./navbar";
 import { MobileDisclaimer } from "./mobile-disclaimer";
 import { SeoHead } from "@/components/seo-head";
 import { AuthProvider } from "@/context/AuthContext";
+import { MarketProvider } from "@/context/MarketContext";
 
 export function AppLayout() {
 	return (
 		<AuthProvider>
-			<AppShell />
+			<MarketProvider>
+				<AppShell />
+			</MarketProvider>
 		</AuthProvider>
 	);
 }

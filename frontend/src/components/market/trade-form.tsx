@@ -1,62 +1,171 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
-import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { COIN_LOGOS } from "@/utils/misc";
-import { TradeFormSkeleton } from "./skeletons";
 import type { UserBalance } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { useMarket } from "@/context/MarketContext";
+import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { formatPrice, formatQty } from "@/utils/format";
+import { Button } from "../ui/button";
+import { DecimalInput } from "../ui/decimal-input";
+import { PercentageSlider } from "../ui/slider";
+import { TradeFormSkeleton } from "./skeletons";
+import { Separator } from "../ui/separator";
 
 interface TradeFormProps {
 	symbol: string;
+	loading?: boolean;
+	lastPrice?: string | null;
+	bestBid?: string | null;
+	bestAsk?: string | null;
 	onOrderPlaced?: () => void;
 }
 
-export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
+function isPositive(value: number) {
+	return Number.isFinite(value) && value > 0;
+}
+
+function truncate(value: number, precision: number) {
+	const factor = 10 ** precision;
+	return String(Math.floor(value * factor + Number.EPSILON) / factor);
+}
+
+function editablePrice(value: number, precision: number) {
+	return Number.isFinite(value) && value > 0 ? value.toFixed(precision) : "";
+}
+
+export function TradeForm({
+	symbol,
+	loading,
+	lastPrice,
+	bestBid,
+	bestAsk,
+	onOrderPlaced,
+}: TradeFormProps) {
 	const [side, setSide] = useState<"BUY" | "SELL">("BUY");
 	const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
 	const [price, setPrice] = useState("");
 	const [quantity, setQuantity] = useState("");
+	const [percent, setPercent] = useState(0);
 	const [submitting, setSubmitting] = useState(false);
-	const { authenticated, loading } = useAuth();
 	const [balance, setBalance] = useState<UserBalance>({});
 	const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
+	const { authenticated, loading: authLoading } = useAuth();
+	const market = useMarket(symbol);
+
+	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;
+	const quote = market?.quoteAsset ?? symbol.split("_")[1] ?? "USD";
+	const pricePrecision = market?.pricePrecision ?? 2;
+	const qtyPrecision = market?.qtyPrecision ?? 4;
+	const priceStep = 10 ** -pricePrecision;
+	const qtyStep = 10 ** -qtyPrecision;
+	const availableQuote = authenticated ? Number(balance[quote]?.available ?? 0) : 0;
+	const availableBase = authenticated ? Number(balance[base]?.available ?? 0) : 0;
+	const effectivePrice = orderType === "LIMIT" ? Number(price) : Number(lastPrice);
+
+	const midPrice = useMemo(() => {
+		const bid = Number(bestBid);
+		const ask = Number(bestAsk);
+		return isPositive(bid) && isPositive(ask) ? (bid + ask) / 2 : Number(lastPrice);
+	}, [bestBid, bestAsk, lastPrice]);
+
+	const bboPrice = side === "BUY" ? Number(bestAsk) : Number(bestBid);
+
+	const maxQuantity = useMemo(() => {
+		if (!authenticated) return 0;
+		if (side === "SELL") return availableBase;
+		if (!isPositive(effectivePrice)) return 0;
+		return availableQuote / effectivePrice;
+	}, [authenticated, side, availableBase, availableQuote, effectivePrice]);
+	const maximumQuantityValue = truncate(maxQuantity, qtyPrecision);
+	const maximumQuantityText = formatQty(maximumQuantityValue, qtyPrecision);
+
+	const requestedQuantity = Number(quantity);
+	const exceedsMaximum =
+		authenticated &&
+		isPositive(requestedQuantity) &&
+		requestedQuantity > maxQuantity + Number.EPSILON;
+	const maximumMessage =
+		side === "BUY"
+			? `You can buy a maximum of ${maximumQuantityText} ${base} with your available ${quote}.`
+			: `You can sell a maximum of ${maximumQuantityText} ${base}.`;
+	const sliderDisabled =
+		!authenticated ||
+		orderType === "MARKET" ||
+		maxQuantity <= 0 ||
+		(side === "BUY" && !isPositive(effectivePrice));
 
 	useEffect(() => {
-		if (authenticated) {
-			api
-				.getBalance()
-				.then(setBalance)
-				.catch((err) => {
-					console.error("Failed to fetch balance:", err);
-					toast.error("Failed to fetch balance");
-				});
+		if (!authenticated) {
+			setBalance({});
+			return;
 		}
+		api
+			.getBalance()
+			.then(setBalance)
+			.catch((error) => {
+				console.error("Failed to fetch balance:", error);
+				toast.error("Failed to fetch balance");
+			});
 	}, [authenticated, balanceRefreshKey]);
 
-	if (loading) {
-		return <TradeFormSkeleton />;
-	}
+	useEffect(() => {
+		setPrice(formatPrice(lastPrice ?? "", pricePrecision));
+		setQuantity("");
+		setPercent(0);
+	}, [symbol, loading]);
 
-	const [base, quote] = symbol.split("_") as [string, string];
-	const baseLogo = COIN_LOGOS[base];
-	const quoteLogo = COIN_LOGOS[quote];
+	const setTradeSide = (nextSide: "BUY" | "SELL") => {
+		setSide(nextSide);
+		setQuantity("");
+		setPercent(0);
+	};
 
-	const handlePlaceOrder = async (e: React.SubmitEvent) => {
-		e.preventDefault();
-		if (!quantity || Number(quantity) <= 0) {
+	const setTradeOrderType = (nextType: "LIMIT" | "MARKET") => {
+		setOrderType(nextType);
+		setQuantity("");
+		setPercent(0);
+	};
+
+	const handleQuantityChange = (value: string) => {
+		setQuantity(value);
+		const nextQuantity = Number(value);
+		if (!isPositive(nextQuantity) || !isPositive(maxQuantity)) {
+			setPercent(0);
+			return;
+		}
+		setPercent(Math.min(100, (nextQuantity / maxQuantity) * 100));
+	};
+
+	const applySliderPercent = (value: number) => {
+		if (sliderDisabled) return;
+		setPercent(value);
+		setQuantity(value === 0 ? "" : truncate(maxQuantity * (value / 100), qtyPrecision));
+	};
+
+	const applyMaximum = () => {
+		if (!isPositive(maxQuantity)) return;
+		setQuantity(maximumQuantityValue);
+		setPercent(100);
+	};
+
+	const handlePlaceOrder = async (event: React.SubmitEvent) => {
+		event.preventDefault();
+		if (!isPositive(Number(quantity))) {
 			toast.error("Enter a valid quantity");
 			return;
 		}
-
-		if (orderType === "LIMIT" && (!price || Number(price) <= 0)) {
-			toast.error("Enter a valid price for limit orders");
+		if (orderType === "LIMIT" && !isPositive(Number(price))) {
+			toast.error("Enter a valid price for the limit order");
+			return;
+		}
+		if (exceedsMaximum) {
+			toast.error(maximumMessage);
 			return;
 		}
 
 		setSubmitting(true);
-
 		try {
 			const result = await api.createOrder(
 				side,
@@ -66,216 +175,190 @@ export function TradeForm({ symbol, onOrderPlaced }: TradeFormProps) {
 				orderType === "LIMIT" ? price : null,
 			);
 
-			const statusMsg =
+			const statusMessage =
 				result.status === "FILLED"
 					? `Filled at avg. ${result.averagePrice ?? "—"}`
 					: result.status === "PARTIALLY_FILLED"
 						? `Partially filled (${result.filledQty}/${Number(quantity)})`
 						: "Order placed successfully";
 
-			toast.success(statusMsg);
-			setPrice("");
+			toast.success(statusMessage);
 			setQuantity("");
-			setBalanceRefreshKey((k) => k + 1);
+			setPercent(0);
+			setBalanceRefreshKey((key) => key + 1);
 			onOrderPlaced?.();
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Order failed");
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Order failed");
 		} finally {
 			setSubmitting(false);
 		}
 	};
 
-	const estTotal =
-		orderType === "LIMIT" ? (parseFloat(price) * parseFloat(quantity) || 0).toFixed(2) : "—";
+	if (loading || authLoading) return <TradeFormSkeleton />;
+
+	const estimatedValue =
+		isPositive(effectivePrice) && isPositive(requestedQuantity)
+			? effectivePrice * requestedQuantity
+			: 0;
+	const displayBalance =
+		side === "BUY"
+			? formatPrice(availableQuote, pricePrecision)
+			: formatQty(availableBase, qtyPrecision);
+	const balanceAsset = side === "BUY" ? quote : base;
+	const showMaximum =
+		authenticated && isPositive(maxQuantity) && (side === "SELL" || orderType === "LIMIT");
 
 	return (
-		<div className="flex flex-col select-none">
-			<div className="p-3">
-				<div className="flex flex-col gap-3">
-					<div className="bg-muted/40 relative flex h-12 w-full overflow-hidden rounded-xl">
-						<div
-							className="absolute top-0 h-full w-1/2 rounded-xl transition-all duration-100 ease-in-out"
-							style={{
-								backgroundColor: side === "BUY" ? "var(--green-bg)" : "var(--red-bg)",
-								left: side === "BUY" ? "0" : "50%",
-							}}
-						/>
-						<button
-							type="button"
-							onClick={() => setSide("BUY")}
-							className={`relative z-10 w-full rounded-xl text-sm font-semibold transition-colors duration-100 cursor-pointer ${
-								side === "BUY" ? "text-green-text" : "text-low-emphasis hover:text-green-text"
-							}`}
-						>
-							Buy
-						</button>
-						<button
-							type="button"
-							onClick={() => setSide("SELL")}
-							className={`relative z-10 w-full rounded-xl text-sm font-semibold transition-colors duration-100 cursor-pointer ${
-								side === "SELL" ? "text-red-text" : "text-low-emphasis hover:text-red-text"
-							}`}
-						>
-							Sell
-						</button>
-					</div>
-
-					<div className="flex items-center justify-start flex-row gap-1">
-						<button
-							type="button"
-							onClick={() => setOrderType("LIMIT")}
-							className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
-								orderType === "LIMIT"
-									? "text-high-emphasis bg-l3"
-									: "text-medium-emphasis hover:text-high-emphasis"
-							}`}
-						>
-							Limit
-						</button>
-						<button
-							type="button"
-							onClick={() => setOrderType("MARKET")}
-							className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
-								orderType === "MARKET"
-									? "text-high-emphasis bg-l3"
-									: "text-medium-emphasis hover:text-high-emphasis"
-							}`}
-						>
-							Market
-						</button>
-					</div>
-
-					<form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
-						<div className="flex justify-between flex-row">
-							<span className="text-medium-emphasis text-xs">Balance</span>
-							<span className="text-high-emphasis text-xs font-medium">
-								{authenticated
-									? side === "BUY"
-										? `${balance[quote]?.available ?? "-"} ${quote}`
-										: `${balance[base]?.available ?? "-"} ${base}`
-									: "-"}
-							</span>
-						</div>
-
-						{orderType === "LIMIT" && (
-							<div className="flex flex-col gap-1.5">
-								<div className="flex items-center justify-between flex-row">
-									<p className="text-medium-emphasis text-xs">Price</p>
-								</div>
-								<div className="relative">
-									<input
-										type="text"
-										inputMode="numeric"
-										step="0.1"
-										placeholder="0"
-										value={price}
-										onChange={(e) => setPrice(e.target.value)}
-										className="bg-l3 border-l3 placeholder-medium-emphasis focus:border-primary border-1.5 w-full rounded-lg pr-12 text-left ring-0 transition focus:ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
-									/>
-									<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
-										<div
-											className="relative flex-none overflow-hidden rounded-full"
-											style={{ width: 24, height: 24 }}
-										>
-											{quoteLogo ? (
-												<img src={quoteLogo} alt={quote} className="h-6 w-6 object-contain" />
-											) : (
-												<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
-													{quote[0]}
-												</div>
-											)}
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
-
-						<div className="flex flex-col gap-1.5">
-							<p className="text-medium-emphasis text-xs">Quantity</p>
-							<div className="relative">
-								<input
-									type="text"
-									inputMode="numeric"
-									step="0.00001"
-									placeholder="0"
-									value={quantity}
-									onChange={(e) => setQuantity(e.target.value)}
-									className="bg-l3 border-border/60 placeholder-medium-emphasis focus:border-primary border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 transition focus:ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
-								/>
-								<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
-									<div
-										className="relative flex-none overflow-hidden rounded-full"
-										style={{ width: 24, height: 24 }}
-									>
-										{baseLogo ? (
-											<img src={baseLogo} alt={base} className="h-6 w-6 object-contain" />
-										) : (
-											<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
-												{base[0]}
-											</div>
-										)}
-									</div>
-								</div>
-							</div>
-						</div>
-
-						{orderType === "LIMIT" && (
-							<div className="flex flex-col gap-1.5">
-								<p className="text-medium-emphasis text-xs">Order Value</p>
-								<div className="relative">
-									<input
-										type="text"
-										inputMode="numeric"
-										placeholder="0"
-										value={estTotal === "0.00" ? "" : estTotal}
-										disabled
-										className="bg-l3 border-border/60 placeholder-medium-emphasis disabled:opacity-60 border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 transition text-lg tabular-nums text-high-emphasis outline-none h-11 px-3"
-									/>
-									<div className="flex flex-row pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 p-2">
-										<div
-											className="relative flex-none overflow-hidden rounded-full"
-											style={{ width: 24, height: 24 }}
-										>
-											{quoteLogo ? (
-												<img src={quoteLogo} alt={quote} className="h-6 w-6 object-contain" />
-											) : (
-												<div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[9px]">
-													{quote[0]}
-												</div>
-											)}
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
-
-						{authenticated ? (
-							<div className="flex flex-col gap-2 pt-1">
-								<Button type="submit" variant="inverted" disabled={submitting}>
-									{submitting
-										? "Placing..."
-										: side === "BUY"
-											? "Place Buy Order"
-											: "Place Sell Order"}
-								</Button>
-							</div>
-						) : (
-							<div className="flex flex-col gap-2 pt-4">
-								<Link to="/signup">
-									<Button size="lg" variant="inverted" className="w-full">
-										Sign up to trade
-									</Button>
-								</Link>
-								<Link to="/login">
-									<Button size="lg" variant="secondary" className="w-full">
-										Log in to trade
-									</Button>
-								</Link>
-							</div>
-						)}
-					</form>
-				</div>
+		<div className="w-full select-none p-3">
+			<div className="grid grid-cols-2 gap-2">
+				<button
+					type="button"
+					onClick={() => setTradeSide("BUY")}
+					className={cn(
+						"h-10 cursor-pointer rounded-lg text-sm font-semibold transition-colors",
+						side === "BUY"
+							? "bg-green-bg/50 text-green-text"
+							: "bg-muted/40 text-low-emphasis hover:bg-green-bg/50 hover:text-green-text",
+					)}
+				>
+					Buy
+				</button>
+				<button
+					type="button"
+					onClick={() => setTradeSide("SELL")}
+					className={cn(
+						"h-10 cursor-pointer rounded-lg text-sm font-semibold transition-colors",
+						side === "SELL"
+							? "bg-red-bg/50 text-red-text"
+							: "bg-muted/40 text-low-emphasis hover:bg-red-bg/50 hover:text-red-text",
+					)}
+				>
+					Sell
+				</button>
 			</div>
+
+			<div className="mt-4 flex items-center gap-1">
+				{(["LIMIT", "MARKET"] as const).map((type) => (
+					<button
+						key={type}
+						type="button"
+						onClick={() => setTradeOrderType(type)}
+						className={cn(
+							"flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold transition-colors",
+							orderType === type
+								? "bg-muted text-high-emphasis"
+								: "text-medium-emphasis hover:text-high-emphasis",
+						)}
+					>
+						{type === "LIMIT" ? "Limit" : "Market"}
+					</button>
+				))}
+			</div>
+
+			<form onSubmit={handlePlaceOrder} className="mt-3 flex flex-col gap-3">
+				<div className="flex items-center justify-between text-xs">
+					<span className="text-medium-emphasis">Balance</span>
+					<span className="font-medium text-high-emphasis">
+						{authenticated ? `${displayBalance} ${balanceAsset}` : "—"}
+					</span>
+				</div>
+
+				<div className="flex flex-col gap-1.5">
+					<div className="flex items-center justify-between">
+						<label className="text-xs text-medium-emphasis">Price</label>
+						<div className="flex items-center gap-2">
+							<button
+								type="button"
+								disabled={orderType === "MARKET" || !isPositive(midPrice)}
+								onClick={() => setPrice(editablePrice(midPrice, pricePrecision))}
+								className="text-xs font-medium text-chart-5 hover:text-chart-5/80 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+								title={isPositive(midPrice) ? formatPrice(midPrice, pricePrecision) : undefined}
+							>
+								Mid
+							</button>
+							<Separator orientation="vertical" className="h-4!" />
+							<button
+								type="button"
+								disabled={orderType === "MARKET" || !isPositive(bboPrice)}
+								onClick={() => setPrice(editablePrice(bboPrice, pricePrecision))}
+								className="text-xs font-medium text-chart-5 hover:text-chart-5/80 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+								title={isPositive(bboPrice) ? formatPrice(bboPrice, pricePrecision) : undefined}
+							>
+								BBO
+							</button>
+						</div>
+					</div>
+					<DecimalInput
+						value={orderType === "MARKET" ? "Market price" : price}
+						onChange={setPrice}
+						precision={pricePrecision}
+						min={priceStep}
+						step={priceStep}
+						placeholder={orderType === "MARKET" ? "Market price" : "0"}
+						asset={quote}
+						disabled={orderType === "MARKET"}
+					/>
+				</div>
+
+				<div className="flex flex-col gap-1.5">
+					<div className="flex items-center justify-between gap-3">
+						<label className="text-xs text-medium-emphasis">Quantity</label>
+						{showMaximum && (
+							<button
+								type="button"
+								onClick={applyMaximum}
+								className="truncate text-xs font-medium text-chart-5 hover:text-chart-5/80"
+							>
+								Max {maximumQuantityText} {base}
+							</button>
+						)}
+					</div>
+					<DecimalInput
+						value={quantity}
+						onChange={handleQuantityChange}
+						precision={qtyPrecision}
+						min={qtyStep}
+						step={qtyStep}
+						placeholder="0"
+						asset={base}
+						aria-invalid={exceedsMaximum}
+					/>
+				</div>
+
+				<PercentageSlider value={percent} onChange={applySliderPercent} disabled={sliderDisabled} />
+
+				<div className="flex items-center justify-between border-t border-border/40 pt-3 text-xs">
+					<span className="text-medium-emphasis">Estimated value</span>
+					<span className="font-medium text-high-emphasis">
+						{formatPrice(estimatedValue, pricePrecision)} {quote}
+					</span>
+				</div>
+
+				{exceedsMaximum && (
+					<p className="text-xs leading-relaxed text-red-text">{maximumMessage}</p>
+				)}
+
+				{authenticated ? (
+					<Button
+						type="submit"
+						variant="inverted"
+						size="lg"
+						className="w-full mt-2"
+						disabled={submitting || exceedsMaximum}
+					>
+						{submitting ? "Placing…" : side === "BUY" ? `Buy ${base}` : `Sell ${base}`}
+					</Button>
+				) : (
+					<div className="flex flex-col gap-3 mt-2">
+						<Button asChild variant="inverted" size="lg">
+							<Link to="/signup">Sign up to trade</Link>
+						</Button>
+						<Button asChild variant="secondary" size="lg">
+							<Link to="/login">Log in to trade</Link>
+						</Button>
+					</div>
+				)}
+			</form>
 		</div>
 	);
 }

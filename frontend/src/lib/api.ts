@@ -1,6 +1,6 @@
 import type { CancelResult, DepthSnapshot, Fill, OrderResult, UserData } from "@/types/api";
 import { config } from "./env";
-import type { Candle, Market, OrderRecord, Ticker, UserBalance } from "@/types";
+import type { Candle, Market, OrderRecord, Ticker, UserBalance, UserTrade } from "@/types";
 
 const BASE = `${config.apiBaseUrl}/v1`;
 
@@ -103,6 +103,10 @@ export const api = {
 		return request<Ticker>(`/markets/${symbol}/ticker`);
 	},
 
+	getAllTickers() {
+		return request<Ticker[]>("/markets/tickers");
+	},
+
 	getDepth(symbol: string) {
 		return request<DepthSnapshot>(`/markets/${symbol}/orderbook`);
 	},
@@ -135,6 +139,10 @@ export const api = {
 		if (params?.page) q.set("page", String(params.page));
 		const qs = q.toString();
 		return request<OrderRecord[]>(`/orders${qs ? `?${qs}` : ""}`);
+	},
+
+	getTradeHistory(limit = 100) {
+		return request<UserTrade[]>(`/trades?limit=${limit}`);
 	},
 
 	createOrder(

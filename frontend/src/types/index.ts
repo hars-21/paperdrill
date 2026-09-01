@@ -36,6 +36,7 @@ export interface OrderRecord {
 	type: "LIMIT" | "MARKET";
 	symbol: string;
 	price: string | null;
+	averagePrice?: string | null;
 	qty: string;
 	filledQty: string;
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
@@ -50,10 +51,25 @@ export interface Trade {
 	timestamp: number;
 }
 
+export interface UserTrade {
+	id: string;
+	symbol: string;
+	price: string;
+	qty: string;
+	side: "BUY" | "SELL";
+	isMaker: boolean;
+	orderId: string;
+	createdAt: string;
+}
+
 export interface Market {
 	id: string;
 	symbol: string;
 	name: string;
+	baseAsset: string;
+	quoteAsset: string;
+	pricePrecision: number;
+	qtyPrecision: number;
 }
 
 export interface Ticker {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,16 +10,18 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { ASSET_NAMES, COIN_LOGOS } from "@/utils/misc";
-import { formatPrice, formatVolume, formatChange } from "@/utils/market";
 import { useTickers } from "@/hooks/use-tickers";
+import { useMarkets } from "@/context/MarketContext";
 import { Page, PageContent, PageHeader } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
+import { AssetIcon } from "@/components/icons/asset-icon";
+import { formatPrice, formatVolume, formatChange } from "@/utils/format";
 
 const TABS = ["Spot"];
 
 export function MarketsPage() {
-	const { markets, tickers, loading, error } = useTickers();
+	const { markets, loading: marketsLoading } = useMarkets();
+	const { tickers, loading, error } = useTickers();
 	const [activeTab, setActiveTab] = useState("Spot");
 	const navigate = useNavigate();
 
@@ -67,7 +69,7 @@ export function MarketsPage() {
 										<TableHead className="text-left">Name</TableHead>
 										<TableHead className="w-[17%] text-right">Price</TableHead>
 										<TableHead className="w-[17%] text-right hidden lg:table-cell">
-											24h Volume(USD)
+											24h Volume
 										</TableHead>
 										<TableHead className="w-[17%] text-right">24h Change</TableHead>
 										<TableHead className="w-20 text-right hidden lg:table-cell">
@@ -76,7 +78,7 @@ export function MarketsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{loading
+									{loading || marketsLoading
 										? Array.from({ length: 4 }).map((_, i) => (
 												<TableRow key={i}>
 													<TableCell>
@@ -100,10 +102,8 @@ export function MarketsPage() {
 												</TableRow>
 											))
 										: markets.map((m) => {
-												const [quote, base] = m.symbol.split("_") as [string, string];
-												const assetName = ASSET_NAMES[quote] || m.name || quote;
 												const ticker = tickers[m.symbol];
-												const change = formatChange(ticker);
+												const change = formatChange(ticker?.priceChangePercent);
 
 												return (
 													<TableRow
@@ -112,54 +112,24 @@ export function MarketsPage() {
 														onClick={() => navigate(`/trade/${m.symbol}`)}
 													>
 														<TableCell className="whitespace-nowrap">
-															<Link
-																to={`/trade/${m.symbol}`}
-																onClick={(e) => e.stopPropagation()}
-																className="flex shrink whitespace-nowrap"
-															>
-																<div className="flex items-center gap-2.5">
-																	<div
-																		className="relative flex-none overflow-hidden rounded-full border border-border/60"
-																		style={{ width: 32, height: 32 }}
-																	>
-																		{COIN_LOGOS[quote] ? (
-																			<img
-																				src={COIN_LOGOS[quote]}
-																				alt={quote}
-																				className="size-8 object-contain"
-																			/>
-																		) : (
-																			<div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
-																				{quote[0]}
-																			</div>
-																		)}
-																	</div>
-																	<div className="flex flex-col">
-																		<div className="text-high-emphasis text-sm">{assetName}</div>
-																		<div className="flex items-center text-medium-emphasis text-xs">
-																			<span>{quote}</span>
-																			<span>/{base}</span>
-																		</div>
-																	</div>
+															<div className="flex items-center gap-3">
+																<div className="overflow-hidden rounded-full size-8">
+																	<AssetIcon asset={m.baseAsset} />
 																</div>
-															</Link>
+																<div className="flex items-center gap-1.5">
+																	<div className="text-high-emphasis text-base">{m.baseAsset}</div>
+																	<div className="text-low-emphasis text-sm">{m.name}</div>
+																</div>
+															</div>
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
-															{formatPrice(ticker)}
+															{formatPrice(ticker?.lastPrice, m.pricePrecision)}
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">
-															{formatVolume(ticker)}
+															${formatVolume(ticker?.quoteVolume)}
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
-															<span
-																className={
-																	change.text === "0.00%"
-																		? "text-medium-emphasis"
-																		: change.isUp
-																			? "text-green-text"
-																			: "text-red-text"
-																}
-															>
+															<span className={change.isUp ? "text-green-text" : "text-red-text"}>
 																{change.text}
 															</span>
 														</TableCell>
