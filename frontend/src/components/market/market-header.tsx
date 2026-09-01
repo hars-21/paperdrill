@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useMarkets } from "@/context/MarketContext";
-import { useTickers } from "@/hooks/use-tickers";
+import type { Market, Ticker } from "@/types";
 import { formatChange, formatPrice, formatQty } from "@/utils/format";
 import { MarketDropdown } from "./market-dropdown";
 
-export function MarketHeader({ symbol }: { symbol: string }) {
-	const { markets } = useMarkets();
-	const { tickers } = useTickers();
+type MarketHeaderProps = {
+	symbol: string;
+	markets: Market[];
+	tickers: Record<string, Ticker>;
+};
+
+export function MarketHeader({ symbol, markets, tickers }: MarketHeaderProps) {
 	const market = markets.find((m) => m.symbol === symbol);
 	const ticker = tickers[symbol];
 	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;

@@ -3,24 +3,28 @@ import { useParams } from "react-router-dom";
 import { Chart } from "../components/chart";
 import { DataPanel } from "../components/market/data-panel";
 import { MarketHeader } from "../components/market/market-header";
+import { MarketWatchlist } from "../components/market/market-watchlist";
 import { Orderbook } from "../components/market/orderbook";
 import { TradeForm } from "../components/market/trade-form";
 import { Trades } from "../components/market/trades";
 import { Page } from "../components/ui/page";
 import { Skeleton } from "../components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { useMarkets } from "@/context/MarketContext";
 import { useOrderbook } from "@/hooks/use-orderbook";
-import { useTicker } from "@/hooks/use-tickers";
+import { useTickers } from "@/hooks/use-tickers";
 import { useTrades } from "@/hooks/use-trades";
 
 export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
 	const { loading: authLoading } = useAuth();
+	const { markets } = useMarkets();
+	const { tickers, loading: tickerLoading } = useTickers();
 	const [orderbookRefreshKey, setOrderbookRefreshKey] = useState(0);
 	const [leftTab, setLeftTab] = useState<"book" | "trades">("book");
 	const { orderbook, loading: orderbookLoading, bestBid, bestAsk } = useOrderbook(symbol);
 	const { trades, loading: tradesLoading } = useTrades(symbol);
-	const { ticker, loading: tickerLoading } = useTicker(symbol);
+	const ticker = tickers[symbol] ?? null;
 	const isDataLoading = authLoading || orderbookLoading || tradesLoading || tickerLoading;
 
 	const bookTradesTabs = (
@@ -54,7 +58,7 @@ export function TradePage() {
 		<Page fixed className="px-4 pb-2">
 			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_minmax(38rem,1fr)_auto]">
 				<div className="lg:col-start-1 lg:row-start-1">
-					<MarketHeader symbol={symbol} />
+					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
 				<div className="flex min-h-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:flex-row">
@@ -117,15 +121,18 @@ export function TradePage() {
 					</div>
 				</div>
 
-				<div className="h-fit overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
-					<TradeForm
-						symbol={symbol}
-						loading={isDataLoading}
-						lastPrice={ticker?.lastPrice}
-						bestBid={bestBid}
-						bestAsk={bestAsk}
-						onOrderPlaced={() => setOrderbookRefreshKey((key) => key + 1)}
-					/>
+				<div className="flex h-fit flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+					<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
+						<TradeForm
+							symbol={symbol}
+							loading={isDataLoading}
+							lastPrice={ticker?.lastPrice}
+							bestBid={bestBid}
+							bestAsk={bestAsk}
+							onOrderPlaced={() => setOrderbookRefreshKey((key) => key + 1)}
+						/>
+					</div>
+					<MarketWatchlist symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
 				<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:col-start-1 lg:row-start-3 lg:min-h-75">
