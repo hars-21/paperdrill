@@ -1,5 +1,5 @@
 export function formatPrice(n?: string | number, pricePrecision: number = 2) {
-	if (!n || !Number.isFinite(Number(n))) return "—";
+	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
 
 	return Number(n).toLocaleString(undefined, {
 		minimumFractionDigits: pricePrecision,
@@ -8,7 +8,7 @@ export function formatPrice(n?: string | number, pricePrecision: number = 2) {
 }
 
 export function formatQty(n?: string | number, qtyPrecision: number = 4) {
-	if (!n || !Number.isFinite(Number(n))) return "—";
+	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
 
 	return Number(n).toLocaleString(undefined, {
 		minimumFractionDigits: qtyPrecision,

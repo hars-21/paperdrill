@@ -33,7 +33,7 @@ export function MarketHeader({ symbol }: { symbol: string }) {
 	}, [ticker?.lastPrice]);
 
 	return (
-		<div className="flex flex-wrap items-center justify-between bg-card rounded-xl border border-border/40 px-5 py-3 gap-4 shrink-0 select-none">
+		<div className="flex flex-wrap items-center justify-between bg-card rounded-lg border border-border/40 px-5 py-3 gap-4 shrink-0 select-none">
 			<div className="flex items-center gap-6 min-w-0">
 				<MarketDropdown
 					symbol={symbol}

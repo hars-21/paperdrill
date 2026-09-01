@@ -1,61 +1,53 @@
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 const MARKS = [0, 25, 50, 75, 100];
 
-export function PercentageSlider({ disabled }: { disabled?: boolean }) {
-	const [value, setValue] = useState(0);
+type PercentageSliderProps = {
+	value: number;
+	onChange: (value: number) => void;
+	disabled?: boolean;
+};
 
-	const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-		if (disabled) return;
-		const rect = e.currentTarget.getBoundingClientRect();
-		const percentage = ((e.clientX - rect.left) / rect.width) * 100;
-
-		const snapped = Math.round(percentage / 25) * 25;
-		setValue(Math.min(100, Math.max(0, snapped)));
-	};
+export function PercentageSlider({ value, onChange, disabled = false }: PercentageSliderProps) {
+	const safeValue = Math.min(100, Math.max(0, value));
 
 	return (
-		<div className="w-full select-none">
-			<div className="px-2">
-				<div className="relative h-4 cursor-pointer" onClick={handleClick}>
-					<div className="absolute top-1/2 h-1.25 w-full -translate-y-1/2 rounded-full bg-l3" />
-
+		<div className={cn("w-full select-none", disabled && "opacity-45")}>
+			<div className="relative mx-1 h-5">
+				<div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-l3" />
+				<div
+					className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-chart-5"
+					style={{ width: `${safeValue}%` }}
+				/>
+				{MARKS.map((mark) => (
 					<div
-						className="absolute left-0 top-1/2 h-1.25 -translate-y-1/2 rounded-full bg-chart-5"
-						style={{ width: `${value}%` }}
+						key={mark}
+						className={cn(
+							"pointer-events-none absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2",
+							safeValue >= mark ? "border-chart-5 bg-chart-5" : "border-l3 bg-card",
+						)}
+						style={{ left: `${mark}%` }}
 					/>
-
-					{MARKS.map((mark) => (
-						<div
-							key={mark}
-							className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2  ${value >= mark ? "border-chart-5 bg-chart-5" : "border-l3 bg-l1"}`}
-							style={{ left: `${mark}%` }}
-						/>
-					))}
-
-					<button
-						type="button"
-						aria-label={`Percentage: ${value}%`}
-						className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-5 shadow-sm"
-						style={{ left: `${value}%` }}
-						onClick={(e) => e.stopPropagation()}
-						onKeyDown={(e) => {
-							if (e.key === "ArrowRight" || e.key === "ArrowUp") {
-								e.preventDefault();
-								setValue((v) => Math.min(100, v + 25));
-							}
-
-							if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
-								e.preventDefault();
-								setValue((v) => Math.max(0, v - 25));
-							}
-						}}
-					/>
-				</div>
+				))}
+				<div
+					className="pointer-events-none absolute top-1/2 z-20 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-card bg-chart-5"
+					style={{ left: `${safeValue}%` }}
+				/>
+				<input
+					type="range"
+					min={0}
+					max={100}
+					step={25}
+					value={safeValue}
+					disabled={disabled}
+					onChange={(event) => onChange(Number(event.target.value))}
+					aria-label="Order size percentage"
+					className="absolute inset-0 z-30 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+				/>
 			</div>
 
 			<div className="mt-1 flex justify-between text-xs leading-none text-muted-foreground">
-				<span className="pl-1">0</span>
+				<span>0</span>
 				<span>100%</span>
 			</div>
 		</div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AssetIcon } from "../icons/asset-icon";
 
@@ -15,14 +15,15 @@ export interface DecimalInputProps
 	className?: string;
 }
 
-const DECIMAL_RE = /^[0-9]*\.?[0-9]*$/;
+const DECIMAL_RE = /^\d*\.?\d*$/;
 
-function clampPrecision(val: string, precision: number): string {
-	const [int = "", dec = ""] = val.split(".");
-	if (precision > 0 && dec.length > precision) {
-		return `${int}.${dec.slice(0, precision)}`;
-	}
-	return `${int}${dec ? "." + dec : ""}`;
+function decimalPlaces(value: string) {
+	return value.split(".")[1]?.length ?? 0;
+}
+
+function formatFinalValue(value: number, precision: number) {
+	const factor = 10 ** precision;
+	return String(Math.round(value * factor) / factor);
 }
 
 export const DecimalInput = forwardRef<HTMLInputElement, DecimalInputProps>(function DecimalInput(
@@ -37,55 +38,51 @@ export const DecimalInput = forwardRef<HTMLInputElement, DecimalInputProps>(func
 		assetClassName,
 		className,
 		disabled,
+		onKeyDown,
 		...props
 	},
 	ref,
 ) {
 	const [focused, setFocused] = useState(false);
-	const lastValueRef = useRef(value);
-
-	useEffect(() => {
-		lastValueRef.current = value;
-	}, [value]);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const raw = e.target.value;
-
-		const filtered = raw
-			.replace(/[^0-9.]/g, "")
-			.replace(/^(\d+\.\d*)\.\d*$/, "$1");
-
-		if (!filtered && raw !== "") return;
-
-		const cleaned = clampPrecision(filtered, precision);
-		lastValueRef.current = cleaned;
-		onChange(cleaned);
+		const next = e.target.value.replaceAll(",", "");
+		if (!DECIMAL_RE.test(next) || decimalPlaces(next) > precision) return;
+		onChange(next);
 	};
 
 	const handleBlur = () => {
 		setFocused(false);
-		const current = lastValueRef.current;
-		if (!current || !Number.isFinite(Number(current))) return;
-
-		const stepNum = Number(step);
+		if (!value) return;
+		const parsed = Number(value);
+		if (!Number.isFinite(parsed)) {
+			onChange("");
+			return;
+		}
 		const minNum = Number(min);
-		let num = Number(current);
+		const maxNum = Number(props.max);
+		let next = parsed;
+		if (Number.isFinite(minNum)) next = Math.max(next, minNum);
+		if (Number.isFinite(maxNum)) next = Math.min(next, maxNum);
+		onChange(formatFinalValue(next, precision));
+	};
 
-		if (Number.isFinite(minNum) && num < minNum) {
-			num = minNum;
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+		if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+			onKeyDown?.(event);
+			return;
 		}
-
-		if (Number.isFinite(stepNum) && stepNum > 0) {
-			const base = Number.isFinite(minNum) ? minNum : 0;
-			const snapped = Math.floor((num - base) / stepNum + 0.0000001) * stepNum + base;
-			if (Number.isFinite(snapped)) num = snapped;
-		}
-
-		const fixed = num.toFixed(precision);
-		const next = Number.isFinite(Number(fixed)) ? String(Number(fixed)) : current;
-
-		lastValueRef.current = next;
-		onChange(next);
+		event.preventDefault();
+		const factor = 10 ** precision;
+		const stepValue = Number(step);
+		const stepUnits = Math.max(1, Math.round((Number.isFinite(stepValue) && stepValue > 0 ? stepValue : 1 / factor) * factor));
+		const minValue = Number(min);
+		const maxValue = Number(props.max);
+		let units = Number.isFinite(Number(value)) ? Math.round(Number(value) * factor) : 0;
+		units += event.key === "ArrowUp" ? stepUnits : -stepUnits;
+		if (Number.isFinite(minValue)) units = Math.max(units, Math.round(minValue * factor));
+		if (Number.isFinite(maxValue)) units = Math.min(units, Math.round(maxValue * factor));
+		onChange(String(units / factor));
 	};
 
 	return (
@@ -103,6 +100,11 @@ export const DecimalInput = forwardRef<HTMLInputElement, DecimalInputProps>(func
 				onFocus={() => setFocused(true)}
 				onBlur={handleBlur}
 				onChange={handleChange}
+				onKeyDown={handleKeyDown}
+				role="spinbutton"
+				aria-valuemin={min === undefined ? undefined : Number(min)}
+				aria-valuemax={props.max === undefined ? undefined : Number(props.max)}
+				aria-valuenow={Number.isFinite(Number(value)) ? Number(value) : undefined}
 				className={cn(
 					"bg-l3 border-border/60 placeholder-medium-emphasis border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3 placeholder:font-normal",
 					focused && "border-primary focus:border-primary",
