@@ -86,9 +86,11 @@ export function useCandles(symbol: string, interval: CandleInterval = "1H") {
 
 	useEffect(() => {
 		let active = true;
+		setLoading(true);
 		setCandles([]);
 		setLastCandle(null);
 		setError(null);
+		candlesRef.current = [];
 
 		const intMs = CANDLE_INTERVAL_MS[interval];
 

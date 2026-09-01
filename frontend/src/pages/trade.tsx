@@ -5,7 +5,7 @@ import { Orderbook } from "../components/market/orderbook";
 import { Trades } from "../components/market/trades";
 import { TradeForm } from "../components/market/trade-form";
 import { DataPanel } from "../components/market/data-panel";
-import { Chart } from "../components/market/chart";
+import { Chart } from "../components/chart";
 import { Skeleton } from "../components/ui/skeleton";
 import { Page } from "../components/ui/page";
 import { useAuth } from "@/context/AuthContext";
@@ -98,7 +98,7 @@ export function TradePage() {
 								</div>
 							) : (
 								<div className="flex-1 relative">
-									<Chart symbol={symbol} />
+									<Chart symbol={symbol} orderbook={orderbook} ticker={ticker} />
 								</div>
 							)}
 						</div>
@@ -157,8 +157,8 @@ export function TradePage() {
 						</div>
 					</div>
 				) : (
-					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0 min-h-64">
-						<Chart symbol={symbol} />
+					<div className="bg-card rounded-lg border border-border/40 shadow-sm overflow-hidden shrink-0 min-h-96">
+						<Chart symbol={symbol} orderbook={orderbook} ticker={ticker} />
 					</div>
 				)}
 
