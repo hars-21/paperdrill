@@ -1,4 +1,4 @@
-export function formatPrice(n?: string | number, pricePrecision: number = 2) {
+export function formatPrice(n?: string | number | null, pricePrecision: number = 2) {
 	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
 
 	return Number(n).toLocaleString(undefined, {
@@ -39,4 +39,16 @@ export function formatChange(pct?: string | number): { text: string; isUp: boole
 
 export function formatTime(ts: string | number) {
 	return new Date(ts).toLocaleTimeString("en-US", { hour12: false });
+}
+
+export function formatDateTime(ts: string | number) {
+	const date = new Date(ts);
+	if (!Number.isFinite(date.getTime())) return "—";
+	return date.toLocaleString(undefined, {
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
+	});
 }

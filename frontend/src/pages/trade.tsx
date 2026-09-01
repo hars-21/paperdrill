@@ -135,7 +135,7 @@ export function TradePage() {
 					<MarketWatchlist symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
-				<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:col-start-1 lg:row-start-3 lg:min-h-75">
+				<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:col-start-1 lg:row-start-3 lg:min-h-144">
 					<DataPanel loading={isDataLoading} refreshKey={orderbookRefreshKey} symbol={symbol} />
 				</div>
 			</div>
