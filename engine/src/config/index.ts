@@ -7,9 +7,11 @@ export const envSchema = z.object({
 	DATABASE_URL: z.string(),
 	INCOMING_STREAM: z.string().default("backend-to-engine-broker"),
 	LOG_LEVEL: z.enum(["debug", "info"]),
-	SNAPSHOT_INTERVAL: z.string().default("3600000"),
-	STREAM_RETENTION_MS: z.coerce.number().default(30 * 60 * 1000),
+	SNAPSHOT_INTERVAL: z.coerce.number().default(3_600_000),
+	STREAM_RETENTION_MS: z.coerce.number().default(3_600_000),
 	RECENT_TRADES_LIMIT: z.coerce.number().positive().default(50),
+	STREAM_READ_BATCH_SIZE: z.coerce.number().positive().default(200),
+	RESPONSE_BATCH_SIZE: z.coerce.number().positive().default(50),
 });
 
 const env = envSchema.parse(process.env);
@@ -20,7 +22,9 @@ export const config = {
 	databaseUrl: env.DATABASE_URL,
 	incomingStream: env.INCOMING_STREAM,
 	logLevel: env.LOG_LEVEL,
-	snapshotInterval: parseInt(env.SNAPSHOT_INTERVAL, 10),
+	snapshotInterval: env.SNAPSHOT_INTERVAL,
 	streamRetentionMs: env.STREAM_RETENTION_MS,
 	recentTradesLimit: env.RECENT_TRADES_LIMIT,
+	streamReadBatchSize: env.STREAM_READ_BATCH_SIZE,
+	responseBatchSize: env.RESPONSE_BATCH_SIZE,
 };

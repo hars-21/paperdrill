@@ -18,6 +18,10 @@ function bigintReviver(_key: string, value: unknown) {
 	return value;
 }
 
+async function readSnapshotFile(path: string) {
+	return fs.readFile(path, "utf-8").then((data) => JSON.parse(data, bigintReviver));
+}
+
 export async function snapshot() {
 	const jobsLastId = (await cacheClient.get("engine:jobs:last_id")) ?? "0-0";
 
@@ -46,14 +50,13 @@ export async function snapshot() {
 	const tmpPath = `${SNAPSHOT_PATH}.tmp`;
 
 	await fs.mkdir("snapshots", { recursive: true });
-	await fs.writeFile(tmpPath, JSON.stringify(snapshotData, bigintReplacer, 2));
+	await fs.writeFile(tmpPath, JSON.stringify(snapshotData, bigintReplacer));
 	await fs.rename(tmpPath, SNAPSHOT_PATH);
 }
 
 export async function loadSnapshot() {
 	try {
-		const data = await fs.readFile(SNAPSHOT_PATH, "utf-8");
-		const parsed = JSON.parse(data, bigintReviver);
+		const parsed = await readSnapshotFile(SNAPSHOT_PATH);
 
 		if (parsed.metadata?.version !== SNAPSHOT_VERSION) {
 			logger.error(

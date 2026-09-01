@@ -27,6 +27,22 @@ async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
 }
 
+type PendingResponse = { queue: string; payload: EngineResponse };
+
+function yieldToEventLoop() {
+	return new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
+
+async function flushResponses(pending: PendingResponse[]) {
+	for (let i = 0; i < pending.length; i += config.responseBatchSize) {
+		const chunk = pending.slice(i, i + config.responseBatchSize);
+		await Promise.all(chunk.map((r) => sendResponse(r.queue, r.payload))).catch((err) =>
+			logger.error("Failed to send engine response", err),
+		);
+		await yieldToEventLoop();
+	}
+}
+
 async function main() {
 	const signal = abortController.signal;
 	let jobsLastId: string;
@@ -48,6 +64,7 @@ async function main() {
 				},
 				{
 					BLOCK: 5000,
+					COUNT: config.streamReadBatchSize,
 				},
 			);
 
@@ -55,7 +72,7 @@ async function main() {
 			if (!streams) continue;
 
 			for (const stream of streams) {
-				const responses: { queue: string; payload: EngineResponse }[] = [];
+				const responses: PendingResponse[] = [];
 
 				for (const message of stream.messages) {
 					let request: EngineRequest;
@@ -105,10 +122,10 @@ async function main() {
 					}
 				}
 
-				await Promise.all(responses.map((r) => sendResponse(r.queue, r.payload))).catch((err) => {
-					logger.error("Failed to send engine response", err);
-				});
+				await flushResponses(responses);
 			}
+
+			await yieldToEventLoop();
 		} catch (err) {
 			if (signal.aborted) break;
 			logger.error("Stream read error", err);
