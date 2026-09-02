@@ -47,3 +47,5 @@ export const depositPayloadSchema = userPayloadSchema.extend({
 	amount: z.coerce.bigint().positive("amount must be a positive number"),
 	asset: z.string().trim().min(1, "asset is required"),
 });
+
+export const initializeBalancePayloadSchema = depositPayloadSchema;

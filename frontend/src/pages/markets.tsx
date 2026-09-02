@@ -37,7 +37,7 @@ export function MarketsPage() {
 			</PageHeader>
 
 			<PageContent>
-				<div className="flex flex-col flex-1 gap-3 rounded-xl border border-border/40 bg-card p-4">
+				<div className="flex flex-1 flex-col gap-3 rounded-xl border border-border/40 bg-card p-3 sm:p-4">
 					<div className="flex items-center justify-between gap-3">
 						<div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap">
 							{TABS.map((tab) => (
@@ -79,7 +79,7 @@ export function MarketsPage() {
 								</TableHeader>
 								<TableBody>
 									{loading || marketsLoading
-										? Array.from({ length: 4 }).map((_, i) => (
+										? Array.from({ length: 3 }).map((_, i) => (
 												<TableRow key={i}>
 													<TableCell>
 														<div className="flex items-center gap-2.5">
@@ -90,14 +90,14 @@ export function MarketsPage() {
 													<TableCell className="text-right">
 														<Skeleton className="h-4 w-20 ml-auto" />
 													</TableCell>
-													<TableCell className="text-right">
-														<Skeleton className="h-4 w-14 ml-auto" />
+													<TableCell className="hidden text-right lg:table-cell">
+														<Skeleton className="ml-auto h-4 w-14" />
 													</TableCell>
 													<TableCell className="text-right">
-														<Skeleton className="h-4 w-12 ml-auto" />
+														<Skeleton className="ml-auto h-4 w-12" />
 													</TableCell>
-													<TableCell className="text-right">
-														<Skeleton className="h-7 w-16 ml-auto" />
+													<TableCell className="hidden text-right lg:table-cell">
+														<Skeleton className="ml-auto h-7 w-16" />
 													</TableCell>
 												</TableRow>
 											))
@@ -118,7 +118,7 @@ export function MarketsPage() {
 																</div>
 																<div className="flex items-center gap-1.5">
 																	<div className="text-high-emphasis text-base">{m.baseAsset}</div>
-																	<div className="text-low-emphasis text-sm">{m.name}</div>
+																	<div className="hidden text-sm text-low-emphasis sm:block">{m.name}</div>
 																</div>
 															</div>
 														</TableCell>

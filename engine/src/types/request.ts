@@ -5,7 +5,8 @@ export type EngineCommandType =
 	| "get_open_orders"
 	| "get_trades"
 	| "cancel_order"
-	| "create_deposit";
+	| "create_deposit"
+	| "initialize_balance";
 
 export interface EngineRequest {
 	correlationId: string;

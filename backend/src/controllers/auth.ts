@@ -13,6 +13,30 @@ import { logger } from "../utils/logger";
 import { config } from "../config";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../utils/emailClient";
+import { sendToEngine } from "../utils/engineClient";
+import { assetPrecision } from "../store/market";
+import { toBigInt } from "../utils/convert";
+
+const INITIAL_BALANCE_ASSET = "USD";
+const INITIAL_BALANCE_AMOUNT = "10000";
+
+async function initializeBalance(userId: string) {
+	const precision = assetPrecision.get(INITIAL_BALANCE_ASSET);
+
+	if (precision == null) {
+		throw new Error(`Missing precision for ${INITIAL_BALANCE_ASSET}`);
+	}
+
+	const response = await sendToEngine("initialize_balance", {
+		userId,
+		asset: INITIAL_BALANCE_ASSET,
+		amount: toBigInt(INITIAL_BALANCE_AMOUNT, precision).toString(),
+	});
+
+	if (!response.success) {
+		throw new Error(response.error ?? "Balance initialization failed");
+	}
+}
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -38,6 +62,13 @@ export async function signup(req: Request, res: Response) {
 			data: { email, name, password: hashedPassword },
 		});
 
+		try {
+			await initializeBalance(user.id);
+		} catch (error) {
+			await prisma.user.delete({ where: { id: user.id } });
+			throw error;
+		}
+
 		const token = crypto.randomBytes(32).toString("hex");
 
 		await prisma.verificationToken.create({
@@ -50,10 +81,16 @@ export async function signup(req: Request, res: Response) {
 
 		sendVerificationEmail(user.name, user.email, token);
 
-		res.status(201).json({
-			success: true,
-			message: "User created successfully. Please check your email to verify your account.",
-		});
+		res
+			.status(201)
+			.cookie("token", createToken({ id: user.id }), config.cookie)
+			.json({
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				emailVerified: user.emailVerified,
+				message: "Account created. Check your email to verify it.",
+			});
 	} catch (e) {
 		logger.error("Signup failed", e);
 		res.status(500).json({ error: "Internal server error" });
@@ -86,11 +123,6 @@ export async function signin(req: Request, res: Response) {
 			return;
 		}
 
-		if (!user.emailVerified) {
-			res.status(403).json({ error: "Email not verified" });
-			return;
-		}
-
 		res
 			.status(200)
 			.cookie("token", createToken({ id: user.id }), config.cookie)
@@ -98,6 +130,7 @@ export async function signin(req: Request, res: Response) {
 				id: user.id,
 				name: user.name,
 				email: user.email,
+				emailVerified: user.emailVerified,
 			});
 	} catch (e) {
 		logger.error("Signin failed", e);
@@ -149,16 +182,12 @@ export async function verifyEmail(req: Request, res: Response) {
 			data: { usedAt: new Date() },
 		});
 
-		const user = await prisma.user.update({
+		await prisma.user.update({
 			where: { id: verification.userId },
 			data: { emailVerified: true },
-			select: { id: true, name: true, email: true },
 		});
 
-		res
-			.status(200)
-			.cookie("token", createToken({ id: verification.userId }), config.cookie)
-			.json(user);
+		res.status(200).json({ message: "Email verified successfully" });
 	} catch (e) {
 		logger.error("Email verification failed", e);
 		res.status(500).json({ error: "Internal server error" });

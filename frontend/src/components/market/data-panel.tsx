@@ -135,7 +135,7 @@ function MarketCell({ symbol, market }: { symbol: string; market: MarketLookup }
 function TableLoading({ columns }: { columns: number }) {
 	return (
 		<div className="space-y-3 px-3 py-4">
-			{Array.from({ length: 5 }).map((_, row) => (
+			{Array.from({ length: PAGE_SIZE }).map((_, row) => (
 				<div
 					key={row}
 					className="grid gap-4"
@@ -205,7 +205,7 @@ function Pagination({
 }
 
 export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProps) {
-	const { user } = useAuth();
+	const { user, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [tab, setTab] = useState<Tab>("open");
 	const [openOrders, setOpenOrders] = useState<OrderRecord[]>([]);
@@ -215,7 +215,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	const [fetching, setFetching] = useState(true);
 	const [cancelling, setCancelling] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
-	const [currentMarketOnly, setCurrentMarketOnly] = useState(true);
+	const [currentMarketOnly, setCurrentMarketOnly] = useState(Boolean(symbol));
 	const [marketFilter, setMarketFilter] = useState("all");
 	const [sideFilter, setSideFilter] = useState<SideFilter>("all");
 	const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -250,8 +250,8 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	}, []);
 
 	useEffect(() => {
-		if (user) fetchData();
-	}, [user, refreshKey, fetchData]);
+		if (user && verified) fetchData();
+	}, [user, verified, refreshKey, fetchData]);
 
 	useEffect(() => {
 		setPage(1);
@@ -400,9 +400,20 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 		);
 	}
 
+	if (!verified) {
+		return (
+			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
+				<Link to="/verify-email" className="font-medium text-primary">
+					Verify your email
+				</Link>
+				&nbsp;to view account data.
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex h-full min-h-144 select-none flex-col overflow-hidden">
-			<div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/40 px-3 py-2">
+			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
 				<div className="flex min-w-0 items-center gap-1 overflow-x-auto">
 					{tabs.map((item) => (
 						<button
@@ -425,18 +436,20 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 				</div>
 
 				{tab !== "balance" && (
-					<div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-initial">
-						<label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis">
-							<Checkbox
-								className="border-border bg-card"
-								checked={currentMarketOnly}
-								onCheckedChange={(checked) => {
-									setCurrentMarketOnly(checked === true);
-									if (checked === true) setMarketFilter("all");
-								}}
-							/>
-							Current market
-						</label>
+					<div className="flex min-w-0 w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+						{symbol && (
+							<label className="hidden cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis sm:flex">
+								<Checkbox
+									className="border-border bg-card"
+									checked={currentMarketOnly}
+									onCheckedChange={(checked) => {
+										setCurrentMarketOnly(checked === true);
+										if (checked === true) setMarketFilter("all");
+									}}
+								/>
+								Current market
+							</label>
+						)}
 
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -532,7 +545,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 							</DropdownMenuContent>
 						</DropdownMenu>
 
-						<div className="relative w-36 sm:w-44">
+						<div className="relative min-w-0 flex-1 sm:w-44 sm:flex-none">
 							<Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-low-emphasis" />
 							<Input
 								value={search}

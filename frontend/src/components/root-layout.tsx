@@ -6,7 +6,7 @@ import { SeoHead } from "@/components/seo-head";
 
 export function RootLayout() {
 	return (
-		<div className="min-h-screen flex flex-col bg-background font-sans antialiased">
+		<div className="flex min-h-screen flex-col overflow-x-hidden bg-background font-sans antialiased">
 			<SeoHead />
 			<AnnouncementBar />
 			<Navbar />

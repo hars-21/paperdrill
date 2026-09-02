@@ -1,6 +1,16 @@
 import type { CancelResult, DepthSnapshot, Fill, OrderResult, UserData } from "@/types/api";
 import { config } from "./env";
-import type { Candle, Market, OrderRecord, Ticker, UserBalance, UserTrade } from "@/types";
+import type {
+	ApiKeyRecord,
+	ApiKeyScope,
+	Candle,
+	CreatedApiKey,
+	Market,
+	OrderRecord,
+	Ticker,
+	UserBalance,
+	UserTrade,
+} from "@/types";
 
 const BASE = `${config.apiBaseUrl}/v1`;
 
@@ -60,26 +70,23 @@ export const api = {
 	},
 
 	signin(email: string, password: string) {
-		return request<{ id: string; name: string; email: string }>("/auth/login", {
+		return request<UserData>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ email, password }),
 		});
 	},
 
 	signup(email: string, name: string, password: string) {
-		return request<{ success: boolean; message: string }>("/auth/signup", {
+		return request<UserData & { message: string }>("/auth/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
 		});
 	},
 
 	verifyEmail(token: string) {
-		return request<{ id: string; name: string; email: string }>(
-			`/auth/verify-email?token=${encodeURIComponent(token)}`,
-			{
-				method: "POST",
-			},
-		);
+		return request<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
+			method: "POST",
+		});
 	},
 
 	resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
@@ -125,6 +132,23 @@ export const api = {
 	getBalance(asset?: string) {
 		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
 		return request<UserBalance>(`/balances${params}`);
+	},
+
+	getApiKeys() {
+		return request<{ keys: ApiKeyRecord[] }>("/keys");
+	},
+
+	createApiKey(label: string, scopes: ApiKeyScope[]) {
+		return request<CreatedApiKey>("/keys", {
+			method: "POST",
+			body: JSON.stringify({ label, scopes }),
+		});
+	},
+
+	revokeApiKey(id: string) {
+		return request<{ success: boolean; message: string }>(`/keys/${id}`, {
+			method: "DELETE",
+		});
 	},
 
 	getOpenOrders() {

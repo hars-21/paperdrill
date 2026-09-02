@@ -1,6 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } from "lucide-react";
+import {
+	Menu,
+	X,
+	Sun,
+	Moon,
+	User,
+	LogOut,
+	LayoutDashboard,
+	KeyRound,
+	ChevronDown,
+	MailCheck,
+} from "lucide-react";
 import { useTheme } from "../lib/theme-provider";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/context/AuthContext";
@@ -18,14 +29,15 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "./ui/sheet";
 
 const NAV_LINKS = [
-	{ label: "Home", to: "/" },
 	{ label: "Markets", to: "/markets" },
 	{ label: "Trading", to: "/trade/BTC_USD" },
+	{ label: "Docs", to: "/docs" },
+	{ label: "Dashboard", to: "/dashboard" },
 ];
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
-	const { user, setUser } = useAuth();
+	const { user, verified, setUser } = useAuth();
 	const navigate = useNavigate();
 
 	const handleLogout = async () => {
@@ -109,7 +121,7 @@ export function Navbar() {
 										<>
 											<SheetClose asChild>
 												<Link
-													to="/profile"
+													to={verified ? "/dashboard" : "/verify-email"}
 													className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-l2 transition-colors"
 												>
 													<Avatar className="size-8">
@@ -211,27 +223,41 @@ export function Navbar() {
 									<DropdownMenuSeparator className="my-1" />
 
 									<DropdownMenuGroup>
+										{!verified && (
+											<DropdownMenuItem asChild>
+												<Link
+													to="/verify-email"
+													className="flex w-full items-center gap-3 rounded-lg"
+												>
+													<MailCheck className="size-4 text-medium-emphasis" />
+													<span>Verify email</span>
+												</Link>
+											</DropdownMenuItem>
+										)}
 										<DropdownMenuItem asChild>
-											<Link to="/profile" className="flex w-full items-center gap-3 rounded-lg">
-												<User className="size-4 text-medium-emphasis" />
-												<span>Profile & Balances</span>
-											</Link>
-										</DropdownMenuItem>
-
-										<DropdownMenuItem asChild>
-											<Link to="/markets" className="flex w-full items-center gap-3 rounded-lg">
-												<TrendingUp className="size-4 text-medium-emphasis" />
-												<span>Spot Markets</span>
+											<Link to="/dashboard" className="flex w-full items-center gap-3 rounded-lg">
+												<LayoutDashboard className="size-4 text-medium-emphasis" />
+												<span>Dashboard</span>
 											</Link>
 										</DropdownMenuItem>
 
 										<DropdownMenuItem asChild>
 											<Link
-												to="/trade/BTC_USD"
+												to="/dashboard/api-keys"
 												className="flex w-full items-center gap-3 rounded-lg"
 											>
-												<Activity className="size-4 text-medium-emphasis" />
-												<span>Trading Console</span>
+												<KeyRound className="size-4 text-medium-emphasis" />
+												<span>API keys</span>
+											</Link>
+										</DropdownMenuItem>
+
+										<DropdownMenuItem asChild>
+											<Link
+												to="/dashboard/profile"
+												className="flex w-full items-center gap-3 rounded-lg"
+											>
+												<User className="size-4 text-medium-emphasis" />
+												<span>Profile</span>
 											</Link>
 										</DropdownMenuItem>
 									</DropdownMenuGroup>

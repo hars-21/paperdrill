@@ -20,6 +20,7 @@ const apiKeyPrincipal: Principal = {
 	userId: "user-1",
 	keyId: "key-1",
 	scopes: ["ACCOUNT_READ", "ORDER_CREATE"],
+	emailVerified: true,
 };
 
 test("requireAccess rejects anonymous requests with 401", () => {
@@ -36,6 +37,30 @@ test("requireAccess rejects disallowed principal types with 403", () => {
 	expect(next).not.toHaveBeenCalled();
 });
 
+test("requireAccess rejects users with unverified email", () => {
+	const { res, next } = run(
+		{ type: "session", userId: "user-1", emailVerified: false },
+		{},
+	);
+
+	expect(res.status).toHaveBeenCalledWith(403);
+	expect(res.json).toHaveBeenCalledWith({
+		error: "Verify your email to continue",
+		code: "EMAIL_NOT_VERIFIED",
+	});
+	expect(next).not.toHaveBeenCalled();
+});
+
+test("requireAccess can allow an unverified session", () => {
+	const { res, next } = run(
+		{ type: "session", userId: "user-1", emailVerified: false },
+		{ allowUnverified: true },
+	);
+
+	expect(next).toHaveBeenCalled();
+	expect(res.status).not.toHaveBeenCalled();
+});
+
 test("requireAccess allows matching principal type", () => {
 	const { res, next } = run(apiKeyPrincipal, { types: ["session", "api_key"] });
 
@@ -44,7 +69,10 @@ test("requireAccess allows matching principal type", () => {
 });
 
 test("requireAccess lets sessions bypass scope checks", () => {
-	const { res, next } = run({ type: "session", userId: "u" }, { scopes: ["ORDER_CANCEL"] });
+	const { res, next } = run(
+		{ type: "session", userId: "u", emailVerified: true },
+		{ scopes: ["ORDER_CANCEL"] },
+	);
 
 	expect(next).toHaveBeenCalled();
 	expect(res.status).not.toHaveBeenCalled();

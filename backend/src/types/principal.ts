@@ -9,4 +9,5 @@ export interface Principal {
 	userId?: string;
 	keyId?: string;
 	scopes?: Scope[];
+	emailVerified?: boolean;
 }

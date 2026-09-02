@@ -6,7 +6,7 @@ import { getTradeHistory } from "../controllers/user";
 
 export const userRouter = Router();
 
-userRouter.get("/users/me", requireAccess({ types: ["session"] }), asyncHandler(getUserData));
+userRouter.get("/users/me", requireAccess({ types: ["session"], allowUnverified: true }), asyncHandler(getUserData));
 userRouter.get("/trades", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getTradeHistory));
 userRouter.get("/balances", requireAccess({ scopes: ["ACCOUNT_READ"] }), asyncHandler(getBalance));
 userRouter.post("/deposits", requireAccess({ types: ["service"] }), asyncHandler(createDeposit));

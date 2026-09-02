@@ -51,7 +51,8 @@ export function TradeForm({
 	const [submitting, setSubmitting] = useState(false);
 	const [balance, setBalance] = useState<UserBalance>({});
 	const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
-	const { authenticated, loading: authLoading } = useAuth();
+	const { authenticated, verified, loading: authLoading } = useAuth();
+	const canTrade = authenticated && verified;
 	const market = useMarket(symbol);
 
 	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;
@@ -60,8 +61,8 @@ export function TradeForm({
 	const qtyPrecision = market?.qtyPrecision ?? 4;
 	const priceStep = 10 ** -pricePrecision;
 	const qtyStep = 10 ** -qtyPrecision;
-	const availableQuote = authenticated ? Number(balance[quote]?.available ?? 0) : 0;
-	const availableBase = authenticated ? Number(balance[base]?.available ?? 0) : 0;
+	const availableQuote = canTrade ? Number(balance[quote]?.available ?? 0) : 0;
+	const availableBase = canTrade ? Number(balance[base]?.available ?? 0) : 0;
 	const effectivePrice = orderType === "LIMIT" ? Number(price) : Number(lastPrice);
 
 	const midPrice = useMemo(() => {
@@ -73,17 +74,17 @@ export function TradeForm({
 	const bboPrice = side === "BUY" ? Number(bestAsk) : Number(bestBid);
 
 	const maxQuantity = useMemo(() => {
-		if (!authenticated) return 0;
+		if (!canTrade) return 0;
 		if (side === "SELL") return availableBase;
 		if (!isPositive(effectivePrice)) return 0;
 		return availableQuote / effectivePrice;
-	}, [authenticated, side, availableBase, availableQuote, effectivePrice]);
+	}, [canTrade, side, availableBase, availableQuote, effectivePrice]);
 	const maximumQuantityValue = truncate(maxQuantity, qtyPrecision);
 	const maximumQuantityText = formatQty(maximumQuantityValue, qtyPrecision);
 
 	const requestedQuantity = Number(quantity);
 	const exceedsMaximum =
-		authenticated &&
+		canTrade &&
 		isPositive(requestedQuantity) &&
 		requestedQuantity > maxQuantity + Number.EPSILON;
 	const maximumMessage =
@@ -91,13 +92,13 @@ export function TradeForm({
 			? `You can buy a maximum of ${maximumQuantityText} ${base} with your available ${quote}.`
 			: `You can sell a maximum of ${maximumQuantityText} ${base}.`;
 	const sliderDisabled =
-		!authenticated ||
+		!canTrade ||
 		orderType === "MARKET" ||
 		maxQuantity <= 0 ||
 		(side === "BUY" && !isPositive(effectivePrice));
 
 	useEffect(() => {
-		if (!authenticated) {
+		if (!canTrade) {
 			setBalance({});
 			return;
 		}
@@ -108,7 +109,7 @@ export function TradeForm({
 				console.error("Failed to fetch balance:", error);
 				toast.error("Failed to fetch balance");
 			});
-	}, [authenticated, balanceRefreshKey]);
+	}, [canTrade, balanceRefreshKey]);
 
 	useEffect(() => {
 		setPrice(formatPrice(lastPrice ?? "", pricePrecision));
@@ -194,7 +195,9 @@ export function TradeForm({
 		}
 	};
 
-	if (loading || authLoading) return <TradeFormSkeleton />;
+	if (loading || authLoading) {
+		return <TradeFormSkeleton showSecondaryAction={!authenticated} />;
+	}
 
 	const estimatedValue =
 		isPositive(effectivePrice) && isPositive(requestedQuantity)
@@ -206,7 +209,7 @@ export function TradeForm({
 			: formatQty(availableBase, qtyPrecision);
 	const balanceAsset = side === "BUY" ? quote : base;
 	const showMaximum =
-		authenticated && isPositive(maxQuantity) && (side === "SELL" || orderType === "LIMIT");
+		canTrade && isPositive(maxQuantity) && (side === "SELL" || orderType === "LIMIT");
 
 	return (
 		<div className="w-full select-none p-3">
@@ -259,7 +262,7 @@ export function TradeForm({
 				<div className="flex items-center justify-between text-xs">
 					<span className="text-medium-emphasis">Balance</span>
 					<span className="font-medium text-high-emphasis">
-						{authenticated ? `${displayBalance} ${balanceAsset}` : "—"}
+						{canTrade ? `${displayBalance} ${balanceAsset}` : "—"}
 					</span>
 				</div>
 
@@ -338,7 +341,7 @@ export function TradeForm({
 					<p className="text-xs leading-relaxed text-red-text">{maximumMessage}</p>
 				)}
 
-				{authenticated ? (
+				{canTrade ? (
 					<Button
 						type="submit"
 						variant="inverted"
@@ -347,6 +350,10 @@ export function TradeForm({
 						disabled={submitting || exceedsMaximum}
 					>
 						{submitting ? "Placing…" : side === "BUY" ? `Buy ${base}` : `Sell ${base}`}
+					</Button>
+				) : authenticated ? (
+					<Button asChild variant="inverted" size="lg" className="mt-2">
+						<Link to="/verify-email">Verify email to trade</Link>
 					</Button>
 				) : (
 					<div className="flex flex-col gap-3 mt-2">

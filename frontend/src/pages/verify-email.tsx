@@ -1,122 +1,143 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "@/lib/api";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
+
+type Status = "waiting" | "verifying" | "success" | "error";
 
 export function VerifyEmailPage() {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get("token");
-	const { setUser } = useAuth();
+	const { user, verified, loading, refreshUser } = useAuth();
 	const navigate = useNavigate();
-
-	const [status, setStatus] = useState<"loading" | "success" | "no-token" | "api-error">("loading");
+	const location = useLocation();
+	const emailWasJustSent = Boolean((location.state as { emailSent?: boolean } | null)?.emailSent);
+	const [status, setStatus] = useState<Status>(token ? "verifying" : "waiting");
+	const [resending, setResending] = useState(false);
+	const [resendAt, setResendAt] = useState<number | null>(() =>
+		emailWasJustSent ? Date.now() + 30_000 : null,
+	);
+	const [countdown, setCountdown] = useState(emailWasJustSent ? 30 : 0);
 
 	useEffect(() => {
-		if (!token) {
-			setStatus("no-token");
-			return;
-		}
+		if (!resendAt) return;
 
-		let cancelled = false;
+		const updateCountdown = () => {
+			const remaining = Math.max(0, Math.ceil((resendAt - Date.now()) / 1000));
+			setCountdown(remaining);
+			if (remaining === 0) setResendAt(null);
+		};
 
-		(async () => {
-			try {
-				const user = await api.verifyEmail(token);
-				setUser(user);
-				if (!cancelled) setStatus("success");
-			} catch (err) {
-				if (!cancelled) {
-					setStatus("api-error");
-					toast.error(
-						err instanceof Error ? err.message : "An error occurred while verifying your email.",
-					);
-				}
-			}
-		})();
+		updateCountdown();
+		const timer = window.setInterval(updateCountdown, 1000);
+		return () => window.clearInterval(timer);
+	}, [resendAt]);
+
+	useEffect(() => {
+		if (!token || loading || verified) return;
+		let active = true;
+
+		api
+			.verifyEmail(token)
+			.then((result) => {
+				if (!active) return;
+				refreshUser();
+				setStatus("success");
+				toast.success(result.message);
+			})
+			.catch((error) => {
+				if (!active) return;
+				setStatus("error");
+				toast.error(error instanceof Error ? error.message : "Email verification failed");
+			});
 
 		return () => {
-			cancelled = true;
+			active = false;
 		};
-	}, [token, setUser]);
+	}, [token, loading, verified]);
 
 	useEffect(() => {
-		if (status === "success") {
-			const id = setTimeout(() => navigate("/markets"), 1500);
-			return () => clearTimeout(id);
+		if (!verified) return;
+		const timer = window.setTimeout(() => navigate("/dashboard", { replace: true }), 1000);
+		return () => window.clearTimeout(timer);
+	}, [verified, navigate]);
+
+	const handleResend = async () => {
+		if (!user || resending || resendAt) return;
+		setResending(true);
+		try {
+			const result = await api.resendVerificationEmail(user.email);
+			setResendAt(Date.now() + 30_000);
+			toast.success(result.message);
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to resend verification email");
+		} finally {
+			setResending(false);
 		}
-	}, [status, navigate]);
+	};
+
+	if (loading || status === "verifying") {
+		return (
+			<div className="flex w-full flex-1 items-center justify-center gap-2 text-sm text-medium-emphasis">
+				<Loader2 className="size-4 animate-spin" />
+				Verifying your email...
+			</div>
+		);
+	}
 
 	return (
-		<div className="flex w-full flex-1 items-center justify-center px-6">
-			<div className="w-full max-w-sm">
-				<Card>
-					<CardHeader className="pb-4">
-						{status === "loading" && (
+		<div className="flex w-full flex-1 items-center justify-center px-4 py-6 sm:px-6">
+			<Card className="w-full max-w-sm px-2 py-8 sm:px-4 sm:py-10">
+				<CardHeader className="text-left">
+					<CardTitle className="text-xl pb-4">
+						{verified
+							? "Email verified"
+							: status === "error"
+								? "Verification failed"
+								: "Check your inbox"}
+					</CardTitle>
+					<CardDescription>
+						{verified ? (
+							"Your email has been successfully verified. Redirecting to the markets page..."
+						) : user ? (
 							<>
-								<CardTitle className="text-2xl tracking-tight">Verifying your email</CardTitle>
-								<CardDescription className="mt-2">
-									We&apos;re confirming your email address. This will only take a moment.
-								</CardDescription>
+								To create your PaperDrill account, click the verification button in the email we
+								sent to: <span className="font-medium text-foreground">{user.email}</span>.
 							</>
+						) : (
+							"Sign in to request a new verification email."
 						)}
-
-						{status === "success" && (
-							<>
-								<CardTitle className="text-2xl tracking-tight">You&apos;re all set</CardTitle>
-								<CardDescription className="mt-2">
-									Your email has been verified successfully. Redirecting you shortly.
-								</CardDescription>
-							</>
-						)}
-
-						{status === "no-token" && (
-							<>
-								<CardTitle className="text-2xl tracking-tight">Unable to verify</CardTitle>
-								<CardDescription className="mt-2">
-									We&apos;re unable to process your verification request. Please try signing in and
-									request a new verification email.
-								</CardDescription>
-							</>
-						)}
-
-						{status === "api-error" && (
-							<>
-								<CardTitle className="text-2xl tracking-tight">Verification failed</CardTitle>
-								<CardDescription className="mt-2">
-									This verification link is invalid or has expired. Please sign in and request a new
-									one.
-								</CardDescription>
-							</>
-						)}
-					</CardHeader>
-
-					<CardContent>
-						{status === "loading" && (
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<Loader2 className="h-4 w-4 animate-spin" />
-								<span>Verifying your account...</span>
-							</div>
-						)}
-
-						{status === "success" && (
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<Loader2 className="h-4 w-4 animate-spin" />
-								<span>Redirecting to markets...</span>
-							</div>
-						)}
-
-						{(status === "no-token" || status === "api-error") && (
-							<Link to="/login" className="block">
-								<Button className="w-full">Sign in</Button>
-							</Link>
-						)}
-					</CardContent>
-				</Card>
-			</div>
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					{user && !verified && (
+						<>
+							<CardDescription>Don't see the email in your inbox or spam folder?</CardDescription>
+							<Button
+								className="w-full"
+								variant="inverted"
+								onClick={handleResend}
+								disabled={resending || resendAt !== null}
+							>
+								{resending
+									? "Sending..."
+									: countdown > 0
+										? `Resend in ${countdown}s`
+										: "Click here to resend"}
+							</Button>
+						</>
+					)}
+					{!user && !verified && (
+						<Button asChild className="w-full">
+							<Link to="/login">Sign in</Link>
+						</Button>
+					)}
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

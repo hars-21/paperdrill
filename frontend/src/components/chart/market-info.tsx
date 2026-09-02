@@ -8,7 +8,7 @@ function increment(precision: number) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex min-h-11 items-center justify-between gap-6 py-1.5">
+		<div className="flex min-h-11 items-center justify-between gap-3 py-1.5 sm:gap-6">
 			<span className="text-sm text-muted-foreground">{label}</span>
 			<span className="text-sm font-medium text-high-emphasis">{value}</span>
 		</div>
@@ -27,7 +27,7 @@ export function MarketInfo({ symbol, ticker }: { symbol: string; ticker: Ticker 
 	const change = formatChange(ticker?.priceChangePercent);
 
 	return (
-		<div className="grid gap-x-10 px-5 py-3 sm:grid-cols-2">
+		<div className="grid gap-x-10 px-3 py-3 sm:grid-cols-2 sm:px-5">
 			<div>
 				<InfoRow label="Market" value={`${market.baseAsset}/${market.quoteAsset}`} />
 				<InfoRow label="Step size" value={increment(market.qtyPrecision)} />

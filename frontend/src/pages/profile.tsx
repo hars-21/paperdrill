@@ -1,45 +1,32 @@
-import { Navigate, useNavigate } from "react-router-dom";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, ShieldCheck } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import Loader from "@/components/ui/loader";
-import { assetNames, AssetIcon } from "../components/icons/asset-icon";
-import { api } from "@/lib/api";
+import { useState } from "react";
+import { Check, Copy, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Page, PageHeader, PageContent } from "@/components/ui/page";
-import { OrdersTable } from "@/components/market/orders-table";
-import { useEffect, useState } from "react";
-import type { UserBalance } from "@/types";
+import { DashboardPage } from "@/components/dashboard-page";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export function ProfilePage() {
-	const { user, setUser, loading } = useAuth();
+	const { user, setUser } = useAuth();
 	const navigate = useNavigate();
-	const [balances, setBalances] = useState<UserBalance>({});
+	const [copied, setCopied] = useState(false);
 
-	if (loading) return <Loader />;
-	if (!user) return <Navigate to="/" replace />;
+	if (!user) return null;
 
-	useEffect(() => {
-		const fetchBalances = async () => {
-			try {
-				const data = await api.getBalance();
-				setBalances(data);
-			} catch (err) {
-				console.error("Failed to fetch balances:", err);
-				toast.error(err instanceof Error ? err.message : "Failed to fetch balances");
-			}
-		};
-
-		fetchBalances();
-	}, []);
+	const copyUserId = async () => {
+		await navigator.clipboard.writeText(user.id);
+		setCopied(true);
+		toast.success("Account ID copied");
+	};
 
 	const handleLogout = async () => {
 		try {
 			await api.signout();
-		} catch (err) {
-			console.error("Signout failed:", err);
+		} catch (error) {
+			console.error("Signout failed:", error);
 		} finally {
 			setUser(null);
 			toast.success("Logged out successfully");
@@ -47,117 +34,74 @@ export function ProfilePage() {
 		}
 	};
 
-	const assetCount = Object.keys(balances).length;
-
 	return (
-		<Page>
-			<PageHeader>
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
-					<p className="text-xs text-muted-foreground mt-1">
-						Manage sandbox balances and review recent trade execution activity.
-					</p>
-				</div>
-				<Button
-					onClick={handleLogout}
-					variant="secondary"
-					size="sm"
-					className="hover:text-destructive hover:border-destructive/35 cursor-pointer shrink-0 gap-1.5"
-				>
-					<LogOut className="size-3.5" />
-					Log out
+		<DashboardPage
+			title="Profile"
+			description="Your basic account details and session controls."
+			action={
+				<Button size="sm" onClick={handleLogout}>
+					<LogOut /> Log out
 				</Button>
-			</PageHeader>
+			}
+		>
+			<div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
+				<Card className="items-center gap-0 border-border/60 py-8 text-center shadow-none">
+					<CardContent className="px-6">
+						<Avatar className="mx-auto size-20">
+							<AvatarFallback className="bg-l3 text-2xl font-semibold text-high-emphasis">
+								{user.name.slice(0, 1).toUpperCase()}
+							</AvatarFallback>
+						</Avatar>
+						<h2 className="mt-4 text-xl font-semibold text-high-emphasis">{user.name}</h2>
+						<p className="mt-1 break-all text-sm text-medium-emphasis">{user.email}</p>
+						<p className="mt-4 inline-flex items-center gap-1.5 text-sm text-green-text">
+							<ShieldCheck className="size-4" /> Email verified
+						</p>
+					</CardContent>
+				</Card>
 
-			<PageContent className="max-w-3xl">
-				<div className="space-y-5">
-					<Card className="border-border/40 shadow-sm">
-						<CardContent className="flex items-center gap-4">
-							<Avatar className="size-14">
-								<AvatarFallback className="bg-l3 text-lg font-bold text-high-emphasis">
-									{user.name[0]}
-								</AvatarFallback>
-							</Avatar>
-
-							<div className="min-w-0 flex-1">
-								<div className="flex items-center gap-2">
-									<h2 className="truncate text-lg font-bold tracking-tight text-high-emphasis">
-										{user.name}
-									</h2>
-								</div>
-								<p className="truncate text-sm text-muted-foreground">{user.email}</p>
-							</div>
-
-							<div className="hidden sm:block text-right shrink-0">
-								<p className="flex items-center justify-end gap-1 text-[10px] text-low-emphasis">
-									<ShieldCheck className="size-3" />
-									Role
-								</p>
-								<p className="mt-0.5 text-sm font-medium text-high-emphasis">Trader</p>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Card className="border-border/40 shadow-sm">
-						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-medium text-medium-emphasis">
-								Sandbox Asset Balances
-							</CardTitle>
-							<CardAction>
-								<span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-medium-emphasis">
-									{assetCount} {assetCount === 1 ? "asset" : "assets"}
-								</span>
-							</CardAction>
-						</CardHeader>
-						<CardContent>
-							{assetCount === 0 ? (
-								<div className="py-6 text-center">
-									<p className="text-sm text-medium-emphasis">No balances yet</p>
-									<p className="mt-1 text-xs text-low-emphasis">
-										You can deposit sandbox assets from the Markets page to start trading.
-									</p>
-								</div>
-							) : (
-								<div className="grid gap-2 sm:grid-cols-2">
-									{Object.entries(balances).map(([asset, bal]) => (
-										<div
-											key={asset}
-											className="flex items-center justify-between gap-3 rounded-xl border border-border/30 bg-muted/20 px-3.5 py-3 transition-colors hover:border-border/60"
-										>
-											<div className="flex items-center gap-3 min-w-0">
-												<AssetIcon asset={asset} />
-												<div className="flex flex-col min-w-0">
-													<span className="font-semibold text-high-emphasis">{asset}</span>
-													<span className="text-[10px] text-low-emphasis truncate">
-														{assetNames[asset] || asset}
-													</span>
-												</div>
-											</div>
-											<div className="text-right shrink-0">
-												<span className="block text-sm font-semibold text-high-emphasis">
-													{bal.available ?? "0"}
-												</span>
-												{Number(bal.locked ?? 0) > 0 && (
-													<span className="text-[10px] text-low-emphasis">{bal.locked} locked</span>
-												)}
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
-
-					<Card className="border-border/40 shadow-sm">
-						<CardHeader className="pb-3">
-							<CardTitle className="text-xs font-medium text-medium-emphasis">Orders</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<OrdersTable />
-						</CardContent>
-					</Card>
+				<div className="overflow-hidden rounded-xl border border-border/60 bg-l1">
+					<DetailRow icon={UserRound} label="Name" value={user.name} />
+					<DetailRow icon={Mail} label="Email address" value={user.email} />
+					<div className="flex flex-col gap-3 border-b border-border/40 px-5 py-4 last:border-b-0 sm:flex-row sm:items-center">
+						<div className="flex min-w-44 items-center gap-3 text-sm text-medium-emphasis">
+							<ShieldCheck className="size-4" /> Account ID
+						</div>
+						<div className="flex min-w-0 flex-1 items-center gap-2 sm:justify-end">
+							<span className="truncate font-mono text-xs text-high-emphasis">{user.id}</span>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								onClick={copyUserId}
+								aria-label="Copy account ID"
+							>
+								{copied ? <Check /> : <Copy />}
+							</Button>
+						</div>
+					</div>
 				</div>
-			</PageContent>
-		</Page>
+			</div>
+		</DashboardPage>
+	);
+}
+
+function DetailRow({
+	icon: Icon,
+	label,
+	value,
+}: {
+	icon: typeof UserRound;
+	label: string;
+	value: string;
+}) {
+	return (
+		<div className="flex flex-col gap-2 border-b border-border/40 px-5 py-4 last:border-b-0 sm:flex-row sm:items-center">
+			<div className="flex min-w-44 items-center gap-3 text-sm text-medium-emphasis">
+				<Icon className="size-4" /> {label}
+			</div>
+			<p className="min-w-0 flex-1 break-all text-sm font-medium text-high-emphasis sm:text-right">
+				{value}
+			</p>
+		</div>
 	);
 }

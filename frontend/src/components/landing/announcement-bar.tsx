@@ -11,7 +11,7 @@ const AnnouncementBar = () => {
 	if (dismissed) return null;
 
 	return (
-		<div className="relative flex h-9 w-full items-center justify-center gap-2 bg-l3 px-4 text-xs text-high-emphasis">
+		<div className="relative flex min-h-9 w-full items-center justify-center gap-2 bg-l3 py-2 pl-4 pr-11 text-xs text-high-emphasis">
 			<span className="hidden sm:inline">
 				<Rocket className="size-3.5 text-red-text" />
 			</span>

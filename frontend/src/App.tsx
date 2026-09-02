@@ -1,5 +1,5 @@
 import "./index.css";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { SignupPage } from "./pages/signup";
@@ -14,6 +14,12 @@ import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
 import { RootLayout } from "./components/root-layout";
 import { Protected, PublicOnly } from "./components/route-guards";
+import { DashboardLayout } from "./components/dashboard-layout";
+import { DashboardOverviewPage } from "./pages/dashboard/overview";
+import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
+import { DashboardBalancesPage } from "./pages/dashboard/balances";
+import { DashboardDataPage } from "./pages/dashboard/data";
+import { DocsLayout } from "./components/docs/docs-layout";
 
 function NotFound() {
 	return (
@@ -32,7 +38,10 @@ export function App() {
 		<Routes>
 			<Route element={<RootLayout />}>
 				<Route index element={<LandingPage />} />
-				<Route path="docs" element={<DocsPage />} />
+				<Route path="docs" element={<DocsLayout />}>
+					<Route index element={<DocsPage />} />
+					<Route path=":slug" element={<DocsPage />} />
+				</Route>
 				<Route path="changelog" element={<ChangelogPage />} />
 				<Route path="terms" element={<TermsPage />} />
 				<Route path="privacy" element={<PrivacyPage />} />
@@ -40,13 +49,20 @@ export function App() {
 
 			<Route element={<AppLayout />}>
 				<Route
-					path="profile"
+					path="dashboard"
 					element={
 						<Protected>
-							<ProfilePage />
+							<DashboardLayout />
 						</Protected>
 					}
-				/>
+				>
+					<Route index element={<DashboardOverviewPage />} />
+					<Route path="api-keys" element={<DashboardApiKeysPage />} />
+					<Route path="balances" element={<DashboardBalancesPage />} />
+					<Route path="data" element={<DashboardDataPage />} />
+					<Route path="profile" element={<ProfilePage />} />
+				</Route>
+				<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
 				<Route path="markets" element={<MarketsPage />} />
 				<Route path="trade/:symbol" element={<TradePage />} />
 				<Route
