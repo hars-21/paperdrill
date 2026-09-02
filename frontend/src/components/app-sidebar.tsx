@@ -1,4 +1,11 @@
-import { ArrowUpRight, Database, KeyRound, LayoutDashboard, WalletCards } from "lucide-react";
+import {
+	ArrowUpRight,
+	BookOpen,
+	Database,
+	KeyRound,
+	LayoutDashboard,
+	WalletCards,
+} from "lucide-react";
 import type { ComponentProps } from "react";
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/brand-logo";
@@ -42,6 +49,14 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 								<Link to="/trade/BTC_USD">
 									<ArrowUpRight />
 									<span>Open trading</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Documentation" className="h-9 rounded-lg px-2.5">
+								<Link to="/docs">
+									<BookOpen />
+									<span>Documentation</span>
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>

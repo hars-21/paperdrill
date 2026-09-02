@@ -31,6 +31,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "./ui/
 const NAV_LINKS = [
 	{ label: "Markets", to: "/markets" },
 	{ label: "Trading", to: "/trade/BTC_USD" },
+	{ label: "Docs", to: "/docs" },
 	{ label: "Dashboard", to: "/dashboard" },
 ];
 

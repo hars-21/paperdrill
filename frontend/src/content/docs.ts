@@ -1,81 +1,63 @@
-import type { Block } from "./types";
+import quickStart from "./docs/quick-start.md" with { type: "text" };
+import authentication from "./docs/authentication.md" with { type: "text" };
+import orders from "./docs/orders.md" with { type: "text" };
+import markets from "./docs/markets.md" with { type: "text" };
+import trades from "./docs/trades.md" with { type: "text" };
+import orderbook from "./docs/orderbook.md" with { type: "text" };
+import websocket from "./docs/websocket.md" with { type: "text" };
 
-export interface DocsContent {
-	intro: string;
-	sections: { id: string; title: string; blocks: Block[] }[];
-}
-
-export const docs: DocsContent = {
-	intro: "A quick guide to the PaperDrill sandbox - what it is and how to use it.",
-	sections: [
-		{
-			id: "introduction",
-			title: "Introduction",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "PaperDrill is a simulated exchange (sandbox) for paper trading digital assets. It runs a real matching engine with a live order book, so orders are matched exactly how they would be on a production exchange - but with simulated money and no real risk.",
-				},
-				{
-					type: "paragraph",
-					text: "Nothing on PaperDrill involves real funds. Balances, trades and market data are all simulated and hold no real value.",
-				},
-			],
-		},
-		{
-			id: "markets",
-			title: "Markets",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "PaperDrill currently offers spot trading on the following markets. All markets charge zero fees.",
-				},
-				{ type: "list", items: ["BTC/USD", "ETH/USD", "SOL/USD"] },
-			],
-		},
-		{
-			id: "trading",
-			title: "Trading",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "Place limit or market orders from the trading page. Orders are matched using price-time priority - better prices fill first, then earlier orders at the same price.",
-				},
-				{
-					type: "paragraph",
-					text: "The order book shows live bids and asks, and trades update in real time over a WebSocket feed.",
-				},
-			],
-		},
-		{
-			id: "accounts",
-			title: "Accounts & Balances",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "Create a free account to get a pre-funded sandbox balance. Your balances and order history persist across sessions, so your portfolio is exactly where you left it when you come back.",
-				},
-			],
-		},
-		{
-			id: "data",
-			title: "Real-Time Data",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "The order book, trade prints and chart data stream over WebSocket in real time, so you can observe how the market reacts to orders as they happen.",
-				},
-			],
-		},
-		{
-			id: "support",
-			title: "Support",
-			blocks: [
-				{
-					type: "paragraph",
-					text: "Questions or feedback? Reach us at [support@paperdrill.dev](mailto:support@paperdrill.dev).",
-				},
-			],
-		},
-	],
+export type DocPage = {
+	title: string;
+	slug: string;
+	description: string;
+	content: string;
 };
+
+export const docs: DocPage[] = [
+	{
+		title: "Quick start",
+		slug: "",
+		description: "Create an account, place a trade, and make your first API request.",
+		content: quickStart,
+	},
+	{
+		title: "Authentication",
+		slug: "authentication",
+		description: "Authenticate API requests with scoped API keys.",
+		content: authentication,
+	},
+	{
+		title: "Orders",
+		slug: "orders",
+		description: "Create, inspect, and cancel orders.",
+		content: orders,
+	},
+	{
+		title: "Markets",
+		slug: "markets",
+		description: "Discover markets and read current ticker values.",
+		content: markets,
+	},
+	{
+		title: "Trades",
+		slug: "trades",
+		description: "Read recent public trades for a market.",
+		content: trades,
+	},
+	{
+		title: "Order book",
+		slug: "orderbook",
+		description: "Read and maintain a live order book.",
+		content: orderbook,
+	},
+	{
+		title: "WebSocket",
+		slug: "websocket",
+		description: "Subscribe to live public market updates.",
+		content: websocket,
+	},
+];
+
+export function getDoc(slug = "") {
+	return docs.find((doc) => doc.slug === slug);
+}

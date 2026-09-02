@@ -7,6 +7,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "../ui
 
 const LINKS = [
 	{ label: "Markets", to: "/markets" },
+	{ label: "Crypto", to: "/trade/BTC_USD" },
 	{ label: "Docs", to: "/docs" },
 	{ label: "Changelog", to: "/changelog" },
 ];

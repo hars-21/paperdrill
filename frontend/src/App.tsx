@@ -19,6 +19,7 @@ import { DashboardOverviewPage } from "./pages/dashboard/overview";
 import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
 import { DashboardBalancesPage } from "./pages/dashboard/balances";
 import { DashboardDataPage } from "./pages/dashboard/data";
+import { DocsLayout } from "./components/docs/docs-layout";
 
 function NotFound() {
 	return (
@@ -37,7 +38,10 @@ export function App() {
 		<Routes>
 			<Route element={<RootLayout />}>
 				<Route index element={<LandingPage />} />
-				<Route path="docs" element={<DocsPage />} />
+				<Route path="docs" element={<DocsLayout />}>
+					<Route index element={<DocsPage />} />
+					<Route path=":slug" element={<DocsPage />} />
+				</Route>
 				<Route path="changelog" element={<ChangelogPage />} />
 				<Route path="terms" element={<TermsPage />} />
 				<Route path="privacy" element={<PrivacyPage />} />

@@ -217,3 +217,37 @@
     display: none;
   }
 }
+
+@layer components {
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--low-emphasis);
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-name {
+    color: var(--primary);
+  }
+
+  .hljs-string,
+  .hljs-title,
+  .hljs-section,
+  .hljs-attribute {
+    color: var(--green-text);
+  }
+
+  .hljs-number,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-type {
+    color: var(--chart-4);
+  }
+
+  .hljs-built_in,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: var(--chart-5);
+  }
+}

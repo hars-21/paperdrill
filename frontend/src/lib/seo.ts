@@ -93,6 +93,14 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 
 export function resolvePageSeo(pathname: string): PageSeo {
 	if (ROUTE_SEO[pathname]) return ROUTE_SEO[pathname];
+	if (pathname.startsWith("/docs/")) {
+		const page = pathname.split("/").at(-1)?.replaceAll("-", " ") ?? "Documentation";
+		return {
+			title: `${page.replace(/^./, (letter) => letter.toUpperCase())} | ${SITE.name}`,
+			description: "PaperDrill API documentation and developer guides.",
+			path: pathname,
+		};
+	}
 
 	if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
 		const page =
