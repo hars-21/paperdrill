@@ -205,7 +205,7 @@ function Pagination({
 }
 
 export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProps) {
-	const { user } = useAuth();
+	const { user, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [tab, setTab] = useState<Tab>("open");
 	const [openOrders, setOpenOrders] = useState<OrderRecord[]>([]);
@@ -250,8 +250,8 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	}, []);
 
 	useEffect(() => {
-		if (user) fetchData();
-	}, [user, refreshKey, fetchData]);
+		if (user && verified) fetchData();
+	}, [user, verified, refreshKey, fetchData]);
 
 	useEffect(() => {
 		setPage(1);
@@ -395,6 +395,15 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 				<Link to="/signup" className="font-medium text-primary">
 					sign up
 				</Link>
+				&nbsp;to view account data.
+			</div>
+		);
+	}
+
+	if (!verified) {
+		return (
+			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
+				<Link to="/verify-email" className="font-medium text-primary">Verify your email</Link>
 				&nbsp;to view account data.
 			</div>
 		);

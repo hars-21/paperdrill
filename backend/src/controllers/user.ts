@@ -32,9 +32,10 @@ export async function getUserData(req: Request, res: Response) {
 		}
 
 		res.status(200).json({
-			userId: user.id,
+			id: user.id,
 			email: user.email,
 			name: user.name,
+			emailVerified: user.emailVerified,
 		});
 	} catch (e) {
 		logger.error("getUserData failed", e);

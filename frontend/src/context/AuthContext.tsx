@@ -1,16 +1,18 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, isUnauthorized } from "@/lib/api";
 
 type User = {
 	id: string;
 	email: string;
 	name: string;
+	emailVerified: boolean;
 };
 
 type AuthContext = {
 	user: User | null;
 	loading: boolean;
 	authenticated: boolean;
+	verified: boolean;
 	refreshUser: () => Promise<void>;
 	setUser: (user: User | null) => void;
 };
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	}, [refreshUser]);
 
 	return (
-		<AuthContext.Provider value={{ user, loading, authenticated: !!user, refreshUser, setUser }}>
+		<AuthContext.Provider value={{ user, loading, authenticated: !!user, verified: !!user?.emailVerified, refreshUser, setUser }}>
 			{children}
 		</AuthContext.Provider>
 	);

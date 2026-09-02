@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown } from "lucide-react";
+import { Menu, X, Sun, Moon, User, LogOut, TrendingUp, Activity, ChevronDown, MailCheck } from "lucide-react";
 import { useTheme } from "../lib/theme-provider";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/context/AuthContext";
@@ -25,7 +25,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
-	const { user, setUser } = useAuth();
+	const { user, verified, setUser } = useAuth();
 	const navigate = useNavigate();
 
 	const handleLogout = async () => {
@@ -109,7 +109,7 @@ export function Navbar() {
 										<>
 											<SheetClose asChild>
 												<Link
-													to="/profile"
+													to={verified ? "/profile" : "/verify-email"}
 													className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-l2 transition-colors"
 												>
 													<Avatar className="size-8">
@@ -211,6 +211,14 @@ export function Navbar() {
 									<DropdownMenuSeparator className="my-1" />
 
 									<DropdownMenuGroup>
+										{!verified && (
+											<DropdownMenuItem asChild>
+												<Link to="/verify-email" className="flex w-full items-center gap-3 rounded-lg">
+													<MailCheck className="size-4 text-medium-emphasis" />
+													<span>Verify email</span>
+												</Link>
+											</DropdownMenuItem>
+										)}
 										<DropdownMenuItem asChild>
 											<Link to="/profile" className="flex w-full items-center gap-3 rounded-lg">
 												<User className="size-4 text-medium-emphasis" />

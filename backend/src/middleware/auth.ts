@@ -15,6 +15,7 @@ interface TokenPayload {
 interface AccessOptions {
 	types?: PrincipalType[];
 	scopes?: Scope[];
+	allowUnverified?: boolean;
 }
 
 export function createToken(payload: TokenPayload): string {
@@ -122,8 +123,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 	}
 }
 
-export function requireAccess({ types, scopes }: AccessOptions) {
-	return (req: Request, res: Response, next: NextFunction) => {
+export function requireAccess({ types, scopes, allowUnverified = false }: AccessOptions) {
+	return async (req: Request, res: Response, next: NextFunction) => {
 		const principal = req.principal;
 
 		if (!principal) {
@@ -134,6 +135,33 @@ export function requireAccess({ types, scopes }: AccessOptions) {
 		if (types?.length && !types.includes(principal.type)) {
 			res.status(403).json({ error: "You do not have permission to perform this action" });
 			return;
+		}
+
+		if (!allowUnverified && principal.type !== "service") {
+			let emailVerified = principal.emailVerified;
+
+			if (emailVerified === undefined && principal.userId) {
+				const user = await prisma.user.findUnique({
+					where: { id: principal.userId },
+					select: { emailVerified: true },
+				});
+
+				if (!user) {
+					res.status(401).json({ error: "Authentication required" });
+					return;
+				}
+
+				emailVerified = user.emailVerified;
+				principal.emailVerified = emailVerified;
+			}
+
+			if (!emailVerified) {
+				res.status(403).json({
+					error: "Verify your email to continue",
+					code: "EMAIL_NOT_VERIFIED",
+				});
+				return;
+			}
 		}
 
 		if (scopes?.length && principal.type !== "session") {

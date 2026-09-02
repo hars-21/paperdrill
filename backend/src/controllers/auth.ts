@@ -50,10 +50,16 @@ export async function signup(req: Request, res: Response) {
 
 		sendVerificationEmail(user.name, user.email, token);
 
-		res.status(201).json({
-			success: true,
-			message: "User created successfully. Please check your email to verify your account.",
-		});
+		res
+			.status(201)
+			.cookie("token", createToken({ id: user.id }), config.cookie)
+			.json({
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				emailVerified: user.emailVerified,
+				message: "Account created. Check your email to verify it.",
+			});
 	} catch (e) {
 		logger.error("Signup failed", e);
 		res.status(500).json({ error: "Internal server error" });
@@ -86,11 +92,6 @@ export async function signin(req: Request, res: Response) {
 			return;
 		}
 
-		if (!user.emailVerified) {
-			res.status(403).json({ error: "Email not verified" });
-			return;
-		}
-
 		res
 			.status(200)
 			.cookie("token", createToken({ id: user.id }), config.cookie)
@@ -98,6 +99,7 @@ export async function signin(req: Request, res: Response) {
 				id: user.id,
 				name: user.name,
 				email: user.email,
+				emailVerified: user.emailVerified,
 			});
 	} catch (e) {
 		logger.error("Signin failed", e);
@@ -149,16 +151,12 @@ export async function verifyEmail(req: Request, res: Response) {
 			data: { usedAt: new Date() },
 		});
 
-		const user = await prisma.user.update({
+		await prisma.user.update({
 			where: { id: verification.userId },
 			data: { emailVerified: true },
-			select: { id: true, name: true, email: true },
 		});
 
-		res
-			.status(200)
-			.cookie("token", createToken({ id: verification.userId }), config.cookie)
-			.json(user);
+		res.status(200).json({ message: "Email verified successfully" });
 	} catch (e) {
 		logger.error("Email verification failed", e);
 		res.status(500).json({ error: "Internal server error" });

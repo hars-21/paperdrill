@@ -60,26 +60,23 @@ export const api = {
 	},
 
 	signin(email: string, password: string) {
-		return request<{ id: string; name: string; email: string }>("/auth/login", {
+		return request<UserData>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ email, password }),
 		});
 	},
 
 	signup(email: string, name: string, password: string) {
-		return request<{ success: boolean; message: string }>("/auth/signup", {
+		return request<UserData & { message: string }>("/auth/signup", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
 		});
 	},
 
 	verifyEmail(token: string) {
-		return request<{ id: string; name: string; email: string }>(
-			`/auth/verify-email?token=${encodeURIComponent(token)}`,
-			{
-				method: "POST",
-			},
-		);
+		return request<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
+			method: "POST",
+		});
 	},
 
 	resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {

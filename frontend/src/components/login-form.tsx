@@ -25,10 +25,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
 		setIsLoading(true);
 		try {
-			const user = await api.signin(email, password);
+			const user = await api.signin(email.trim(), password);
 			setUser(user);
 			toast.success("Successfully logged in");
-			navigate("/markets");
+			navigate(user.emailVerified ? "/markets" : "/verify-email");
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Login failed");
 		} finally {
@@ -63,7 +63,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 								<Input
 									id="password"
 									type="password"
-									placeholder="•••••"
+									placeholder="••••••••"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									autoComplete="current-password"
