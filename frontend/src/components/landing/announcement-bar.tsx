@@ -3,10 +3,10 @@ import { Button } from "../ui/button";
 import { Rocket, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const DISMISS_KEY = "announcement-dismissed";
+
 const AnnouncementBar = () => {
-	const [dismissed, setDismissed] = useState(
-		sessionStorage.getItem("bar-dismissed") == "true" ? true : false,
-	);
+	const [dismissed, setDismissed] = useState(sessionStorage.getItem(DISMISS_KEY) === "true");
 
 	if (dismissed) return null;
 
@@ -16,11 +16,11 @@ const AnnouncementBar = () => {
 				<Rocket className="size-3.5 text-red-text" />
 			</span>
 			<span>
-				<strong>PaperDrill Beta v0.2</strong>
-				<span className="hidden sm:inline"> is live - real matching engine, real order book.</span>
+				<strong>PaperDrill Beta v0.3</strong>
+				<span className="hidden sm:inline"> is live with API access, dashboards and docs.</span>
 				<span className="sm:hidden"> is live.</span>{" "}
-				<Link to="/signup" className="font-medium text-primary hover:underline">
-					Get started
+				<Link to="/changelog" className="font-medium text-primary hover:underline">
+					What&apos;s new
 				</Link>
 			</span>
 			<Button
@@ -28,7 +28,7 @@ const AnnouncementBar = () => {
 				size="icon-sm"
 				onClick={() => {
 					setDismissed(true);
-					sessionStorage.setItem("bar-dismissed", "true");
+					sessionStorage.setItem(DISMISS_KEY, "true");
 				}}
 				className="absolute right-2"
 				aria-label="Dismiss"
