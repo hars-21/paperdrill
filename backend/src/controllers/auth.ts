@@ -13,6 +13,30 @@ import { logger } from "../utils/logger";
 import { config } from "../config";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../utils/emailClient";
+import { sendToEngine } from "../utils/engineClient";
+import { assetPrecision } from "../store/market";
+import { toBigInt } from "../utils/convert";
+
+const INITIAL_BALANCE_ASSET = "USD";
+const INITIAL_BALANCE_AMOUNT = "10000";
+
+async function initializeBalance(userId: string) {
+	const precision = assetPrecision.get(INITIAL_BALANCE_ASSET);
+
+	if (precision == null) {
+		throw new Error(`Missing precision for ${INITIAL_BALANCE_ASSET}`);
+	}
+
+	const response = await sendToEngine("initialize_balance", {
+		userId,
+		asset: INITIAL_BALANCE_ASSET,
+		amount: toBigInt(INITIAL_BALANCE_AMOUNT, precision).toString(),
+	});
+
+	if (!response.success) {
+		throw new Error(response.error ?? "Balance initialization failed");
+	}
+}
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -37,6 +61,13 @@ export async function signup(req: Request, res: Response) {
 		const user = await prisma.user.create({
 			data: { email, name, password: hashedPassword },
 		});
+
+		try {
+			await initializeBalance(user.id);
+		} catch (error) {
+			await prisma.user.delete({ where: { id: user.id } });
+			throw error;
+		}
 
 		const token = crypto.randomBytes(32).toString("hex");
 

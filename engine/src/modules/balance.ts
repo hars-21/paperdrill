@@ -23,19 +23,28 @@ function qtyScale(qtyPrecision: number): bigint {
 	return 10n ** BigInt(qtyPrecision);
 }
 
-function initializeBalance(): UserBalance {
-	const balance: UserBalance = {};
-	for (const asset of ASSETS) {
-		balance[asset] ??= { available: 10000000n, locked: 0n };
-	}
-
-	return balance;
-}
-
 function getAssetBalance(balance: UserBalance, asset: string) {
 	const assetBalance = balance[asset];
 	if (!assetBalance) throw new Error(`Missing balance for asset: ${asset}`);
 	return assetBalance;
+}
+
+function ensureAssetBalance(balance: UserBalance, asset: string) {
+	return (balance[asset] ??= { available: 0n, locked: 0n });
+}
+
+export function initializeUserBalance(userId: string, asset: string, amount: bigint) {
+	if (!ASSETS.has(asset)) {
+		throw new Error(`Unknown asset: ${asset}`);
+	}
+
+	if (!BALANCES[userId]) {
+		BALANCES[userId] = {
+			[asset]: { available: amount, locked: 0n },
+		};
+	}
+
+	return BALANCES[userId];
 }
 
 export function addBalance(userId: string, asset: string, amount: bigint) {
@@ -43,31 +52,22 @@ export function addBalance(userId: string, asset: string, amount: bigint) {
 		throw new Error(`Unknown asset: ${asset}`);
 	}
 
-	if (!BALANCES[userId]) {
-		BALANCES[userId] = initializeBalance();
-	}
+	const userBalance = (BALANCES[userId] ??= {});
+	const assetBalance = ensureAssetBalance(userBalance, asset);
+	assetBalance.available += amount;
 
-	const userBalance = BALANCES[userId];
-
-	if (!userBalance[asset]) {
-		userBalance[asset] = { available: 0n, locked: 0n };
-	}
-
-	userBalance[asset].available += amount;
-
-	return { [asset]: userBalance[asset] };
+	return { [asset]: assetBalance };
 }
 
 export function getUserBalance(userId: string, asset?: string): UserBalance {
-	if (!BALANCES[userId]) {
-		BALANCES[userId] = initializeBalance();
-	}
+	const userBalance = BALANCES[userId] ?? {};
 
 	if (asset) {
-		return { [asset]: getAssetBalance(BALANCES[userId], asset) };
+		const assetBalance = userBalance[asset];
+		return assetBalance ? { [asset]: assetBalance } : {};
 	}
 
-	return BALANCES[userId];
+	return userBalance;
 }
 
 export function lockBalance(order: CreateOrderInput): LockResult {
@@ -76,10 +76,8 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 	const market = getMarket(symbol);
 	const userBalance = getUserBalance(userId);
 
-	const base = getAssetBalance(userBalance, market.baseAsset);
-	const quote = getAssetBalance(userBalance, market.quoteAsset);
-
 	if (side === "BUY") {
+		const quote = userBalance[market.quoteAsset];
 		const scale = qtyScale(market.qtyPrecision);
 		let lockAmount: bigint;
 
@@ -92,7 +90,7 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 			lockAmount = (((bestAsk * qty) / scale) * 11n) / 10n;
 		}
 
-		if (quote.available < lockAmount) {
+		if (!quote || quote.available < lockAmount) {
 			throw new Error("Insufficient balance");
 		}
 
@@ -104,11 +102,12 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 			locked: lockAmount,
 		};
 	} else {
+		const base = userBalance[market.baseAsset];
 		if (type === "MARKET" && market.bestBid == null) {
 			throw new Error("No liquidity");
 		}
 
-		if (base.available < qty) {
+		if (!base || base.available < qty) {
 			throw new Error("Insufficient balance");
 		}
 
@@ -131,9 +130,9 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 		const sellerBalance = getUserBalance(sellerId);
 
 		const buyerQuote = getAssetBalance(buyerBalance, market.quoteAsset);
-		const sellerQuote = getAssetBalance(sellerBalance, market.quoteAsset);
+		const sellerQuote = ensureAssetBalance(sellerBalance, market.quoteAsset);
 
-		const buyerBase = getAssetBalance(buyerBalance, market.baseAsset);
+		const buyerBase = ensureAssetBalance(buyerBalance, market.baseAsset);
 		const sellerBase = getAssetBalance(sellerBalance, market.baseAsset);
 
 		const scale = qtyScale(market.qtyPrecision);
@@ -162,10 +161,8 @@ export function releaseBalance(order: InternalOrder): ReleaseResult {
 	const market = getMarket(symbol);
 	const userBalance = getUserBalance(order.userId);
 
-	const quote = getAssetBalance(userBalance, market.quoteAsset);
-	const base = getAssetBalance(userBalance, market.baseAsset);
-
 	if (side === "BUY") {
+		const quote = getAssetBalance(userBalance, market.quoteAsset);
 		const remaining = lockedAmount! - spentAmount;
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");
@@ -176,6 +173,7 @@ export function releaseBalance(order: InternalOrder): ReleaseResult {
 
 		return { asset: market.quoteAsset, released: remaining };
 	} else {
+		const base = getAssetBalance(userBalance, market.baseAsset);
 		const remainingQty = qty - filledQty;
 
 		if (base.locked < remainingQty) throw new Error("Insufficient Locked Balance");

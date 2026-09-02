@@ -1,24 +1,62 @@
 import { beforeEach, expect, test } from "bun:test";
-import { getUserBalance } from "../src/modules/balance";
+import { getUserBalance, initializeUserBalance } from "../src/modules/balance";
+import { BALANCES } from "../src/store";
 import { resetState, cancelOrder, placeOrder } from "./utils";
 
 beforeEach(() => {
 	resetState();
 });
 
-test("new user balance", () => {
-	const balance = getUserBalance("1");
+test("reading a new user balance does not initialize funds", () => {
+	const balance = getUserBalance("3");
 
-	expect(balance).toMatchObject({
+	expect(balance).toEqual({});
+	expect(BALANCES["3"]).toBeUndefined();
+});
+
+test("initializes a new user with only the starting asset", () => {
+	const balance = initializeUserBalance("3", "USD", 100000n);
+
+	expect(balance).toEqual({
 		USD: {
-			available: 1000000n,
-			locked: 0n,
-		},
-		BTC: {
-			available: 1000000n,
+			available: 100000n,
 			locked: 0n,
 		},
 	});
+});
+
+test("does not grant the starting balance twice", () => {
+	initializeUserBalance("3", "USD", 100000n);
+	initializeUserBalance("3", "USD", 100000n);
+
+	expect(getUserBalance("3").USD?.available).toBe(100000n);
+});
+
+test("a fill adds acquired assets to sparse balances", async () => {
+	delete BALANCES["1"]?.USD;
+	delete BALANCES["2"]?.BTC;
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 50000n,
+	});
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "BUY",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 50000n,
+	});
+
+	expect(getUserBalance("1").USD).toEqual({ available: 50000n, locked: 0n });
+	expect(getUserBalance("2").BTC).toEqual({ available: 50000n, locked: 0n });
 });
 
 test("buyer balance after fill", async () => {
