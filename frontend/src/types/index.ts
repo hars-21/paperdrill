@@ -18,6 +18,21 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export type ApiKeyScope = "ACCOUNT_READ" | "ORDER_READ" | "ORDER_CREATE" | "ORDER_CANCEL";
+
+export interface ApiKeyRecord {
+	id: string;
+	label: string;
+	scopes: ApiKeyScope[];
+	lastUsedAt: string | null;
+	revokedAt: string | null;
+	createdAt: string;
+}
+
+export interface CreatedApiKey extends Omit<ApiKeyRecord, "lastUsedAt" | "revokedAt"> {
+	key: string;
+}
+
 export interface StreamResponse {
 	bids: DepthLevel[];
 	asks: DepthLevel[];

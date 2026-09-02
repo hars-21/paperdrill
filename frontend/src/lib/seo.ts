@@ -94,6 +94,22 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 export function resolvePageSeo(pathname: string): PageSeo {
 	if (ROUTE_SEO[pathname]) return ROUTE_SEO[pathname];
 
+	if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+		const page =
+			pathname.split("/").at(-1)?.replace("api-keys", "API Keys").replace("data", "Account Data") ??
+			"Dashboard";
+		const title =
+			pathname === "/dashboard"
+				? "Dashboard"
+				: page.replace(/^./, (letter) => letter.toUpperCase());
+		return {
+			title: `${title} | ${SITE.name}`,
+			description: "Manage your PaperDrill account, balances, API keys and trading activity.",
+			path: pathname,
+			noIndex: true,
+		};
+	}
+
 	const tradeMatch = pathname.match(/^\/trade\/([A-Z_]+)$/);
 	if (tradeMatch) {
 		const symbol = tradeMatch[1]?.replace("_", "/") ?? "BTC/USD";

@@ -28,7 +28,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 			const user = await api.signin(email.trim(), password);
 			setUser(user);
 			toast.success("Successfully logged in");
-			navigate(user.emailVerified ? "/markets" : "/verify-email");
+			navigate(user.emailVerified ? "/dashboard" : "/verify-email");
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Login failed");
 		} finally {

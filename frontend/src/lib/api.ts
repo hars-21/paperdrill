@@ -1,6 +1,16 @@
 import type { CancelResult, DepthSnapshot, Fill, OrderResult, UserData } from "@/types/api";
 import { config } from "./env";
-import type { Candle, Market, OrderRecord, Ticker, UserBalance, UserTrade } from "@/types";
+import type {
+	ApiKeyRecord,
+	ApiKeyScope,
+	Candle,
+	CreatedApiKey,
+	Market,
+	OrderRecord,
+	Ticker,
+	UserBalance,
+	UserTrade,
+} from "@/types";
 
 const BASE = `${config.apiBaseUrl}/v1`;
 
@@ -122,6 +132,23 @@ export const api = {
 	getBalance(asset?: string) {
 		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
 		return request<UserBalance>(`/balances${params}`);
+	},
+
+	getApiKeys() {
+		return request<{ keys: ApiKeyRecord[] }>("/keys");
+	},
+
+	createApiKey(label: string, scopes: ApiKeyScope[]) {
+		return request<CreatedApiKey>("/keys", {
+			method: "POST",
+			body: JSON.stringify({ label, scopes }),
+		});
+	},
+
+	revokeApiKey(id: string) {
+		return request<{ success: boolean; message: string }>(`/keys/${id}`, {
+			method: "DELETE",
+		});
 	},
 
 	getOpenOrders() {

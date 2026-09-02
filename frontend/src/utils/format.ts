@@ -7,7 +7,7 @@ export function formatPrice(n?: string | number | null, pricePrecision: number =
 	});
 }
 
-export function formatQty(n?: string | number, qtyPrecision: number = 4) {
+export function formatQty(n?: string | number | null, qtyPrecision: number = 4) {
 	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
 
 	return Number(n).toLocaleString(undefined, {

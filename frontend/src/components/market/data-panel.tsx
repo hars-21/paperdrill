@@ -215,7 +215,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	const [fetching, setFetching] = useState(true);
 	const [cancelling, setCancelling] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
-	const [currentMarketOnly, setCurrentMarketOnly] = useState(true);
+	const [currentMarketOnly, setCurrentMarketOnly] = useState(Boolean(symbol));
 	const [marketFilter, setMarketFilter] = useState("all");
 	const [sideFilter, setSideFilter] = useState<SideFilter>("all");
 	const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -403,7 +403,9 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	if (!verified) {
 		return (
 			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
-				<Link to="/verify-email" className="font-medium text-primary">Verify your email</Link>
+				<Link to="/verify-email" className="font-medium text-primary">
+					Verify your email
+				</Link>
 				&nbsp;to view account data.
 			</div>
 		);
@@ -435,17 +437,19 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 
 				{tab !== "balance" && (
 					<div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-initial">
-						<label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis">
-							<Checkbox
-								className="border-border bg-card"
-								checked={currentMarketOnly}
-								onCheckedChange={(checked) => {
-									setCurrentMarketOnly(checked === true);
-									if (checked === true) setMarketFilter("all");
-								}}
-							/>
-							Current market
-						</label>
+						{symbol && (
+							<label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis">
+								<Checkbox
+									className="border-border bg-card"
+									checked={currentMarketOnly}
+									onCheckedChange={(checked) => {
+										setCurrentMarketOnly(checked === true);
+										if (checked === true) setMarketFilter("all");
+									}}
+								/>
+								Current market
+							</label>
+						)}
 
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>

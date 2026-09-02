@@ -16,6 +16,6 @@ export function PublicOnly({ children }: { children: ReactNode }) {
 	const { user, verified, loading } = useAuth();
 
 	if (loading) return <Loader />;
-	if (user) return <Navigate to={verified ? "/markets" : "/verify-email"} replace />;
+	if (user) return <Navigate to={verified ? "/dashboard" : "/verify-email"} replace />;
 	return <>{children}</>;
 }

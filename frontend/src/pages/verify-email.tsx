@@ -62,7 +62,7 @@ export function VerifyEmailPage() {
 
 	useEffect(() => {
 		if (!verified) return;
-		const timer = window.setTimeout(() => navigate("/markets", { replace: true }), 1000);
+		const timer = window.setTimeout(() => navigate("/dashboard", { replace: true }), 1000);
 		return () => window.clearTimeout(timer);
 	}, [verified, navigate]);
 
