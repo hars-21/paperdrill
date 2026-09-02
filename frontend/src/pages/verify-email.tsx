@@ -90,8 +90,8 @@ export function VerifyEmailPage() {
 	}
 
 	return (
-		<div className="flex w-full flex-1 items-center justify-center px-6">
-			<Card className="w-full max-w-sm px-4 py-10">
+		<div className="flex w-full flex-1 items-center justify-center px-4 py-6 sm:px-6">
+			<Card className="w-full max-w-sm px-2 py-8 sm:px-4 sm:py-10">
 				<CardHeader className="text-left">
 					<CardTitle className="text-xl pb-4">
 						{verified

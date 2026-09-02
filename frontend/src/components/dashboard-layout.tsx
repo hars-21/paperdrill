@@ -33,12 +33,12 @@ export function DashboardLayout() {
 				<header className="flex h-12 shrink-0 items-center gap-2 border-b border-border/40 bg-l0 px-4">
 					<SidebarTrigger className="-ml-1" />
 					<Separator orientation="vertical" className="mr-1 h-4!" />
-					<Breadcrumb>
+					<Breadcrumb className="min-w-0">
 						<BreadcrumbList className="text-xs">
-							<BreadcrumbItem className="text-medium-emphasis">Dashboard</BreadcrumbItem>
-							<BreadcrumbSeparator />
+							<BreadcrumbItem className="hidden text-medium-emphasis sm:inline-flex">Dashboard</BreadcrumbItem>
+							<BreadcrumbSeparator className="hidden sm:block" />
 							<BreadcrumbItem>
-								<BreadcrumbPage>{pageName}</BreadcrumbPage>
+								<BreadcrumbPage className="truncate">{pageName}</BreadcrumbPage>
 							</BreadcrumbItem>
 						</BreadcrumbList>
 					</Breadcrumb>

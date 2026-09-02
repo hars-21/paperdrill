@@ -56,7 +56,7 @@ export function Navbar() {
 						<SheetContent
 							side="left"
 							showCloseButton={false}
-							className="gap-0 bg-background p-0 w-72"
+							className="w-72 max-w-[calc(100vw-2rem)] gap-0 bg-background p-0"
 						>
 							<SheetTitle className="sr-only">Navigation</SheetTitle>
 

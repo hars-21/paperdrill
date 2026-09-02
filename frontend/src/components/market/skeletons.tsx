@@ -112,28 +112,58 @@ export const OrderbookSkeleton = () => {
 	);
 };
 
-export const TradeFormSkeleton = () => {
+export const TradeFormSkeleton = ({
+	showSecondaryAction = false,
+}: {
+	showSecondaryAction?: boolean;
+}) => {
 	return (
-		<div className="flex h-full flex-col select-none p-3 animate-pulse">
-			<div className="flex flex-col gap-3">
-				<Skeleton className="h-10 w-full rounded-xl" />
-				<div className="flex gap-1">
-					<Skeleton className="h-8 w-16 rounded-lg" />
-					<Skeleton className="h-8 w-16 rounded-lg" />
-				</div>
-				<div className="flex justify-between">
-					<Skeleton className="h-3 w-16" />
-					<Skeleton className="h-3 w-12" />
-				</div>
-				<div className="flex flex-col gap-1.5">
-					<Skeleton className="h-3 w-10" />
-					<Skeleton className="h-11 w-full rounded-lg" />
-				</div>
-				<div className="flex flex-col gap-1.5">
+		<div className="w-full select-none p-3">
+			<div className="grid grid-cols-2 gap-2">
+				<Skeleton className="h-10 w-full rounded-lg" />
+				<Skeleton className="h-10 w-full rounded-lg" />
+			</div>
+
+			<div className="mt-4 flex gap-1">
+				<Skeleton className="h-8 w-16 rounded-lg" />
+				<Skeleton className="h-8 w-16 rounded-lg" />
+			</div>
+
+			<div className="mt-3 flex flex-col gap-3">
+				<div className="flex items-center justify-between">
 					<Skeleton className="h-3 w-14" />
+					<Skeleton className="h-3 w-20" />
+				</div>
+				<div className="flex flex-col gap-1.5">
+					<div className="flex items-center justify-between">
+						<Skeleton className="h-3 w-10" />
+						<div className="flex gap-2">
+							<Skeleton className="h-3 w-7" />
+							<Skeleton className="h-3 w-7" />
+						</div>
+					</div>
 					<Skeleton className="h-11 w-full rounded-lg" />
 				</div>
-				<Skeleton className="h-10 w-full rounded-xl" />
+				<div className="flex flex-col gap-1.5">
+					<div className="flex items-center justify-between">
+						<Skeleton className="h-3 w-14" />
+						<Skeleton className="h-3 w-24" />
+					</div>
+					<Skeleton className="h-11 w-full rounded-lg" />
+				</div>
+				<div>
+					<Skeleton className="mx-1 h-5 rounded-full" />
+					<div className="mt-1 flex justify-between">
+						<Skeleton className="h-3 w-3" />
+						<Skeleton className="h-3 w-8" />
+					</div>
+				</div>
+				<div className="flex items-center justify-between border-t border-border/40 pt-3">
+					<Skeleton className="h-3 w-20" />
+					<Skeleton className="h-3 w-24" />
+				</div>
+				<Skeleton className="mt-2 h-10 w-full rounded-md" />
+				{showSecondaryAction && <Skeleton className="h-10 w-full rounded-md" />}
 			</div>
 		</div>
 	);

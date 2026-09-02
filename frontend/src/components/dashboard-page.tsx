@@ -21,7 +21,7 @@ export function DashboardPage({
 					<h1 className="text-2xl font-semibold tracking-tight text-high-emphasis">{title}</h1>
 					<p className="mt-1 max-w-2xl text-sm text-medium-emphasis">{description}</p>
 				</div>
-				{action}
+				{action && <div className="shrink-0 self-start">{action}</div>}
 			</div>
 			{children}
 		</div>

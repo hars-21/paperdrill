@@ -63,7 +63,7 @@ export function DashboardBalancesPage() {
 					</div>
 				) : (
 					<div className="overflow-x-auto">
-						<Table>
+						<Table className="min-w-120">
 							<TableHeader>
 								<TableRow className="bg-l2/60 hover:bg-l2/60">
 									<TableHead className="px-5">Asset</TableHead>

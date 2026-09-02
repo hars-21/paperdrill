@@ -127,7 +127,7 @@ export function DashboardApiKeysPage() {
 		>
 			{createdKey && (
 				<Card className="mb-6 gap-0 border-primary/40 bg-primary/4 py-0 shadow-none">
-					<CardHeader className="grid-cols-[1fr_auto] border-b border-primary/20 px-5 py-4">
+					<CardHeader className="grid-cols-[minmax(0,1fr)_auto] border-b border-primary/20 px-4 py-4 sm:px-5">
 						<div>
 							<CardTitle className="text-base">Copy your new API key</CardTitle>
 							<p className="mt-1 text-sm text-medium-emphasis">
@@ -143,7 +143,7 @@ export function DashboardApiKeysPage() {
 							<X />
 						</Button>
 					</CardHeader>
-					<CardContent className="flex flex-col gap-2 p-5 sm:flex-row">
+					<CardContent className="flex min-w-0 flex-col gap-2 p-4 sm:flex-row sm:p-5">
 						<Input
 							readOnly
 							value={createdKey.key}
@@ -224,7 +224,7 @@ export function DashboardApiKeysPage() {
 					</div>
 				) : (
 					<div className="overflow-x-auto">
-						<Table>
+						<Table className="min-w-200">
 							<TableHeader>
 								<TableRow className="bg-l2/60 hover:bg-l2/60">
 									<TableHead className="px-5">Name</TableHead>

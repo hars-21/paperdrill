@@ -195,7 +195,9 @@ export function TradeForm({
 		}
 	};
 
-	if (loading || authLoading) return <TradeFormSkeleton />;
+	if (loading || authLoading) {
+		return <TradeFormSkeleton showSecondaryAction={!authenticated} />;
+	}
 
 	const estimatedValue =
 		isPositive(effectivePrice) && isPositive(requestedQuantity)

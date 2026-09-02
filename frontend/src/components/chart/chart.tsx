@@ -34,7 +34,7 @@ function Clock() {
 	}, []);
 
 	return (
-		<div className="whitespace-nowrap text-sm text-medium-emphasis flex items-center gap-1">
+		<div className="hidden items-center gap-1 whitespace-nowrap text-sm text-medium-emphasis sm:flex">
 			<span>
 				{now.toLocaleTimeString([], {
 					hour: "2-digit",
@@ -82,7 +82,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 
 	return (
 		<div ref={panelRef} className="flex h-full min-h-0 flex-col bg-card">
-			<div className="flex h-11 shrink-0 items-center border-b border-border/40 px-3">
+			<div className="flex h-11 shrink-0 items-center overflow-x-auto border-b border-border/40 px-2 sm:px-3">
 				<div className="flex items-center gap-1">
 					{TABS.map((item) => (
 						<button
@@ -180,7 +180,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 						)}
 					</div>
 
-					<div className="flex h-9 shrink-0 items-center justify-between gap-4 border-t border-border/40 px-3">
+					<div className="flex h-9 shrink-0 items-center justify-between gap-2 overflow-x-auto border-t border-border/40 px-2 sm:px-3">
 						<div className="flex items-center gap-1 sm:gap-3">
 							{CHART_RANGES.map((item) => (
 								<Button

@@ -55,13 +55,13 @@ export function TradePage() {
 	);
 
 	return (
-		<Page fixed className="px-4 pb-2">
+		<Page fixed className="px-2 pb-2 sm:px-4">
 			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_minmax(38rem,1fr)_auto]">
 				<div className="lg:col-start-1 lg:row-start-1">
 					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
-				<div className="flex min-h-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:flex-row">
+				<div className="flex flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:min-h-0 lg:flex-row">
 					<div className="hidden w-1/3 min-w-65 max-w-75 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:flex">
 						<div className="shrink-0 p-3">{bookTradesTabs}</div>
 						<div className="min-h-0 flex-1">
@@ -79,9 +79,9 @@ export function TradePage() {
 						</div>
 					</div>
 
-					<div className="flex w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:hidden">
+					<div className="flex h-96 w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:hidden">
 						<div className="shrink-0 p-3">{bookTradesTabs}</div>
-						<div className="min-h-48">
+						<div className="min-h-0 flex-1">
 							{leftTab === "book" ? (
 								<Orderbook
 									compact
@@ -121,7 +121,7 @@ export function TradePage() {
 					</div>
 				</div>
 
-				<div className="flex h-fit flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+				<div className="flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
 					<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
 						<TradeForm
 							symbol={symbol}
@@ -132,7 +132,9 @@ export function TradePage() {
 							onOrderPlaced={() => setOrderbookRefreshKey((key) => key + 1)}
 						/>
 					</div>
-					<MarketWatchlist symbol={symbol} markets={markets} tickers={tickers} />
+					<div className="hidden lg:block">
+						<MarketWatchlist symbol={symbol} markets={markets} tickers={tickers} />
+					</div>
 				</div>
 
 				<div

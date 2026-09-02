@@ -135,7 +135,7 @@ function MarketCell({ symbol, market }: { symbol: string; market: MarketLookup }
 function TableLoading({ columns }: { columns: number }) {
 	return (
 		<div className="space-y-3 px-3 py-4">
-			{Array.from({ length: 5 }).map((_, row) => (
+			{Array.from({ length: PAGE_SIZE }).map((_, row) => (
 				<div
 					key={row}
 					className="grid gap-4"
@@ -413,7 +413,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 
 	return (
 		<div className="flex h-full min-h-144 select-none flex-col overflow-hidden">
-			<div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/40 px-3 py-2">
+			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
 				<div className="flex min-w-0 items-center gap-1 overflow-x-auto">
 					{tabs.map((item) => (
 						<button
@@ -436,9 +436,9 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 				</div>
 
 				{tab !== "balance" && (
-					<div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-initial">
+					<div className="flex min-w-0 w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
 						{symbol && (
-							<label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis">
+							<label className="hidden cursor-pointer items-center gap-2 whitespace-nowrap text-xs text-medium-emphasis sm:flex">
 								<Checkbox
 									className="border-border bg-card"
 									checked={currentMarketOnly}
@@ -545,7 +545,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 							</DropdownMenuContent>
 						</DropdownMenu>
 
-						<div className="relative w-36 sm:w-44">
+						<div className="relative min-w-0 flex-1 sm:w-44 sm:flex-none">
 							<Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-low-emphasis" />
 							<Input
 								value={search}

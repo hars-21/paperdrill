@@ -48,7 +48,7 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 
 			<PopoverContent
 				align="start"
-				className="w-84 p-1 border-border/40 rounded-xl overflow-hidden shadow-lg"
+				className="w-[calc(100vw-2rem)] max-w-84 overflow-hidden rounded-xl border-border/40 p-1 shadow-lg"
 			>
 				<div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/20 bg-muted/10">
 					<Search className="size-4 text-low-emphasis shrink-0" />
