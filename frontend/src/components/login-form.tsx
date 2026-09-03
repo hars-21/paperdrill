@@ -27,10 +27,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 		try {
 			const user = await api.signin(email.trim(), password);
 			setUser(user);
-			toast.success("Successfully logged in");
+			toast.success("Signed in successfully");
 			navigate(user.emailVerified ? "/dashboard" : "/verify-email");
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Login failed");
+			toast.error(err instanceof Error ? err.message : "Failed to sign in");
 		} finally {
 			setIsLoading(false);
 		}
@@ -41,7 +41,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 			<Card>
 				<CardHeader className="text-center">
 					<CardTitle className="text-xl">Welcome back</CardTitle>
-					<CardDescription>Log in to your PaperDrill account</CardDescription>
+					<CardDescription>Sign in to your PaperDrill account</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit}>
@@ -72,7 +72,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 							</Field>
 							<Field>
 								<Button type="submit" disabled={isLoading}>
-									{isLoading ? "Logging in..." : "Log in"}
+									{isLoading ? "Signing in…" : "Sign in"}
 								</Button>
 								<FieldDescription className="text-center">
 									Don&apos;t have an account? <Link to="/signup">Sign up</Link>

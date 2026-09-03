@@ -7,7 +7,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "../ui
 
 const LINKS = [
 	{ label: "Markets", to: "/markets" },
-	{ label: "Crypto", to: "/trade/BTC_USD" },
+	{ label: "Trading", to: "/trade/BTC_USD" },
 	{ label: "Docs", to: "/docs" },
 	{ label: "Changelog", to: "/changelog" },
 ];
@@ -39,7 +39,7 @@ export function Navbar() {
 
 					<Link to="/login" className="hidden md:inline-flex">
 						<Button variant="ghost" size="sm" className="bg-l3">
-							Log in
+							Sign in
 						</Button>
 					</Link>
 					<Link to="/signup" className="hidden md:inline-flex">
@@ -85,18 +85,18 @@ export function Navbar() {
 								))}
 
 								<SheetClose asChild>
-									<>
-										<Link to="/login" className="mt-2">
-											<Button variant="ghost" size="sm" className="w-full h-11 bg-l3">
-												Login
-											</Button>
-										</Link>
-										<Link to="/signup" className="mt-2">
-											<Button size="sm" className="w-full h-11">
-												Get started
-											</Button>
-										</Link>
-									</>
+									<Link to="/login" className="mt-2">
+										<Button variant="ghost" size="sm" className="w-full h-11 bg-l3">
+											Sign in
+										</Button>
+									</Link>
+								</SheetClose>
+								<SheetClose asChild>
+									<Link to="/signup" className="mt-2">
+										<Button size="sm" className="w-full h-11">
+											Get started
+										</Button>
+									</Link>
 								</SheetClose>
 							</nav>
 						</SheetContent>

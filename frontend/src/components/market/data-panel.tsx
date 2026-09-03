@@ -389,7 +389,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
 				Please&nbsp;
 				<Link to="/login" className="font-medium text-primary">
-					log in
+					sign in
 				</Link>
 				&nbsp;or&nbsp;
 				<Link to="/signup" className="font-medium text-primary">

@@ -68,7 +68,7 @@ export function useOrderbook(symbol: string) {
 			})
 			.catch((err) => {
 				if (!active) return;
-				setError(err instanceof Error ? err.message : "Failed to load orderbook");
+				setError(err instanceof Error ? err.message : "Failed to load order book");
 			})
 			.finally(() => {
 				if (active) setLoading(false);

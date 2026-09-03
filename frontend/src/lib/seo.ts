@@ -73,7 +73,7 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 		path: "/markets",
 	},
 	"/login": {
-		title: `Log In | ${SITE.name}`,
+		title: `Sign In | ${SITE.name}`,
 		description: "Sign in to your PaperDrill account to trade and manage simulated balances.",
 		path: "/login",
 		noIndex: true,

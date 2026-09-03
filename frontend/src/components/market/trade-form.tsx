@@ -361,7 +361,7 @@ export function TradeForm({
 							<Link to="/signup">Sign up to trade</Link>
 						</Button>
 						<Button asChild variant="secondary" size="lg">
-							<Link to="/login">Log in to trade</Link>
+							<Link to="/login">Sign in to trade</Link>
 						</Button>
 					</div>
 				)}

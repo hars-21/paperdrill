@@ -73,7 +73,7 @@ export function Footer() {
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						v0.3-beta - Simulated environment. No real funds or assets are involved.
+						v0.3.0-beta - Simulated environment. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>

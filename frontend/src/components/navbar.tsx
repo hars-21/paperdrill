@@ -156,7 +156,7 @@ export function Navbar() {
 											<SheetClose asChild>
 												<Link to="/login">
 													<Button variant="ghost" size="sm" className="w-full h-11">
-														Log in
+														Sign in
 													</Button>
 												</Link>
 											</SheetClose>
@@ -278,7 +278,7 @@ export function Navbar() {
 							<>
 								<Link to="/login">
 									<Button variant="ghost" size="sm" className="bg-l3">
-										Log in
+										Sign in
 									</Button>
 								</Link>
 								<Link to="/signup">
