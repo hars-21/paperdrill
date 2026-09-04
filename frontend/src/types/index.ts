@@ -18,6 +18,26 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export interface PortfolioPosition {
+	asset: string;
+	available: string;
+	locked: string;
+	total: string;
+	markPrice: string;
+	value: string;
+}
+
+export interface Portfolio {
+	quoteAsset: string;
+	equity: string;
+	baselineEquity: string;
+	pnl: string;
+	pnlPercent: string;
+	baselineAt: string;
+	asOf: string;
+	positions: PortfolioPosition[];
+}
+
 export type ApiKeyScope = "ACCOUNT_READ" | "ORDER_READ" | "ORDER_CREATE" | "ORDER_CANCEL";
 
 export interface ApiKeyRecord {

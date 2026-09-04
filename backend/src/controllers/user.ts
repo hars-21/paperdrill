@@ -1,10 +1,13 @@
 import { prisma } from "../db";
 import type { Request, Response } from "express";
 import { sendToEngine } from "../utils/engineClient";
-import { formatBalance, formatUserTrade } from "../utils/formatter";
+import { formatBalance, formatPortfolio, formatUserTrade } from "../utils/formatter";
 import { logger } from "../utils/logger";
 import { balanceQuerySchema, depositBodySchema, tradeHistoryQuerySchema } from "../schema/exchange";
 import { sendValidationError } from "../utils/validation";
+import { marketStore } from "../store/market";
+import { calculatePortfolio, type Balance } from "../utils/portfolio";
+import { getReferencePrices } from "../utils/referencePrice";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
@@ -94,6 +97,49 @@ export async function getBalance(req: Request, res: Response) {
 	res
 		.status(200)
 		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
+}
+
+export async function getPortfolio(req: Request, res: Response) {
+	const userId = getUserId(req);
+	const engineResponse = await sendToEngine("get_user_balance", { userId });
+
+	if (!engineResponse.success) {
+		res.status(400).json({ error: engineResponse.error });
+		return;
+	}
+
+	try {
+		const balances = engineResponse.data as Record<string, Balance>;
+		const markets = [...marketStore.values()];
+		const prices = await getReferencePrices(markets);
+		const portfolio = calculatePortfolio(balances, markets, prices);
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { pnlBaseline: true, pnlBaselineAt: true },
+		});
+
+		if (!user) {
+			res.status(404).json({ error: "User not found" });
+			return;
+		}
+
+		let baseline = user.pnlBaseline;
+		let baselineAt = user.pnlBaselineAt;
+
+		if (baseline == null || baselineAt == null) {
+			baseline = portfolio.equity;
+			baselineAt = new Date();
+			await prisma.user.update({
+				where: { id: userId },
+				data: { pnlBaseline: baseline, pnlBaselineAt: baselineAt },
+			});
+		}
+
+		res.status(200).json(formatPortfolio(portfolio, baseline, baselineAt));
+	} catch (error) {
+		logger.error("Failed to calculate portfolio", error);
+		res.status(503).json({ error: "Portfolio valuation is temporarily unavailable" });
+	}
 }
 
 export async function createDeposit(req: Request, res: Response) {

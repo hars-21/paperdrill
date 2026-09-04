@@ -20,17 +20,21 @@ import { toBigInt } from "../utils/convert";
 const INITIAL_BALANCE_ASSET = "USD";
 const INITIAL_BALANCE_AMOUNT = "10000";
 
-async function initializeBalance(userId: string) {
+function initialBalance() {
 	const precision = assetPrecision.get(INITIAL_BALANCE_ASSET);
 
 	if (precision == null) {
 		throw new Error(`Missing precision for ${INITIAL_BALANCE_ASSET}`);
 	}
 
+	return toBigInt(INITIAL_BALANCE_AMOUNT, precision);
+}
+
+async function initializeBalance(userId: string, amount: bigint) {
 	const response = await sendToEngine("initialize_balance", {
 		userId,
 		asset: INITIAL_BALANCE_ASSET,
-		amount: toBigInt(INITIAL_BALANCE_AMOUNT, precision).toString(),
+		amount: amount.toString(),
 	});
 
 	if (!response.success) {
@@ -57,13 +61,20 @@ export async function signup(req: Request, res: Response) {
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
+		const balance = initialBalance();
 
 		const user = await prisma.user.create({
-			data: { email, name, password: hashedPassword },
+			data: {
+				email,
+				name,
+				password: hashedPassword,
+				pnlBaseline: balance,
+				pnlBaselineAt: new Date(),
+			},
 		});
 
 		try {
-			await initializeBalance(user.id);
+			await initializeBalance(user.id, balance);
 		} catch (error) {
 			await prisma.user.delete({ where: { id: user.id } });
 			throw error;

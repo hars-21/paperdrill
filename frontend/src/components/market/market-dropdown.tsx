@@ -17,6 +17,7 @@ interface MarketDropdownProps {
 
 export function MarketDropdown({ symbol, base, quote, markets, tickers }: MarketDropdownProps) {
 	const navigate = useNavigate();
+	const [open, setOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredMarkets = markets.filter((m) => {
@@ -28,8 +29,10 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 
 	return (
 		<Popover
-			onOpenChange={(open) => {
-				if (!open) setSearchQuery("");
+			open={open}
+			onOpenChange={(nextOpen) => {
+				setOpen(nextOpen);
+				if (!nextOpen) setSearchQuery("");
 			}}
 		>
 			<PopoverTrigger asChild>
@@ -80,6 +83,7 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 								<button
 									key={m.id}
 									onClick={() => {
+										setOpen(false);
 										navigate(`/trade/${m.symbol}`);
 									}}
 									className={cn(

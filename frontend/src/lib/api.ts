@@ -7,6 +7,7 @@ import type {
 	CreatedApiKey,
 	Market,
 	OrderRecord,
+	Portfolio,
 	Ticker,
 	UserBalance,
 	UserTrade,
@@ -132,6 +133,10 @@ export const api = {
 	getBalance(asset?: string) {
 		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
 		return request<UserBalance>(`/balances${params}`);
+	},
+
+	getPortfolio() {
+		return request<Portfolio>("/portfolio");
 	},
 
 	getApiKeys() {

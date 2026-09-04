@@ -10,14 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
 import { api } from "@/lib/api";
-import type { ApiKeyRecord, OrderRecord, UserBalance, UserTrade } from "@/types";
+import type { OrderRecord, Portfolio, UserBalance, UserTrade } from "@/types";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 
 type OverviewData = {
 	balances: UserBalance;
 	openOrders: OrderRecord[];
 	trades: UserTrade[];
-	keys: ApiKeyRecord[];
+	portfolio: Portfolio | null;
 };
 
 export function DashboardOverviewPage() {
@@ -26,20 +26,21 @@ export function DashboardOverviewPage() {
 	const [data, setData] = useState<OverviewData | null>(null);
 
 	useEffect(() => {
-		Promise.all([api.getBalance(), api.getOpenOrders(), api.getTradeHistory(5), api.getApiKeys()])
-			.then(([balances, openOrders, trades, keyResponse]) => {
-				setData({ balances, openOrders, trades, keys: keyResponse.keys });
+		Promise.all([api.getBalance(), api.getOpenOrders(), api.getTradeHistory(5), api.getPortfolio()])
+			.then(([balances, openOrders, trades, portfolio]) => {
+				setData({ balances, openOrders, trades, portfolio });
 			})
 			.catch((error) => {
 				console.error("Failed to load dashboard:", error);
-				setData({ balances: {}, openOrders: [], trades: [], keys: [] });
+				setData({ balances: {}, openOrders: [], trades: [], portfolio: null });
 				toast.error("Failed to load dashboard overview");
 			});
 	}, []);
 
-	const activeKeys = data?.keys.filter((key) => !key.revokedAt).length ?? 0;
 	const balanceEntries = useMemo(() => Object.entries(data?.balances ?? {}), [data?.balances]);
-	const usdAvailable = data?.balances.USD?.available;
+	const portfolio = data?.portfolio;
+	const pnl = Number(portfolio?.pnl ?? 0);
+	const pnlClassName = pnl >= 0 ? "text-green-text" : "text-red-text";
 
 	const precisionFor = (asset: string) => {
 		const market = markets.find((item) => item.baseAsset === asset || item.quoteAsset === asset);
@@ -62,20 +63,40 @@ export function DashboardOverviewPage() {
 			<div className="grid overflow-hidden rounded-xl border border-border/60 bg-l1 sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
 					className="border-b sm:border-r xl:border-b-0"
-					label="Available USD"
-					value={usdAvailable == null ? null : formatPrice(usdAvailable, precisionFor("USD"))}
+					label="Portfolio value"
+					value={
+						!data
+							? null
+							: portfolio
+								? `${formatPrice(portfolio.equity)} ${portfolio.quoteAsset}`
+								: "Unavailable"
+					}
 				/>
 				<Metric
 					className="border-b xl:border-r xl:border-b-0"
-					label="Assets held"
-					value={data ? String(balanceEntries.length) : null}
+					label="Total PnL"
+					value={
+						!data
+							? null
+							: portfolio
+								? `${pnl > 0 ? "+" : ""}${formatPrice(portfolio.pnl)} ${portfolio.quoteAsset}`
+								: "Unavailable"
+					}
+					valueClassName={pnlClassName}
 				/>
 				<Metric
 					className="border-b sm:border-r sm:border-b-0"
-					label="Open orders"
-					value={data ? String(data.openOrders.length) : null}
+					label="PnL return"
+					value={
+						!data
+							? null
+							: portfolio
+								? `${pnl > 0 ? "+" : ""}${portfolio.pnlPercent}%`
+								: "Unavailable"
+					}
+					valueClassName={pnlClassName}
 				/>
-				<Metric label="Active API keys" value={data ? String(activeKeys) : null} />
+				<Metric label="Open orders" value={data ? String(data.openOrders.length) : null} />
 			</div>
 
 			<div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
@@ -190,10 +211,12 @@ function Metric({
 	label,
 	value,
 	className,
+	valueClassName,
 }: {
 	label: string;
 	value: string | null;
 	className?: string;
+	valueClassName?: string;
 }) {
 	return (
 		<div className={`border-border/40 px-5 py-4 ${className ?? ""}`}>
@@ -201,7 +224,9 @@ function Metric({
 			{value == null ? (
 				<Skeleton className="mt-2 h-7 w-20" />
 			) : (
-				<p className="mt-1 text-xl font-semibold text-high-emphasis">{value}</p>
+				<p className={`mt-1 text-xl font-semibold text-high-emphasis ${valueClassName ?? ""}`}>
+					{value}
+				</p>
 			)}
 		</div>
 	);

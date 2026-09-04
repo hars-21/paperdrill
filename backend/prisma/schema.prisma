@@ -43,6 +43,8 @@ model User {
   name          String
   password      String
   type          UserType  @default(USER)
+  pnlBaseline   BigInt?
+  pnlBaselineAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

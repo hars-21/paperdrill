@@ -1,5 +1,6 @@
 import { marketStore, assetPrecision } from "../store/market";
 import { fromBigInt } from "./convert";
+import type { PortfolioPosition } from "./portfolio";
 
 function fmt(val: unknown, prec: number): string | number | null {
 	if (val == null) return null;
@@ -15,17 +16,10 @@ function getMarket(symbol: string) {
 
 export function formatOrder(order: Record<string, unknown>) {
 	const m = getMarket(order.symbol as string);
-
-	const orderId = order.id as string;
 	const createdAt = order.createdAt;
 
 	const formatted = {
-		id: orderId,
-		userId: order.userId,
-		symbol: order.symbol,
-		side: order.side,
-		type: order.type,
-		status: order.status,
+		...order,
 		price: fmt(order.price, m.pricePrecision),
 		qty: fmt(order.qty, m.qtyPrecision),
 		filledQty: fmt(order.filledQty, m.qtyPrecision),
@@ -155,6 +149,41 @@ export function formatBalance(balance: Record<string, Record<string, unknown>>) 
 		};
 	}
 	return formatted;
+}
+
+export function formatPortfolio(
+	portfolio: {
+		quoteAsset: string;
+		quotePrecision: number;
+		equity: bigint;
+		positions: PortfolioPosition[];
+	},
+	baseline: bigint,
+	baselineAt: Date,
+) {
+	const pnl = portfolio.equity - baseline;
+	const pnlPercent = baseline === 0n ? 0n : (pnl * 10000n) / baseline;
+	const timestamps = portfolio.positions
+		.map((position) => position.markTimestamp)
+		.filter((timestamp): timestamp is number => timestamp != null);
+
+	return {
+		quoteAsset: portfolio.quoteAsset,
+		equity: fmt(portfolio.equity, portfolio.quotePrecision),
+		baselineEquity: fmt(baseline, portfolio.quotePrecision),
+		pnl: fmt(pnl, portfolio.quotePrecision),
+		pnlPercent: fmt(pnlPercent, 2),
+		baselineAt: baselineAt.toISOString(),
+		asOf: new Date(timestamps.length > 0 ? Math.min(...timestamps) : Date.now()).toISOString(),
+		positions: portfolio.positions.map((position) => ({
+			asset: position.asset,
+			available: fmt(position.available, position.precision),
+			locked: fmt(position.locked, position.precision),
+			total: fmt(position.total, position.precision),
+			markPrice: fmt(position.markPrice, portfolio.quotePrecision),
+			value: fmt(position.value, portfolio.quotePrecision),
+		})),
+	};
 }
 
 export function formatCancel(result: Record<string, unknown>) {
