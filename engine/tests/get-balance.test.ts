@@ -193,3 +193,129 @@ test("cancelled order should unlock balance", async () => {
 		},
 	});
 });
+
+test("cancel after a partial fill keeps the purchase and refunds only the remainder", async () => {
+	const order = await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "BUY",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 100000n,
+	});
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 40000n,
+	});
+
+	await cancelOrder("1", order.id);
+
+	expect(getUserBalance("1")).toMatchObject({
+		USD: { available: 960000n, locked: 0n },
+		BTC: { available: 1040000n, locked: 0n },
+	});
+});
+
+test("a filled limit buy refunds price improvement", async () => {
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 50000n,
+	});
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "BUY",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 20000n,
+		qty: 50000n,
+	});
+
+	expect(getUserBalance("2")).toMatchObject({
+		USD: { available: 950000n, locked: 0n },
+		BTC: { available: 1050000n, locked: 0n },
+	});
+});
+
+test("a partially filled market sell unlocks the unfilled quantity", async () => {
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "BUY",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 20000n,
+	});
+
+	const order = await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "SELL",
+		type: "MARKET",
+		symbol: "BTC_USD",
+		price: null,
+		qty: 50000n,
+	});
+
+	expect(order).toMatchObject({ status: "CANCELLED", filledQty: 20000n });
+	expect(getUserBalance("2")).toMatchObject({
+		USD: { available: 1020000n, locked: 0n },
+		BTC: { available: 980000n, locked: 0n },
+	});
+});
+
+test("an affordable market buy can fill across multiple price levels", async () => {
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 10000n,
+	});
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 20000n,
+		qty: 40000n,
+	});
+
+	const order = await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "BUY",
+		type: "MARKET",
+		symbol: "BTC_USD",
+		price: null,
+		qty: 50000n,
+	});
+
+	expect(order).toMatchObject({
+		status: "FILLED",
+		filledQty: 50000n,
+		averagePrice: 18000n,
+	});
+	expect(getUserBalance("2")).toMatchObject({
+		USD: { available: 910000n, locked: 0n },
+		BTC: { available: 1050000n, locked: 0n },
+	});
+});
