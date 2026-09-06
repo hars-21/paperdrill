@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import type { OrderRecord, UserBalance, UserTrade } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
+import { useBalance } from "@/hooks/use-balance";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
@@ -205,13 +206,12 @@ function Pagination({
 }
 
 export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProps) {
-	const { user, verified } = useAuth();
+	const { authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [tab, setTab] = useState<Tab>("open");
 	const [openOrders, setOpenOrders] = useState<OrderRecord[]>([]);
 	const [orders, setOrders] = useState<OrderRecord[]>([]);
 	const [trades, setTrades] = useState<UserTrade[]>([]);
-	const [balances, setBalances] = useState<UserBalance>({});
 	const [fetching, setFetching] = useState(true);
 	const [cancelling, setCancelling] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
@@ -223,24 +223,23 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	const [sortField, setSortField] = useState<SortField>("time");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 	const [page, setPage] = useState(1);
+	const {
+		balances,
+		loading: balanceLoading,
+		error: balanceError,
+	} = useBalance({ enabled: authenticated });
 
 	const fetchData = useCallback(async () => {
 		setFetching(true);
 		try {
-			const [open, orderHistory, tradeHistory, balance] = await Promise.all([
+			const [open, orderHistory, tradeHistory] = await Promise.all([
 				api.getOpenOrders(),
 				api.getOrders({ limit: 100 }),
 				api.getTradeHistory(100),
-				api.getBalance(),
 			]);
-			setOpenOrders(
-				open.filter(
-					(order, index, list) => index === list.findIndex((item) => item.id === order.id),
-				),
-			);
+			setOpenOrders(open);
 			setOrders(orderHistory);
 			setTrades(tradeHistory);
-			setBalances(balance);
 		} catch (error) {
 			console.error("Failed to load account data:", error);
 			toast.error("Failed to load account data");
@@ -250,8 +249,8 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	}, []);
 
 	useEffect(() => {
-		if (user && verified) fetchData();
-	}, [user, verified, refreshKey, fetchData]);
+		if (authenticated) fetchData();
+	}, [authenticated, refreshKey, fetchData]);
 
 	useEffect(() => {
 		setPage(1);
@@ -357,6 +356,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 	};
 
 	const handleCancel = async (orderId: string) => {
+		if (!verified) return;
 		setCancelling(orderId);
 		try {
 			await api.cancelOrder(orderId);
@@ -384,7 +384,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 		tab === "open" ? filteredOpenOrders : tab === "orders" ? filteredOrders : filteredTrades;
 	const visibleData = activeData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-	if (!user) {
+	if (!authenticated) {
 		return (
 			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
 				Please&nbsp;
@@ -394,17 +394,6 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 				&nbsp;or&nbsp;
 				<Link to="/signup" className="font-medium text-primary">
 					sign up
-				</Link>
-				&nbsp;to view account data.
-			</div>
-		);
-	}
-
-	if (!verified) {
-		return (
-			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
-				<Link to="/verify-email" className="font-medium text-primary">
-					Verify your email
 				</Link>
 				&nbsp;to view account data.
 			</div>
@@ -569,7 +558,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 			</div>
 
 			<div className="min-h-0 flex-1 overflow-auto">
-				{loading || fetching ? (
+				{loading || fetching || (tab === "balance" && balanceLoading) ? (
 					<TableLoading
 						columns={tab === "balance" ? 4 : tab === "trades" ? 7 : tab === "open" ? 10 : 9}
 					/>
@@ -595,6 +584,7 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 						marketFor={marketFor}
 						open={tab === "open"}
 						cancelling={cancelling}
+						canCancel={verified}
 						onCancel={handleCancel}
 						sortField={sortField}
 						sortDirection={sortDirection}
@@ -615,6 +605,7 @@ function OrderTable({
 	marketFor,
 	open,
 	cancelling,
+	canCancel,
 	onCancel,
 	sortField,
 	sortDirection,
@@ -624,6 +615,7 @@ function OrderTable({
 	marketFor: (symbol: string) => MarketLookup;
 	open: boolean;
 	cancelling: string | null;
+	canCancel: boolean;
 	onCancel: (orderId: string) => void;
 	sortField: SortField;
 	sortDirection: SortDirection;
@@ -722,7 +714,7 @@ function OrderTable({
 										type="button"
 										variant="ghost"
 										size="xs"
-										disabled={cancelling === order.id}
+										disabled={!canCancel || cancelling === order.id}
 										onClick={() => onCancel(order.id)}
 										className="text-medium-emphasis hover:bg-red-bg/40 hover:text-red-text"
 									>

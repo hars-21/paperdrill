@@ -13,12 +13,22 @@ export function useTicker(symbol: string) {
 		let active = true;
 		setTicker(null);
 		setError(null);
+		setLoading(true);
+
+		const unsubscribe = wsManager.subscribe(`ticker:${symbol}`, (msg: unknown) => {
+			if (!active) return;
+			const data = msg as Ticker;
+			if (!data?.symbol) return;
+			setTicker((prev) => (prev && prev.symbol === data.symbol ? { ...prev, ...data } : data));
+			setError(null);
+			setLoading(false);
+		});
 
 		api
 			.getTicker(symbol)
 			.then((data) => {
 				if (!active) return;
-				setTicker(data);
+				if (data) setTicker(data);
 			})
 			.catch((err) => {
 				if (!active) return;
@@ -27,12 +37,6 @@ export function useTicker(symbol: string) {
 			.finally(() => {
 				if (active) setLoading(false);
 			});
-
-		const unsubscribe = wsManager.subscribe(`ticker:${symbol}`, (msg: unknown) => {
-			const data = msg as Ticker;
-			if (!data?.symbol) return;
-			setTicker((prev) => (prev && prev.symbol === data.symbol ? { ...prev, ...data } : data));
-		});
 
 		return () => {
 			active = false;
@@ -51,9 +55,19 @@ export function useTickers() {
 
 	useEffect(() => {
 		let active = true;
-		let unsubs: (() => void)[] = [];
-
 		setLoading(true);
+		setError(null);
+
+		const unsubs = markets.map((market) =>
+			wsManager.subscribe(`ticker:${market.symbol}`, (msg: unknown) => {
+				if (!active) return;
+				const data = msg as Ticker;
+				if (!data?.symbol) return;
+				setTickers((prev) => ({ ...prev, [data.symbol]: data }));
+				setError(null);
+				setLoading(false);
+			}),
+		);
 
 		api
 			.getAllTickers()
@@ -63,15 +77,7 @@ export function useTickers() {
 				for (const t of data) {
 					if (t?.symbol) map[t.symbol] = t;
 				}
-				setTickers(map);
-
-				unsubs = markets.map((m) =>
-					wsManager.subscribe(`ticker:${m.symbol}`, (msg: unknown) => {
-						const data = msg as Ticker;
-						if (!data?.symbol) return;
-						setTickers((prev) => ({ ...prev, [data.symbol]: data }));
-					}),
-				);
+				setTickers((current) => ({ ...map, ...current }));
 			})
 			.catch((err) => {
 				if (!active) return;

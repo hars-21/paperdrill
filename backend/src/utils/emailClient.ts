@@ -6,7 +6,7 @@ import { emailVerificationTemplate } from "../templates/email-verification";
 const resend = new Resend(config.resend.apiKey);
 
 export async function sendVerificationEmail(name: string, email: string, token: string) {
-	const verificationUrl = `https://paperdrill.dev/verify-email?token=${token}`;
+	const verificationUrl = `${config.app.url}/verify-email?token=${token}`;
 	const html = emailVerificationTemplate(name, verificationUrl);
 	const { error } = await resend.emails.send({
 		from: config.resend.from,

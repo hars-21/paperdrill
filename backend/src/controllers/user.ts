@@ -8,6 +8,7 @@ import { sendValidationError } from "../utils/validation";
 import { marketStore } from "../store/market";
 import { calculatePortfolio, type Balance } from "../utils/portfolio";
 import { getReferencePrices } from "../utils/referencePrice";
+import { config } from "../config";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
@@ -30,7 +31,10 @@ export async function getUserData(req: Request, res: Response) {
 		});
 
 		if (!user) {
-			res.status(400).json({ error: "User not found" });
+			res
+				.clearCookie("token", config.cookie)
+				.status(401)
+				.json({ error: "Authentication required" });
 			return;
 		}
 

@@ -12,9 +12,21 @@ import { orderLimiter } from "../middleware/rateLimit";
 
 export const orderRouter = Router();
 
-orderRouter.get("/", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOrders));
-orderRouter.get("/open", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOpenOrders));
-orderRouter.get("/:orderId", requireAccess({ scopes: ["ORDER_READ"] }), asyncHandler(getOrderById));
+orderRouter.get(
+	"/",
+	requireAccess({ scopes: ["ORDER_READ"], allowUnverified: true }),
+	asyncHandler(getOrders),
+);
+orderRouter.get(
+	"/open",
+	requireAccess({ scopes: ["ORDER_READ"], allowUnverified: true }),
+	asyncHandler(getOpenOrders),
+);
+orderRouter.get(
+	"/:orderId",
+	requireAccess({ scopes: ["ORDER_READ"], allowUnverified: true }),
+	asyncHandler(getOrderById),
+);
 orderRouter.post(
 	"/",
 	requireAccess({ scopes: ["ORDER_CREATE"] }),

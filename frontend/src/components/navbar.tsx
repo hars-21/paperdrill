@@ -121,7 +121,7 @@ export function Navbar() {
 										<>
 											<SheetClose asChild>
 												<Link
-													to={verified ? "/dashboard" : "/verify-email"}
+													to="/dashboard"
 													className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-l2 transition-colors"
 												>
 													<Avatar className="size-8">

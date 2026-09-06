@@ -4,18 +4,17 @@ import { useAuth } from "@/context/AuthContext";
 import Loader from "@/components/ui/loader";
 
 export function Protected({ children }: { children: ReactNode }) {
-	const { user, verified, loading } = useAuth();
+	const { authenticated, loading } = useAuth();
 
 	if (loading) return <Loader />;
-	if (!user) return <Navigate to="/login" replace />;
-	if (!verified) return <Navigate to="/verify-email" replace />;
+	if (!authenticated) return <Navigate to="/login" replace />;
 	return <>{children}</>;
 }
 
 export function PublicOnly({ children }: { children: ReactNode }) {
-	const { user, verified, loading } = useAuth();
+	const { authenticated, loading } = useAuth();
 
 	if (loading) return <Loader />;
-	if (user) return <Navigate to={verified ? "/dashboard" : "/verify-email"} replace />;
+	if (authenticated) return <Navigate to="/dashboard" replace />;
 	return <>{children}</>;
 }

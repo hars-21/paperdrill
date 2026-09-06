@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import type { UserBalance } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useMarket } from "@/context/MarketContext";
+import { useBalance } from "@/hooks/use-balance";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatQty } from "@/utils/format";
@@ -49,10 +49,13 @@ export function TradeForm({
 	const [quantity, setQuantity] = useState("");
 	const [percent, setPercent] = useState(0);
 	const [submitting, setSubmitting] = useState(false);
-	const [balance, setBalance] = useState<UserBalance>({});
-	const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
 	const { authenticated, verified, loading: authLoading } = useAuth();
 	const canTrade = authenticated && verified;
+	const {
+		balances: balance,
+		loading: balanceLoading,
+		refresh: refreshBalance,
+	} = useBalance({ enabled: authenticated });
 	const market = useMarket(symbol);
 
 	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;
@@ -61,8 +64,8 @@ export function TradeForm({
 	const qtyPrecision = market?.qtyPrecision ?? 4;
 	const priceStep = 10 ** -pricePrecision;
 	const qtyStep = 10 ** -qtyPrecision;
-	const availableQuote = canTrade ? Number(balance[quote]?.available ?? 0) : 0;
-	const availableBase = canTrade ? Number(balance[base]?.available ?? 0) : 0;
+	const availableQuote = authenticated ? Number(balance[quote]?.available ?? 0) : 0;
+	const availableBase = authenticated ? Number(balance[base]?.available ?? 0) : 0;
 	const effectivePrice = orderType === "LIMIT" ? Number(price) : Number(lastPrice);
 
 	const midPrice = useMemo(() => {
@@ -96,20 +99,6 @@ export function TradeForm({
 		orderType === "MARKET" ||
 		maxQuantity <= 0 ||
 		(side === "BUY" && !isPositive(effectivePrice));
-
-	useEffect(() => {
-		if (!canTrade) {
-			setBalance({});
-			return;
-		}
-		api
-			.getBalance()
-			.then(setBalance)
-			.catch((error) => {
-				console.error("Failed to fetch balance:", error);
-				toast.error("Failed to fetch balance");
-			});
-	}, [canTrade, balanceRefreshKey]);
 
 	useEffect(() => {
 		setPrice(formatPrice(lastPrice ?? "", pricePrecision));
@@ -186,7 +175,7 @@ export function TradeForm({
 			toast.success(statusMessage);
 			setQuantity("");
 			setPercent(0);
-			setBalanceRefreshKey((key) => key + 1);
+			refreshBalance();
 			onOrderPlaced?.();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Order failed");
@@ -195,7 +184,11 @@ export function TradeForm({
 		}
 	};
 
-	if (loading || authLoading) {
+	if (
+		loading ||
+		authLoading ||
+		(authenticated && balanceLoading && Object.keys(balance).length === 0)
+	) {
 		return <TradeFormSkeleton showSecondaryAction={!authenticated} />;
 	}
 
@@ -262,7 +255,7 @@ export function TradeForm({
 				<div className="flex items-center justify-between text-xs">
 					<span className="text-medium-emphasis">Balance</span>
 					<span className="font-medium text-high-emphasis">
-						{canTrade ? `${displayBalance} ${balanceAsset}` : "—"}
+						{authenticated ? `${displayBalance} ${balanceAsset}` : "—"}
 					</span>
 				</div>
 

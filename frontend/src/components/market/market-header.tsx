@@ -36,7 +36,7 @@ export function MarketHeader({ symbol, markets, tickers }: MarketHeaderProps) {
 	}, [ticker?.lastPrice]);
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border/40 bg-card px-3 py-3 select-none sm:px-5">
+		<div className="flex flex-wrap items-center gap-4 rounded-lg border border-border/40 bg-card px-3 py-3 select-none sm:px-5">
 			<div className="flex w-full min-w-0 items-center gap-4 sm:gap-6">
 				<MarketDropdown
 					symbol={symbol}
@@ -46,56 +46,50 @@ export function MarketHeader({ symbol, markets, tickers }: MarketHeaderProps) {
 					tickers={tickers}
 				/>
 
-				{ticker ? (
-					<>
-						<div className="hidden sm:block h-8 w-px bg-border" />
-						<div className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex">
-							<div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs xl:gap-x-8">
-								<div>
-									<span
-										className={cn(
-											"text-lg font-bold",
-											priceDirection === "up" ? "text-green-text" : "text-red-text",
-										)}
-									>
-										{formatPrice(ticker.lastPrice)}
-									</span>
-								</div>
-								<div className="flex flex-col gap-1">
-									<span className="text-muted-foreground text-[10px]">24h Change</span>
-									<span
-										className={cn(
-											"font-medium",
-											currentChange.isUp ? "text-green-text" : "text-red-text",
-										)}
-									>
-										{formatPrice(ticker.priceChange)} {currentChange.text}
-									</span>
-								</div>
-								<div className="flex flex-col gap-1">
-									<span className="text-muted-foreground text-[10px]">24h High</span>
-									<span className="font-medium text-high-emphasis">{formatPrice(ticker.high)}</span>
-								</div>
-								<div className="flex flex-col gap-1">
-									<span className="text-muted-foreground text-[10px]">24h Low</span>
-									<span className="font-medium text-high-emphasis">{formatPrice(ticker.low)}</span>
-								</div>
-								<div className="flex flex-col gap-1">
-									<span className="text-muted-foreground text-[10px]">24h Vol ({base})</span>
-									<span className="font-medium text-high-emphasis">
-										{formatQty(ticker.volume, 2)}
-									</span>
-								</div>
-								<div className="flex flex-col gap-1 text-[10px]">
-									<span className="text-muted-foreground">24h Vol ({quote})</span>
-									<span className="font-medium text-high-emphasis">
-										{formatQty(ticker.quoteVolume, 2)}
-									</span>
-								</div>
-							</div>
+				<div className="hidden sm:block h-8 w-px bg-border" />
+				<div className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex">
+					<div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs xl:gap-x-8">
+						<div>
+							<span
+								className={cn(
+									"text-lg font-bold",
+									priceDirection === "up" ? "text-green-text" : "text-red-text",
+								)}
+							>
+								{formatPrice(ticker?.lastPrice)}
+							</span>
 						</div>
-					</>
-				) : null}
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground text-[10px]">24h Change</span>
+							<span
+								className={cn(
+									"font-medium",
+									currentChange.isUp ? "text-green-text" : "text-red-text",
+								)}
+							>
+								{formatPrice(ticker?.priceChange)} {currentChange.text}
+							</span>
+						</div>
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground text-[10px]">24h High</span>
+							<span className="font-medium text-high-emphasis">{formatPrice(ticker?.high)}</span>
+						</div>
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground text-[10px]">24h Low</span>
+							<span className="font-medium text-high-emphasis">{formatPrice(ticker?.low)}</span>
+						</div>
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground text-[10px]">24h Vol ({base})</span>
+							<span className="font-medium text-high-emphasis">{formatQty(ticker?.volume, 2)}</span>
+						</div>
+						<div className="flex flex-col gap-1 text-[10px]">
+							<span className="text-muted-foreground">24h Vol ({quote})</span>
+							<span className="font-medium text-high-emphasis">
+								{formatQty(ticker?.quoteVolume, 2)}
+							</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

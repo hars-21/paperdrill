@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check, Copy, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardPage } from "@/components/dashboard-page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 
 export function ProfilePage() {
-	const { user, setUser } = useAuth();
+	const { user, verified, setUser } = useAuth();
 	const navigate = useNavigate();
 	const [copied, setCopied] = useState(false);
 
@@ -54,9 +54,18 @@ export function ProfilePage() {
 						</Avatar>
 						<h2 className="mt-4 text-xl font-semibold text-high-emphasis">{user.name}</h2>
 						<p className="mt-1 break-all text-sm text-medium-emphasis">{user.email}</p>
-						<p className="mt-4 inline-flex items-center gap-1.5 text-sm text-green-text">
-							<ShieldCheck className="size-4" /> Email verified
-						</p>
+						{verified ? (
+							<p className="mt-4 inline-flex items-center gap-1.5 text-sm text-green-text">
+								<ShieldCheck className="size-4" /> Email verified
+							</p>
+						) : (
+							<Link
+								to="/verify-email"
+								className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+							>
+								<Mail className="size-4" /> Verify email
+							</Link>
+						)}
 					</CardContent>
 				</Card>
 

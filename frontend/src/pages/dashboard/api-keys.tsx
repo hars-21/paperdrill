@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardPage } from "@/components/dashboard-page";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/context/AuthContext";
 import {
 	Table,
 	TableBody,
@@ -35,6 +37,7 @@ const scopeLabels: Record<ApiKeyScope, string> = {
 };
 
 export function DashboardApiKeysPage() {
+	const { verified } = useAuth();
 	const [keys, setKeys] = useState<ApiKeyRecord[] | null>(null);
 	const [showForm, setShowForm] = useState(false);
 	const [label, setLabel] = useState("");
@@ -67,7 +70,7 @@ export function DashboardApiKeysPage() {
 
 	const handleCreate = async (event: React.FormEvent) => {
 		event.preventDefault();
-		if (!label.trim() || scopes.length === 0) return;
+		if (!verified || !label.trim() || scopes.length === 0) return;
 
 		setCreating(true);
 		try {
@@ -86,6 +89,8 @@ export function DashboardApiKeysPage() {
 	};
 
 	const handleDelete = async (key: ApiKeyRecord) => {
+		if (!verified) return;
+
 		const confirmed = window.confirm(
 			`Delete the API key “${key.label}”? Applications using it will lose access immediately.`,
 		);
@@ -119,10 +124,16 @@ export function DashboardApiKeysPage() {
 			title="API keys"
 			description="Create scoped credentials for bots and other programmatic clients."
 			action={
-				<Button size="sm" onClick={() => setShowForm((current) => !current)}>
-					{showForm ? <X /> : <Plus />}
-					{showForm ? "Cancel" : "Create API key"}
-				</Button>
+				verified ? (
+					<Button size="sm" onClick={() => setShowForm((current) => !current)}>
+						{showForm ? <X /> : <Plus />}
+						{showForm ? "Cancel" : "Create API key"}
+					</Button>
+				) : (
+					<Button asChild size="sm">
+						<Link to="/verify-email">Verify email to create keys</Link>
+					</Button>
+				)
 			}
 		>
 			{createdKey && (
@@ -158,7 +169,7 @@ export function DashboardApiKeysPage() {
 				</Card>
 			)}
 
-			{showForm && (
+			{showForm && verified && (
 				<Card className="mb-6 gap-0 border-border/60 py-0 shadow-none">
 					<CardHeader className="border-b border-border/40 px-5 py-4">
 						<CardTitle className="text-base">Create API key</CardTitle>
@@ -265,9 +276,10 @@ export function DashboardApiKeysPage() {
 												<Button
 													variant="ghost"
 													size="icon-sm"
-													disabled={deleting === key.id}
+													disabled={!verified || deleting === key.id}
 													onClick={() => handleDelete(key)}
 													aria-label={`Delete ${key.label}`}
+													title={verified ? undefined : "Verify your email to delete API keys"}
 													className="hover:text-red-text"
 												>
 													<Trash2 />

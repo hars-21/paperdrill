@@ -114,12 +114,17 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 	}
 
 	try {
-		const payload = jwt.verify(token, config.auth.jwtSecret) as TokenPayload;
+		const payload = jwt.verify(token, config.auth.jwtSecret);
+		if (typeof payload === "string" || typeof payload.id !== "string") {
+			throw new Error("Invalid token payload");
+		}
+
 		req.principal = { type: "session", userId: payload.id };
 		next();
 	} catch (e) {
 		logger.warn("Auth token verification failed", { error: (e as Error).message });
-		res.status(401).clearCookie("token", config.cookie).json({ error: "Invalid auth token" });
+		res.clearCookie("token", config.cookie);
+		next();
 	}
 }
 
@@ -147,6 +152,7 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 				});
 
 				if (!user) {
+					if (principal.type === "session") res.clearCookie("token", config.cookie);
 					res.status(401).json({ error: "Authentication required" });
 					return;
 				}

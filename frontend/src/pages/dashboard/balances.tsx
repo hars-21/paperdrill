@@ -12,39 +12,31 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { useMarkets } from "@/context/MarketContext";
+import { useBalance } from "@/hooks/use-balance";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { Portfolio, PortfolioPosition, UserBalance } from "@/types";
+import type { Portfolio, PortfolioPosition } from "@/types";
 import { formatPrice, formatQty } from "@/utils/format";
 
 type BalanceRow = PortfolioPosition & { precision: number };
 
 export function DashboardBalancesPage() {
 	const { markets } = useMarkets();
-	const [balances, setBalances] = useState<UserBalance | null>(null);
+	const { balances, loading: balanceLoading } = useBalance();
 	const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [portfolioLoading, setPortfolioLoading] = useState(true);
 
 	useEffect(() => {
-		Promise.allSettled([api.getBalance(), api.getPortfolio()]).then(
-			([balanceResult, portfolioResult]) => {
-				if (balanceResult.status === "fulfilled") {
-					setBalances(balanceResult.value);
-				} else {
-					setBalances({});
-					toast.error("Failed to load balances");
-				}
-
-				if (portfolioResult.status === "fulfilled") {
-					setPortfolio(portfolioResult.value);
-				} else {
-					toast.error("Portfolio valuation is temporarily unavailable");
-				}
-
-				setLoading(false);
-			},
-		);
+		api
+			.getPortfolio()
+			.then(setPortfolio)
+			.catch(() => {
+				toast.error("Portfolio valuation is temporarily unavailable");
+			})
+			.finally(() => setPortfolioLoading(false));
 	}, []);
+
+	const loading = balanceLoading || portfolioLoading;
 
 	const precisionFor = (asset: string) => {
 		const market = markets.find((item) => item.baseAsset === asset || item.quoteAsset === asset);

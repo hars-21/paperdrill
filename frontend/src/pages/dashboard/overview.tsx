@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
+import { useBalance } from "@/hooks/use-balance";
 import { api } from "@/lib/api";
-import type { OrderRecord, Portfolio, UserBalance, UserTrade } from "@/types";
+import type { OrderRecord, Portfolio, UserTrade } from "@/types";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 
 type OverviewData = {
-	balances: UserBalance;
 	openOrders: OrderRecord[];
 	trades: UserTrade[];
 	portfolio: Portfolio | null;
@@ -23,21 +23,22 @@ type OverviewData = {
 export function DashboardOverviewPage() {
 	const { user } = useAuth();
 	const { markets } = useMarkets();
+	const { balances, loading: balanceLoading } = useBalance();
 	const [data, setData] = useState<OverviewData | null>(null);
 
 	useEffect(() => {
-		Promise.all([api.getBalance(), api.getOpenOrders(), api.getTradeHistory(5), api.getPortfolio()])
-			.then(([balances, openOrders, trades, portfolio]) => {
-				setData({ balances, openOrders, trades, portfolio });
+		Promise.all([api.getOpenOrders(), api.getTradeHistory(5), api.getPortfolio()])
+			.then(([openOrders, trades, portfolio]) => {
+				setData({ openOrders, trades, portfolio });
 			})
 			.catch((error) => {
 				console.error("Failed to load dashboard:", error);
-				setData({ balances: {}, openOrders: [], trades: [], portfolio: null });
+				setData({ openOrders: [], trades: [], portfolio: null });
 				toast.error("Failed to load dashboard overview");
 			});
 	}, []);
 
-	const balanceEntries = useMemo(() => Object.entries(data?.balances ?? {}), [data?.balances]);
+	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
 	const portfolio = data?.portfolio;
 	const pnl = Number(portfolio?.pnl ?? 0);
 	const pnlClassName = pnl >= 0 ? "text-green-text" : "text-red-text";
@@ -105,7 +106,7 @@ export function DashboardOverviewPage() {
 						<CardTitle className="text-base">Balances</CardTitle>
 					</CardHeader>
 					<CardContent className="px-0">
-						{!data ? (
+						{!data || balanceLoading ? (
 							<div className="space-y-4 p-5">
 								<Skeleton className="h-8" />
 								<Skeleton className="h-8" />
