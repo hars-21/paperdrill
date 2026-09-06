@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { fromBigInt } from "../src/utils/convert";
+import { formatPortfolio } from "../src/utils/formatter";
 import { calculatePortfolio } from "../src/utils/portfolio";
 
 const markets = [
@@ -48,8 +48,72 @@ test("non-zero assets require a reference price", () => {
 	).toThrow("Reference price unavailable for BTC_USD");
 });
 
-test("formats negative fixed-point values", () => {
-	expect(fromBigInt(-1n, 2)).toBe("-0.01");
-	expect(fromBigInt(-100n, 2)).toBe("-1.00");
-	expect(fromBigInt(-100n, 0)).toBe("-100");
+test("portfolio values each asset using its market quantity precision", () => {
+	const portfolio = calculatePortfolio(
+		{
+			USD: { available: 100000n, locked: 0n },
+			BTC: { available: 10000n, locked: 0n },
+			ETH: { available: 500n, locked: 0n },
+		},
+		[
+			...markets,
+			{
+				symbol: "ETH_USD",
+				baseAsset: "ETH",
+				quoteAsset: "USD",
+				pricePrecision: 2,
+				qtyPrecision: 3,
+			},
+		],
+		new Map([
+			["BTC_USD", { price: 2000000n, timestamp: 10 }],
+			["ETH_USD", { price: 100000n, timestamp: 20 }],
+		]),
+	);
+
+	expect(portfolio.equity).toBe(2150000n);
+	expect(portfolio.positions.find((position) => position.asset === "BTC")?.value).toBe(
+		2000000n,
+	);
+	expect(portfolio.positions.find((position) => position.asset === "ETH")?.value).toBe(50000n);
+});
+
+test("portfolio rejects market metadata that cannot produce one quote valuation", () => {
+	expect(() =>
+		calculatePortfolio(
+			{ USD: { available: 100000n, locked: 0n } },
+			[
+				...markets,
+				{
+					symbol: "ETH_EUR",
+					baseAsset: "ETH",
+					quoteAsset: "EUR",
+					pricePrecision: 2,
+					qtyPrecision: 3,
+				},
+			],
+			new Map(),
+		),
+	).toThrow("PnL requires markets to share one quote asset");
+});
+
+test("formatted portfolio reports losses with a signed percentage", () => {
+	const result = formatPortfolio(
+		{
+			quoteAsset: "USD",
+			quotePrecision: 2,
+			equity: 2500000n,
+			positions: [],
+		},
+		3000000n,
+		new Date("2026-01-01T00:00:00.000Z"),
+	);
+
+	expect(result).toMatchObject({
+		equity: "25000.00",
+		baselineEquity: "30000.00",
+		pnl: "-5000.00",
+		pnlPercent: "-16.66",
+		baselineAt: "2026-01-01T00:00:00.000Z",
+	});
 });

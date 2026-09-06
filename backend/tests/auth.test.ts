@@ -1,6 +1,6 @@
 import { expect, test, mock } from "bun:test";
 import jwt from "jsonwebtoken";
-import { createToken, authenticate } from "../src/middleware/auth";
+import { authenticate, createToken, hashSecret, secretsMatch } from "../src/middleware/auth";
 import { config } from "../src/config";
 
 function mockReq(headers: Record<string, string> = {}) {
@@ -19,10 +19,12 @@ function mockRes() {
 	return res;
 }
 
-test("createToken returns a valid JWT", () => {
-	const token = createToken({ id: "user-1" });
-	expect(typeof token).toBe("string");
-	expect(token.split(".")).toHaveLength(3);
+test("API key secrets only match the stored hash", () => {
+	const hash = hashSecret("correct-secret");
+
+	expect(secretsMatch("correct-secret", hash)).toBe(true);
+	expect(secretsMatch("wrong-secret", hash)).toBe(false);
+	expect(secretsMatch("correct-secret", "malformed-hash")).toBe(false);
 });
 
 test("authenticate passes through anonymously when no credentials", async () => {
