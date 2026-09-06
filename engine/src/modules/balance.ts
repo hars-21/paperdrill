@@ -85,9 +85,28 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 			if (price == null) throw new Error("LIMIT order must have price");
 			lockAmount = (price * qty) / scale;
 		} else {
-			const bestAsk = market.bestAsk;
-			if (bestAsk == null) throw new Error("No liquidity");
-			lockAmount = (((bestAsk * qty) / scale) * 11n) / 10n;
+			if (market.bestAsk == null) throw new Error("No liquidity");
+
+			let remainingQty = qty;
+			lockAmount = 0n;
+
+			const askPrices = [...market.asks.keys()].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+			for (const askPrice of askPrices) {
+				const level = market.asks.get(askPrice);
+				if (!level) continue;
+
+				for (const restingOrder of level.orders) {
+					const availableQty = restingOrder.qty - restingOrder.filledQty;
+					const fillQty = remainingQty < availableQty ? remainingQty : availableQty;
+
+					lockAmount += (askPrice * fillQty) / scale;
+					remainingQty -= fillQty;
+
+					if (remainingQty === 0n) break;
+				}
+
+				if (remainingQty === 0n) break;
+			}
 		}
 
 		if (!quote || quote.available < lockAmount) {
