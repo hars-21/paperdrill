@@ -165,7 +165,7 @@ export async function getTickers(_req: Request, res: Response) {
 		const tickers: Record<string, unknown>[] = [];
 
 		await Promise.all(
-			Object.keys(marketStore).map(async (symbol) => {
+			marketStore.keys().map(async (symbol) => {
 				const raw = await cacheClient.get(`market:ticker:${symbol}`);
 				if (raw) {
 					tickers.push(JSON.parse(raw));

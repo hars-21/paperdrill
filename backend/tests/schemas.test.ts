@@ -7,6 +7,7 @@ test("account credentials reject malformed or missing identity fields", () => {
 		{ email: "not-an-email", name: "alice", password: "secret123" },
 		{ email: "alice@test.com", name: " ", password: "secret123" },
 		{ email: "alice@test.com", name: "alice", password: "" },
+		{ email: "alice@test.com", name: "a".repeat(41), password: "secret123" },
 	];
 
 	for (const input of invalidSignups) {

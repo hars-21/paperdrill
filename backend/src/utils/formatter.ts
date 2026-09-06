@@ -19,7 +19,12 @@ export function formatOrder(order: Record<string, unknown>) {
 	const createdAt = order.createdAt;
 
 	const formatted = {
-		...order,
+		id: order.id,
+		userId: order.userId,
+		symbol: order.symbol,
+		side: order.side,
+		type: order.type,
+		status: order.status,
 		price: fmt(order.price, m.pricePrecision),
 		qty: fmt(order.qty, m.qtyPrecision),
 		filledQty: fmt(order.filledQty, m.qtyPrecision),

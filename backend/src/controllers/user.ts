@@ -114,6 +114,14 @@ export async function getPortfolio(req: Request, res: Response) {
 
 	try {
 		const balances = engineResponse.data as Record<string, Balance>;
+
+		for (const [key, value] of Object.entries(balances)) {
+			balances[key] = {
+				available: BigInt(value.available.toString()),
+				locked: BigInt(value.locked.toString()),
+			};
+		}
+
 		const markets = [...marketStore.values()];
 		const prices = await getReferencePrices(markets);
 		const portfolio = calculatePortfolio(balances, markets, prices);

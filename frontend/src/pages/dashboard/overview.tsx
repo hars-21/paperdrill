@@ -41,7 +41,7 @@ export function DashboardOverviewPage() {
 	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
 	const portfolio = data?.portfolio;
 	const pnl = Number(portfolio?.pnl ?? 0);
-	const pnlClassName = pnl >= 0 ? "text-green-text" : "text-red-text";
+	const pnlClassName = pnl >= 0 ? "text-green-text!" : "text-red-text!";
 
 	const precisionFor = (asset: string) => {
 		const market = markets.find((item) => item.baseAsset === asset || item.quoteAsset === asset);
@@ -70,7 +70,7 @@ export function DashboardOverviewPage() {
 							? null
 							: portfolio
 								? `${formatPrice(portfolio.equity)} ${portfolio.quoteAsset}`
-								: "Unavailable"
+								: "-"
 					}
 				/>
 				<Metric
@@ -81,20 +81,14 @@ export function DashboardOverviewPage() {
 							? null
 							: portfolio
 								? `${pnl > 0 ? "+" : ""}${formatPrice(portfolio.pnl)} ${portfolio.quoteAsset}`
-								: "Unavailable"
+								: "-"
 					}
 					valueClassName={pnlClassName}
 				/>
 				<Metric
 					className="border-b sm:border-r sm:border-b-0"
 					label="PnL return"
-					value={
-						!data
-							? null
-							: portfolio
-								? `${pnl > 0 ? "+" : ""}${portfolio.pnlPercent}%`
-								: "Unavailable"
-					}
+					value={!data ? null : portfolio ? `${pnl > 0 ? "+" : ""}${portfolio.pnlPercent}%` : "-"}
 					valueClassName={pnlClassName}
 				/>
 				<Metric label="Open orders" value={data ? String(data.openOrders.length) : null} />

@@ -55,6 +55,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 									placeholder="John Doe"
 									value={name}
 									onChange={(event) => setName(event.target.value)}
+									maxLength={40}
 									autoComplete="name"
 									required
 								/>
