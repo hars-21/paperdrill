@@ -10,6 +10,7 @@ import { connectRedis, disconnectRedis } from "./redis";
 import { logger } from "./utils/logger";
 import { prisma } from "./db";
 import { loadMarkets } from "./store/market";
+import { startLeaderboardRefresh, stopLeaderboardRefresh } from "./services/leaderboard";
 
 const { httpServer, wss } = createAppServer();
 
@@ -24,6 +25,7 @@ async function main() {
 
 	listenForEngineresponses().catch((err) => logger.error("Engine listener error", err));
 	listenForOrderbookDepth().catch((err) => logger.error("Orderbook listener error", err));
+	startLeaderboardRefresh();
 
 	httpServer.listen(config.app.port, () => {
 		logger.info(`HTTP + WS server running on port ${config.app.port}`);
@@ -39,6 +41,7 @@ async function gracefulShutdown(signal: string) {
 	}, 10000);
 
 	engineAbortController.abort();
+	stopLeaderboardRefresh();
 
 	try {
 		await new Promise<void>((resolve) => httpServer.close(() => resolve()));

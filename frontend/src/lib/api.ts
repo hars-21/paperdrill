@@ -5,7 +5,9 @@ import type {
 	ApiKeyScope,
 	Candle,
 	CreatedApiKey,
+	LeaderboardResponse,
 	Market,
+	MyLeaderboardResponse,
 	OrderRecord,
 	Portfolio,
 	Ticker,
@@ -137,6 +139,14 @@ export const api = {
 
 	getPortfolio() {
 		return request<Portfolio>("/portfolio");
+	},
+
+	getLeaderboard(limit = 25, offset = 0) {
+		return request<LeaderboardResponse>(`/leaderboard?limit=${limit}&offset=${offset}`);
+	},
+
+	getMyLeaderboardEntry() {
+		return request<MyLeaderboardResponse>("/leaderboard/me");
 	},
 
 	getApiKeys() {

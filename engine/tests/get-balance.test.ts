@@ -2,6 +2,7 @@ import { beforeEach, expect, test } from "bun:test";
 import { getUserBalance, initializeUserBalance } from "../src/modules/balance";
 import { BALANCES } from "../src/store";
 import { resetState, cancelOrder, placeOrder } from "./utils";
+import { getAllBalancesHandler } from "../src/handlers/getAllBalances";
 
 beforeEach(() => {
 	resetState();
@@ -12,6 +13,13 @@ test("reading a new user balance does not initialize funds", () => {
 
 	expect(balance).toEqual({});
 	expect(BALANCES["3"]).toBeUndefined();
+});
+
+test("all-balances snapshot is isolated from later balance changes", async () => {
+	const snapshot = await getAllBalancesHandler();
+	BALANCES["1"]!.USD!.available = 0n;
+
+	expect(snapshot["1"]?.USD?.available).toBe(1000000n);
 });
 
 test("initializes a new user with only the starting asset", () => {

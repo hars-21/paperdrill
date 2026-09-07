@@ -7,6 +7,7 @@ import { getOpenOrdersHandler } from "../handlers/getOpenOrders";
 import { getTradesHandler } from "../handlers/getTrades";
 import { createDepositHandler } from "../handlers/createDeposit";
 import { initializeBalanceHandler } from "../handlers/initializeBalance";
+import { getAllBalancesHandler } from "../handlers/getAllBalances";
 
 type EngineHandler = (payload: Record<string, unknown>) => Promise<unknown>;
 
@@ -15,6 +16,7 @@ const handlers: Record<EngineCommandType, EngineHandler> = {
 	cancel_order: cancelOrderHandler,
 	get_depth: getDepthHandler,
 	get_user_balance: getUserBalanceHandler,
+	get_all_balances: getAllBalancesHandler,
 	get_open_orders: getOpenOrdersHandler,
 	get_trades: getTradesHandler,
 	create_deposit: createDepositHandler,

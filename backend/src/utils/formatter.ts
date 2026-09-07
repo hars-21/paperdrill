@@ -162,6 +162,7 @@ export function formatPortfolio(
 		quotePrecision: number;
 		equity: bigint;
 		positions: PortfolioPosition[];
+		partial?: boolean;
 	},
 	baseline: bigint,
 	baselineAt: Date,
@@ -180,6 +181,7 @@ export function formatPortfolio(
 		pnlPercent: fmt(pnlPercent, 2),
 		baselineAt: baselineAt.toISOString(),
 		asOf: new Date(timestamps.length > 0 ? Math.min(...timestamps) : Date.now()).toISOString(),
+		partial: portfolio.partial ?? false,
 		positions: portfolio.positions.map((position) => ({
 			asset: position.asset,
 			available: fmt(position.available, position.precision),
@@ -188,6 +190,29 @@ export function formatPortfolio(
 			markPrice: fmt(position.markPrice, portfolio.quotePrecision),
 			value: fmt(position.value, portfolio.quotePrecision),
 		})),
+	};
+}
+
+export function formatLeaderboardEntry(
+	entry: {
+		position: number;
+		rank: number;
+		baseline: bigint;
+		equity: bigint;
+		pnl: bigint;
+	},
+	name: string,
+	quotePrecision: number,
+) {
+	const pnlPercent = entry.baseline === 0n ? 0n : (entry.pnl * 10000n) / entry.baseline;
+
+	return {
+		position: entry.position,
+		rank: entry.rank,
+		name,
+		equity: fmt(entry.equity, quotePrecision),
+		pnl: fmt(entry.pnl, quotePrecision),
+		pnlPercent: fmt(pnlPercent, 2),
 	};
 }
 

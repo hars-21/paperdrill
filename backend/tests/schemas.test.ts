@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { signinSchema, signupSchema } from "../src/schema/auth";
 import { orderBodySchema, orderQuerySchema } from "../src/schema/exchange";
+import { leaderboardQuerySchema } from "../src/schema/leaderboard";
 
 test("account credentials reject malformed or missing identity fields", () => {
 	const invalidSignups = [
@@ -15,6 +16,12 @@ test("account credentials reject malformed or missing identity fields", () => {
 	}
 
 	expect(signinSchema.safeParse({ email: "alice@test.com", password: "" }).success).toBe(false);
+});
+
+test("leaderboard pagination applies public query limits", () => {
+	expect(leaderboardQuerySchema.safeParse({ limit: "25", offset: "0" }).success).toBe(true);
+	expect(leaderboardQuerySchema.safeParse({ limit: "101" }).success).toBe(false);
+	expect(leaderboardQuerySchema.safeParse({ offset: "-1" }).success).toBe(false);
 });
 
 test("order input accepts the two supported order shapes", () => {

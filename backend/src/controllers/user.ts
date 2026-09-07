@@ -135,19 +135,13 @@ export async function getPortfolio(req: Request, res: Response) {
 			return;
 		}
 
-		let baseline = user.pnlBaseline;
-		let baselineAt = user.pnlBaselineAt;
-
-		if (baseline == null || baselineAt == null) {
-			baseline = portfolio.equity;
-			baselineAt = new Date();
-			await prisma.user.update({
-				where: { id: userId },
-				data: { pnlBaseline: baseline, pnlBaselineAt: baselineAt },
-			});
+		if (user.pnlBaseline == null || user.pnlBaselineAt == null) {
+			logger.warn("Portfolio requested for user without a baseline", { userId });
+			res.status(503).json({ error: "Portfolio baseline is not configured" });
+			return;
 		}
 
-		res.status(200).json(formatPortfolio(portfolio, baseline, baselineAt));
+		res.status(200).json(formatPortfolio(portfolio, user.pnlBaseline, user.pnlBaselineAt));
 	} catch (error) {
 		logger.error("Failed to calculate portfolio", error);
 		res.status(503).json({ error: "Portfolio valuation is temporarily unavailable" });

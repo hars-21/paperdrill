@@ -38,14 +38,16 @@ test("quote-only portfolio does not require a market price", () => {
 	expect(portfolio.equity).toBe(1000000n);
 });
 
-test("non-zero assets require a reference price", () => {
-	expect(() =>
-		calculatePortfolio(
-			{ BTC: { available: 10000n, locked: 0n } },
-			markets,
-			new Map(),
-		),
-	).toThrow("Reference price unavailable for BTC_USD");
+test("unpriced assets are excluded and marked partial", () => {
+	const portfolio = calculatePortfolio(
+		{ USD: { available: 10000n, locked: 0n }, BTC: { available: 10000n, locked: 0n } },
+		markets,
+		new Map(),
+	);
+
+	expect(portfolio.partial).toBe(true);
+	expect(portfolio.equity).toBe(10000n);
+	expect(portfolio.positions.find((position) => position.asset === "BTC")).toBeUndefined();
 });
 
 test("portfolio values each asset using its market quantity precision", () => {

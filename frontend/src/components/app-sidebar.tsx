@@ -4,6 +4,7 @@ import {
 	Database,
 	KeyRound,
 	LayoutDashboard,
+	Trophy,
 	WalletCards,
 } from "lucide-react";
 import type { ComponentProps } from "react";
@@ -44,6 +45,14 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 				<NavMain items={navigation} />
 				<div className="mt-auto px-2 pb-2">
 					<SidebarMenu>
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Leaderboard" className="h-9 rounded-lg px-2.5">
+								<Link to="/leaderboard">
+									<Trophy />
+									<span>Leaderboard</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Open trading" className="h-9 rounded-lg px-2.5">
 								<Link to="/trade/BTC_USD">

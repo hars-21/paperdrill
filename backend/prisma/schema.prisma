@@ -52,6 +52,24 @@ model User {
   orders        Order[]
   buyFills      Fill[]    @relation("FillBuyer")
   sellFills     Fill[]    @relation("FillSeller")
+  leaderboardEntry LeaderboardEntry?
+}
+
+model LeaderboardEntry {
+  userId   String @id
+  position Int    @unique
+  rank     Int
+  baseline BigInt
+  equity   BigInt
+  pnl      BigInt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LeaderboardState {
+  id         Int      @id
+  quoteAsset String
+  asOf       DateTime
 }
 
 model ApiKey {
@@ -103,6 +121,9 @@ model Fill {
   buyer         User     @relation("FillBuyer", fields: [buyerId], references: [id])
   seller        User     @relation("FillSeller", fields: [sellerId], references: [id])
   market        Market   @relation(fields: [symbol], references: [symbol])
+
+  @@index([buyerId])
+  @@index([sellerId])
 }
 
 model Market {
