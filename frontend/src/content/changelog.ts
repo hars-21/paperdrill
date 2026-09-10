@@ -15,6 +15,19 @@ export const changelog: Changelog = {
 	intro: "Release notes for PaperDrill. New features, fixes and updates land here.",
 	entries: [
 		{
+			version: "0.4.0-beta",
+			date: "2026-09-10",
+			features: [
+				"A global leaderboard ranked by all-time portfolio return with personal standing and pagination.",
+				"Portfolio analytics with total equity, profit and loss, return and asset allocation across current balances.",
+			],
+			fixes: [
+				"Portfolio valuation now uses the latest PaperDrill trade and handles temporarily unpriced assets safely.",
+				"Improved expired-session handling and empty ticker states across account and market views.",
+			],
+			updates: [],
+		},
+		{
 			version: "0.3.0-beta",
 			date: "2026-09-02",
 			features: [

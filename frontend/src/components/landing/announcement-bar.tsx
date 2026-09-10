@@ -16,8 +16,11 @@ const AnnouncementBar = () => {
 				<Rocket className="size-3.5 text-red-text" />
 			</span>
 			<span>
-				<strong>PaperDrill v0.3.0-beta</strong>
-				<span className="hidden sm:inline"> is live with API access, a dashboard and docs.</span>
+				<strong>PaperDrill v0.4.0-beta</strong>
+				<span className="hidden sm:inline">
+					{" "}
+					is live with portfolio analytics and global rankings.
+				</span>
 				<span className="sm:hidden"> is live.</span>{" "}
 				<Link to="/changelog" className="font-medium text-primary hover:underline">
 					What&apos;s new
