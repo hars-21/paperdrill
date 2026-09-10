@@ -8,6 +8,7 @@ PaperDrill runs BTC/USD, ETH/USD, and SOL/USD spot markets with price-time prior
 
 - [Home](https://paperdrill.dev/): Landing page with product overview and live demo UI
 - [Markets](https://paperdrill.dev/markets): Browse live spot markets and 24h stats
+- [Leaderboard](https://paperdrill.dev/leaderboard): Global paper-trading standings ranked by portfolio return
 - [Trading Console](https://paperdrill.dev/trade/BTC_USD): Full trading UI with order book, chart, and order entry
 - [Sign Up](https://paperdrill.dev/signup): Create a free account with simulated starting balances
 

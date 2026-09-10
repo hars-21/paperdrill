@@ -72,6 +72,12 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 			"Browse live BTC/USD, ETH/USD, and SOL/USD spot markets on PaperDrill with real-time order books.",
 		path: "/markets",
 	},
+	"/leaderboard": {
+		title: `Leaderboard | ${SITE.name}`,
+		description:
+			"View PaperDrill's global leaderboard, ranked by all-time portfolio return across live simulated markets.",
+		path: "/leaderboard",
+	},
 	"/login": {
 		title: `Sign In | ${SITE.name}`,
 		description: "Sign in to your PaperDrill account to trade and manage simulated balances.",
