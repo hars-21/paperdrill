@@ -1,5 +1,7 @@
 import { expect, test, mock } from "bun:test";
-import { createToken, authenticate } from "../src/middleware/auth";
+import jwt from "jsonwebtoken";
+import { authenticate, createToken, hashSecret, secretsMatch } from "../src/middleware/auth";
+import { config } from "../src/config";
 
 function mockReq(headers: Record<string, string> = {}) {
 	return {
@@ -17,10 +19,12 @@ function mockRes() {
 	return res;
 }
 
-test("createToken returns a valid JWT", () => {
-	const token = createToken({ id: "user-1" });
-	expect(typeof token).toBe("string");
-	expect(token.split(".")).toHaveLength(3);
+test("API key secrets only match the stored hash", () => {
+	const hash = hashSecret("correct-secret");
+
+	expect(secretsMatch("correct-secret", hash)).toBe(true);
+	expect(secretsMatch("wrong-secret", hash)).toBe(false);
+	expect(secretsMatch("correct-secret", "malformed-hash")).toBe(false);
 });
 
 test("authenticate passes through anonymously when no credentials", async () => {
@@ -34,16 +38,29 @@ test("authenticate passes through anonymously when no credentials", async () => 
 	expect(req.principal).toBeUndefined();
 });
 
-test("authenticate returns 401 for invalid session cookie", async () => {
+test("authenticate clears an invalid session cookie and continues anonymously", async () => {
 	const req = mockReq({ cookie: "token=invalid-token" });
 	const res = mockRes();
 	const next = mock(() => undefined);
 
 	await authenticate(req, res, next);
 
-	expect(res.status).toHaveBeenCalledWith(401);
-	expect(res.json).toHaveBeenCalledWith({ error: "Invalid auth token" });
-	expect(next).not.toHaveBeenCalled();
+	expect(res.clearCookie).toHaveBeenCalledWith("token", expect.any(Object));
+	expect(next).toHaveBeenCalled();
+	expect(req.principal).toBeUndefined();
+});
+
+test("authenticate clears an expired session cookie and continues anonymously", async () => {
+	const token = jwt.sign({ id: "user-1" }, config.auth.jwtSecret, { expiresIn: -1 });
+	const req = mockReq({ cookie: `token=${token}` });
+	const res = mockRes();
+	const next = mock(() => undefined);
+
+	await authenticate(req, res, next);
+
+	expect(res.clearCookie).toHaveBeenCalledWith("token", expect.any(Object));
+	expect(next).toHaveBeenCalled();
+	expect(req.principal).toBeUndefined();
 });
 
 test("authenticate sets session principal for valid cookie", async () => {

@@ -139,10 +139,17 @@ export async function getTicker(req: Request, res: Response) {
 	const { symbol } = parsedParams.data;
 
 	try {
+		const market = marketStore.get(symbol);
+
+		if (!market) {
+			res.status(404).json({ error: "Market not found" });
+			return;
+		}
+
 		const raw = await cacheClient.get(`market:ticker:${symbol}`);
 
 		if (!raw) {
-			res.status(404).json({ error: "Ticker unavailable" });
+			res.status(200).json(formatTicker({ symbol }));
 			return;
 		}
 
@@ -158,18 +165,15 @@ export async function getTickers(_req: Request, res: Response) {
 		const tickers: Record<string, unknown>[] = [];
 
 		await Promise.all(
-			Array.from(marketStore.entries()).map(async ([symbol, _metadata]) => {
+			marketStore.keys().map(async (symbol) => {
 				const raw = await cacheClient.get(`market:ticker:${symbol}`);
 				if (raw) {
 					tickers.push(JSON.parse(raw));
+				} else {
+					tickers.push({ symbol });
 				}
 			}),
 		);
-
-		if (tickers.length === 0) {
-			res.status(404).json({ error: "Tickers unavailable" });
-			return;
-		}
 
 		res.status(200).json(formatTickers(tickers));
 	} catch (err) {

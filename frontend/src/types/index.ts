@@ -18,6 +18,60 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export interface PortfolioPosition {
+	asset: string;
+	available: string;
+	locked: string;
+	total: string;
+	markPrice: string;
+	value: string;
+}
+
+export interface Portfolio {
+	quoteAsset: string;
+	equity: string;
+	baselineEquity: string;
+	pnl: string;
+	pnlPercent: string;
+	baselineAt: string;
+	asOf: string;
+	partial: boolean;
+	positions: PortfolioPosition[];
+}
+
+export interface LeaderboardEntry {
+	position: number;
+	rank: number;
+	name: string;
+	equity: string;
+	pnl: string;
+	pnlPercent: string;
+}
+
+export interface LeaderboardResponse {
+	asOf: string;
+	quoteAsset: string;
+	stale: boolean;
+	entries: LeaderboardEntry[];
+	pagination: {
+		limit: number;
+		offset: number;
+		total: number;
+	};
+}
+
+export type MyLeaderboardResponse =
+	| {
+			eligible: true;
+			asOf: string;
+			quoteAsset: string;
+			entry: LeaderboardEntry;
+	  }
+	| {
+			eligible: false;
+			reason: "EMAIL_NOT_VERIFIED" | "NO_TRADES" | "NOT_CALCULATED";
+	  };
+
 export type ApiKeyScope = "ACCOUNT_READ" | "ORDER_READ" | "ORDER_CREATE" | "ORDER_CANCEL";
 
 export interface ApiKeyRecord {

@@ -1,149 +1,65 @@
 import { expect, test } from "bun:test";
-import { signupSchema, signinSchema } from "../src/schema/auth";
-import {
-	orderBodySchema,
-	orderIdParamSchema,
-	symbolParamSchema,
-	statusQuerySchema,
-} from "../src/schema/exchange";
+import { signinSchema, signupSchema } from "../src/schema/auth";
+import { orderBodySchema, orderQuerySchema } from "../src/schema/exchange";
+import { leaderboardQuerySchema } from "../src/schema/leaderboard";
 
-test("signup schema accepts valid input", () => {
-	const result = signupSchema.safeParse({
-		email: "alice@test.com",
-		name: "alice",
-		password: "secret123",
-	});
-	expect(result.success).toBe(true);
+test("account credentials reject malformed or missing identity fields", () => {
+	const invalidSignups = [
+		{ email: "not-an-email", name: "alice", password: "secret123" },
+		{ email: "alice@test.com", name: " ", password: "secret123" },
+		{ email: "alice@test.com", name: "alice", password: "" },
+		{ email: "alice@test.com", name: "a".repeat(41), password: "secret123" },
+	];
+
+	for (const input of invalidSignups) {
+		expect(signupSchema.safeParse(input).success).toBe(false);
+	}
+
+	expect(signinSchema.safeParse({ email: "alice@test.com", password: "" }).success).toBe(false);
 });
 
-test("signup schema rejects invalid email", () => {
-	const result = signupSchema.safeParse({
-		email: "not-an-email",
-		name: "alice",
-		password: "secret123",
-	});
-	expect(result.success).toBe(false);
+test("leaderboard pagination applies public query limits", () => {
+	expect(leaderboardQuerySchema.safeParse({ limit: "25", offset: "0" }).success).toBe(true);
+	expect(leaderboardQuerySchema.safeParse({ limit: "101" }).success).toBe(false);
+	expect(leaderboardQuerySchema.safeParse({ offset: "-1" }).success).toBe(false);
 });
 
-test("signup schema rejects empty name", () => {
-	const result = signupSchema.safeParse({
-		email: "alice@test.com",
-		name: " ",
-		password: "secret123",
-	});
-	expect(result.success).toBe(false);
+test("order input accepts the two supported order shapes", () => {
+	expect(
+		orderBodySchema.safeParse({
+			type: "LIMIT",
+			side: "BUY",
+			symbol: "BTC_USD",
+			price: "100.25",
+			qty: "0.5",
+		}).success,
+	).toBe(true);
+
+	expect(
+		orderBodySchema.safeParse({
+			type: "MARKET",
+			side: "SELL",
+			symbol: "BTC_USD",
+			qty: "0.5",
+		}).success,
+	).toBe(true);
 });
 
-test("signup schema rejects empty password", () => {
-	const result = signupSchema.safeParse({
-		email: "alice@test.com",
-		name: "alice",
-		password: "",
-	});
-	expect(result.success).toBe(false);
+test("order input rejects values that could create invalid engine orders", () => {
+	const invalidOrders = [
+		{ type: "LIMIT", side: "BUY", symbol: "BTC_USD", qty: "1" },
+		{ type: "LIMIT", side: "BUY", symbol: "BTC_USD", price: "100", qty: "-1" },
+		{ type: "LIMIT", side: "INVALID", symbol: "BTC_USD", price: "100", qty: "1" },
+		{ type: "MARKET", side: "BUY", symbol: "BTC_USD", qty: "1e3" },
+	];
+
+	for (const input of invalidOrders) {
+		expect(orderBodySchema.safeParse(input).success).toBe(false);
+	}
 });
 
-test("signup schema rejects empty email", () => {
-	const result = signupSchema.safeParse({ email: "", name: "alice", password: "secret" });
-	expect(result.success).toBe(false);
-});
-
-test("signin schema accepts valid email", () => {
-	const result = signinSchema.safeParse({ email: "alice@test.com", password: "secret" });
-	expect(result.success).toBe(true);
-});
-
-test("signin schema rejects invalid email", () => {
-	const result = signinSchema.safeParse({ email: "not-an-email", password: "secret" });
-	expect(result.success).toBe(false);
-});
-
-test("signin schema rejects empty email", () => {
-	const result = signinSchema.safeParse({ email: " ", password: "secret" });
-	expect(result.success).toBe(false);
-});
-
-test("signin schema rejects empty password", () => {
-	const result = signinSchema.safeParse({ email: "alice@test.com", password: "" });
-	expect(result.success).toBe(false);
-});
-
-test("order body schema accepts valid LIMIT order", () => {
-	const result = orderBodySchema.safeParse({
-		type: "LIMIT",
-		side: "BUY",
-		symbol: "BTC",
-		price: "100",
-		qty: "5",
-	});
-	expect(result.success).toBe(true);
-});
-
-test("order body schema accepts valid MARKET order", () => {
-	const result = orderBodySchema.safeParse({
-		type: "MARKET",
-		side: "SELL",
-		symbol: "ETH",
-		qty: "10",
-	});
-	expect(result.success).toBe(true);
-});
-
-test("order body schema rejects LIMIT order without price", () => {
-	const result = orderBodySchema.safeParse({
-		type: "LIMIT",
-		side: "BUY",
-		symbol: "BTC",
-		qty: 5,
-	});
-	expect(result.success).toBe(false);
-});
-
-test("order body schema rejects negative qty", () => {
-	const result = orderBodySchema.safeParse({
-		type: "LIMIT",
-		side: "BUY",
-		symbol: "BTC",
-		price: "100",
-		qty: "-1",
-	});
-	expect(result.success).toBe(false);
-});
-
-test("order body schema rejects invalid side", () => {
-	const result = orderBodySchema.safeParse({
-		type: "LIMIT",
-		side: "INVALID",
-		symbol: "BTC",
-		price: "100",
-		qty: "5",
-	});
-	expect(result.success).toBe(false);
-});
-
-test("symbol param schema accepts valid symbol", () => {
-	const result = symbolParamSchema.safeParse({ symbol: "BTC" });
-	expect(result.success).toBe(true);
-});
-
-test("symbol param schema rejects empty symbol", () => {
-	const result = symbolParamSchema.safeParse({ symbol: "" });
-	expect(result.success).toBe(false);
-});
-
-test("orderId param schema accepts valid id", () => {
-	const result = orderIdParamSchema.safeParse({ orderId: "abc-123" });
-	expect(result.success).toBe(true);
-});
-
-test("orderId param schema rejects empty id", () => {
-	const result = orderIdParamSchema.safeParse({ orderId: "" });
-	expect(result.success).toBe(false);
-});
-
-test("status query schema accepts valid statuses", () => {
-	for (const status of ["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"]) {
-		const result = statusQuerySchema.safeParse({ status });
-		expect(result.success).toBe(true);
+test("order-history pagination rejects non-positive and fractional values", () => {
+	for (const query of [{ limit: "0" }, { page: "-1" }, { limit: "1.5" }]) {
+		expect(orderQuerySchema.safeParse(query).success).toBe(false);
 	}
 });

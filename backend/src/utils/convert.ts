@@ -10,11 +10,13 @@ export const toBigInt = (value: string, precision: number): bigint => {
 };
 
 export const fromBigInt = (value: bigint, precision: number): string => {
-	const padded = value.toString().padStart(precision + 1, "0");
+	const sign = value < 0n ? "-" : "";
+	const padded = (value < 0n ? -value : value).toString().padStart(precision + 1, "0");
+	if (precision === 0) return sign + padded;
 	const dot = padded.length - precision;
 
 	const integer = padded.slice(0, dot);
 	const fraction = padded.slice(dot);
 
-	return integer + "." + fraction;
+	return sign + integer + "." + fraction;
 };

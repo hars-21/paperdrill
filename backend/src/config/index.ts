@@ -45,6 +45,7 @@ export const config = {
 		env: env.NODE_ENV,
 		port: env.PORT,
 		logLevel: env.LOG_LEVEL,
+		url: env.CORS_ORIGIN.split(",")[0],
 	},
 
 	resend: {

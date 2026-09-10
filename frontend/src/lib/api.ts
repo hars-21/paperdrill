@@ -5,8 +5,11 @@ import type {
 	ApiKeyScope,
 	Candle,
 	CreatedApiKey,
+	LeaderboardResponse,
 	Market,
+	MyLeaderboardResponse,
 	OrderRecord,
+	Portfolio,
 	Ticker,
 	UserBalance,
 	UserTrade,
@@ -132,6 +135,18 @@ export const api = {
 	getBalance(asset?: string) {
 		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
 		return request<UserBalance>(`/balances${params}`);
+	},
+
+	getPortfolio() {
+		return request<Portfolio>("/portfolio");
+	},
+
+	getLeaderboard(limit = 25, offset = 0) {
+		return request<LeaderboardResponse>(`/leaderboard?limit=${limit}&offset=${offset}`);
+	},
+
+	getMyLeaderboardEntry() {
+		return request<MyLeaderboardResponse>("/leaderboard/me");
 	},
 
 	getApiKeys() {

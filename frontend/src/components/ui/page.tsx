@@ -21,21 +21,10 @@ function Page({ className, fixed = false, ...props }: PageProps) {
 
 function PageHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
-		<div
-			data-slot="page-header"
-			className="relative shrink-0 select-none overflow-hidden border-b border-border/40"
-		>
-			<div
-				aria-hidden
-				className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/[0.05] via-primary/[0.02] to-transparent"
-			/>
-			<div
-				aria-hidden
-				className="pointer-events-none absolute -top-24 left-1/2 h-44 w-1/2 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
-			/>
+		<div data-slot="page-header" className="shrink-0 select-none border-b border-border/40">
 			<div
 				className={cn(
-					"relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 sm:py-6",
+					"mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 sm:py-6",
 					className,
 				)}
 				{...props}

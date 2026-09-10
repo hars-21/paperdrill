@@ -20,6 +20,7 @@ import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
 import { DashboardBalancesPage } from "./pages/dashboard/balances";
 import { DashboardDataPage } from "./pages/dashboard/data";
 import { DocsLayout } from "./components/docs/docs-layout";
+import { LeaderboardPage } from "./pages/leaderboard";
 
 function NotFound() {
 	return (
@@ -64,6 +65,7 @@ export function App() {
 				</Route>
 				<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
 				<Route path="markets" element={<MarketsPage />} />
+				<Route path="leaderboard" element={<LeaderboardPage />} />
 				<Route path="trade/:symbol" element={<TradePage />} />
 				<Route
 					path="login"

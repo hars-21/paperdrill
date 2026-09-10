@@ -1,7 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { getTradesHandler } from "../src/handlers/getTrades";
 import { config } from "../src/config";
-import { RECENT_TRADES, recordFill } from "../src/store";
 import { placeOrder, resetState } from "./utils";
 
 beforeEach(() => {
@@ -52,6 +51,44 @@ test("trades returned newest first", async () => {
 	expect(result[1]).toMatchObject({ price: 10000n, qty: 20000n });
 });
 
+test("repeated reads return trades in the same order", async () => {
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "1",
+		side: "SELL",
+		type: "LIMIT",
+		symbol: "BTC_USD",
+		price: 10000n,
+		qty: 50000n,
+	});
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "BUY",
+		type: "MARKET",
+		symbol: "BTC_USD",
+		price: null,
+		qty: 20000n,
+	});
+
+	await placeOrder({
+		id: crypto.randomUUID(),
+		userId: "2",
+		side: "BUY",
+		type: "MARKET",
+		symbol: "BTC_USD",
+		price: null,
+		qty: 30000n,
+	});
+
+	const firstRead = await getTradesHandler({ symbol: "BTC_USD" });
+	const secondRead = await getTradesHandler({ symbol: "BTC_USD" });
+
+	expect(firstRead.map((trade) => trade.id)).toEqual(secondRead.map((trade) => trade.id));
+	expect(secondRead.map((trade) => trade.qty)).toEqual([30000n, 20000n]);
+});
+
 test("limit returns most recent trades", async () => {
 	await placeOrder({
 		id: crypto.randomUUID(),
@@ -95,27 +132,37 @@ test("limit above buffer cap rejected", () => {
 	).rejects.toThrow();
 });
 
-test("buffer evicts oldest beyond cap", () => {
+test("trade history keeps only the newest trades within its limit", async () => {
 	const original = config.recentTradesLimit;
 	config.recentTradesLimit = 3;
 
 	try {
+		await placeOrder({
+			id: crypto.randomUUID(),
+			userId: "1",
+			side: "SELL",
+			type: "LIMIT",
+			symbol: "BTC_USD",
+			price: 10000n,
+			qty: 5000n,
+		});
+
+		const tradeIds: string[] = [];
 		for (let i = 0; i < 5; i++) {
-			recordFill({
-				id: String(i),
+			const order = await placeOrder({
+				id: crypto.randomUUID(),
+				userId: "2",
+				side: "BUY",
+				type: "MARKET",
 				symbol: "BTC_USD",
-				price: 10000n,
 				qty: 1000n,
-				buyOrderId: `b${i}`,
-				sellOrderId: `s${i}`,
-				buyerId: "1",
-				sellerId: "2",
-				isBuyerMaker: false,
-				createdAt: i,
+				price: null,
 			});
+			tradeIds.push(order.fills[0]!.id);
 		}
 
-		expect(RECENT_TRADES.BTC_USD?.map((f) => f.id)).toEqual(["2", "3", "4"]);
+		const result = await getTradesHandler({ symbol: "BTC_USD" });
+		expect(result.map((trade) => trade.id)).toEqual(tradeIds.slice(2).reverse());
 	} finally {
 		config.recentTradesLimit = original;
 	}

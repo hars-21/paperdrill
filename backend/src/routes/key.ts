@@ -5,6 +5,10 @@ import { createKey, listKeys, revokeKey } from "../controllers/key";
 
 export const keyRouter = Router();
 
-keyRouter.get("/", requireAccess({ types: ["session"] }), asyncHandler(listKeys));
+keyRouter.get(
+	"/",
+	requireAccess({ types: ["session"], allowUnverified: true }),
+	asyncHandler(listKeys),
+);
 keyRouter.post("/", requireAccess({ types: ["session"] }), asyncHandler(createKey));
 keyRouter.delete("/:id", requireAccess({ types: ["session"] }), asyncHandler(revokeKey));
