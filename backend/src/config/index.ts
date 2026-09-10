@@ -13,8 +13,8 @@ const envSchema = z.object({
 	JWT_SECRET: z.string(),
 	SERVICE_TOKEN_HASH: z.string().default(""),
 
-	RESEND_API_KEY: z.string(),
-	EMAIL_FROM: z.string(),
+	RESEND_API_KEY: z.string().trim().min(1).optional(),
+	EMAIL_FROM: z.string().trim().min(1).optional(),
 
 	INCOMING_STREAM: z.string().default("backend-to-engine-broker"),
 	BACKEND_QUEUE_ID: z.string().default(crypto.randomUUID()),

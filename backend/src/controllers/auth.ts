@@ -12,7 +12,7 @@ import { sendValidationError } from "../utils/validation";
 import { logger } from "../utils/logger";
 import { config } from "../config";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../utils/emailClient";
+import { isEmailDeliveryEnabled, sendVerificationEmail } from "../utils/emailClient";
 import { sendToEngine } from "../utils/engineClient";
 import { assetPrecision } from "../store/market";
 import { toBigInt } from "../utils/convert";
@@ -51,6 +51,13 @@ export async function signup(req: Request, res: Response) {
 	}
 
 	const { email, name, password } = parsedBody.data;
+	const emailDeliveryEnabled = isEmailDeliveryEnabled();
+	const bypassEmailVerification = config.app.env !== "production" && !emailDeliveryEnabled;
+
+	if (config.app.env === "production" && !emailDeliveryEnabled) {
+		res.status(503).json({ error: "Account registration is currently unavailable" });
+		return;
+	}
 
 	try {
 		const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -68,6 +75,7 @@ export async function signup(req: Request, res: Response) {
 				email,
 				name,
 				password: hashedPassword,
+				emailVerified: bypassEmailVerification,
 				pnlBaseline: balance,
 				pnlBaselineAt: new Date(),
 			},
@@ -80,17 +88,19 @@ export async function signup(req: Request, res: Response) {
 			throw error;
 		}
 
-		const token = crypto.randomBytes(32).toString("hex");
+		if (emailDeliveryEnabled) {
+			const token = crypto.randomBytes(32).toString("hex");
 
-		await prisma.verificationToken.create({
-			data: {
-				userId: user.id,
-				tokenHash: crypto.createHash("sha256").update(token).digest("hex"),
-				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-			},
-		});
+			await prisma.verificationToken.create({
+				data: {
+					userId: user.id,
+					tokenHash: crypto.createHash("sha256").update(token).digest("hex"),
+					expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+				},
+			});
 
-		sendVerificationEmail(user.name, user.email, token);
+			void sendVerificationEmail(user.name, user.email, token);
+		}
 
 		res
 			.status(201)
@@ -100,7 +110,9 @@ export async function signup(req: Request, res: Response) {
 				name: user.name,
 				email: user.email,
 				emailVerified: user.emailVerified,
-				message: "Account created. Check your email to verify it.",
+				message: user.emailVerified
+					? "Account created successfully."
+					: "Account created. Check your email to verify it.",
 			});
 	} catch (e) {
 		logger.error("Signup failed", e);
@@ -214,6 +226,10 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 	}
 
 	const { email } = parsedBody.data;
+	if (!isEmailDeliveryEnabled()) {
+		res.status(503).json({ error: "Email delivery is currently unavailable" });
+		return;
+	}
 
 	try {
 		const user = await prisma.user.findUnique({ where: { email } });
@@ -238,7 +254,7 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 			},
 		});
 
-		sendVerificationEmail(user.name, user.email, token);
+		void sendVerificationEmail(user.name, user.email, token);
 
 		res.status(200).json({
 			success: true,

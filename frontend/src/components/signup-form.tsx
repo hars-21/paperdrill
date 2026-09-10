@@ -29,7 +29,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 			const { message, ...user } = await api.signup(email.trim(), name.trim(), password);
 			setUser(user);
 			toast.success(message);
-			navigate("/verify-email", { state: { emailSent: true } });
+			navigate(user.emailVerified ? "/dashboard" : "/verify-email", {
+				state: user.emailVerified ? undefined : { emailSent: true },
+			});
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Signup failed");
 		} finally {
@@ -42,7 +44,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 			<Card>
 				<CardHeader className="text-center">
 					<CardTitle className="text-xl">Create your account</CardTitle>
-					<CardDescription>Verify your email before you start trading</CardDescription>
+					<CardDescription>Create an account to start trading</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit}>
