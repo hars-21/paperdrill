@@ -5,6 +5,7 @@ const CONCURRENCY = parseInt(process.env.CONCURRENCY ?? "50", 10);
 const DURATION_SEC = parseInt(process.env.DURATION_SEC ?? "10", 10);
 const SERVICE_TOKEN = process.env.SERVICE_TOKEN;
 const SERVICE_EMAIL = process.env.SERVICE_EMAIL;
+const BENCHMARK_BALANCE = "1000000000000";
 
 // --- Helpers ---
 
@@ -19,13 +20,13 @@ function stats(times: number[]) {
 	return { avg, p50, p95, p99, total: sum, count: times.length };
 }
 
-function report(name: string, times: number[], errors: number) {
+function report(name: string, times: number[], errors: number, elapsedMs: number) {
 	const s = stats(times);
-	const opsPerSec = s.total === 0 ? 0 : (s.count / s.total) * 1000;
+	const opsPerSec = elapsedMs === 0 ? 0 : (s.count / elapsedMs) * 1000;
 	const errRate = ((errors / (s.count + errors)) * 100).toFixed(1);
 	console.log(`  ${name}`);
 	console.log(
-		`    ${s.count} ok, ${errors} err (${errRate}% err) | ${(s.total / 1000).toFixed(1)}s`,
+		`    ${s.count} ok, ${errors} err (${errRate}% err) | ${(elapsedMs / 1000).toFixed(1)}s`,
 	);
 	console.log(
 		`    ${opsPerSec.toFixed(0)} req/sec | avg ${s.avg.toFixed(1)}ms | p50 ${s.p50?.toFixed(1)}ms | p95 ${s.p95?.toFixed(1)}ms | p99 ${s.p99?.toFixed(1)}ms`,
@@ -38,6 +39,7 @@ async function runLoadTest(name: string, fn: RequestFn, durationMs: number) {
 	const times: number[] = [];
 	let errors = 0;
 	let running = true;
+	const startedAt = performance.now();
 
 	const worker = async () => {
 		while (running) {
@@ -62,13 +64,14 @@ async function runLoadTest(name: string, fn: RequestFn, durationMs: number) {
 	await Promise.all(workers);
 	clearTimeout(deadline);
 
-	report(name, times, errors);
+	report(name, times, errors, performance.now() - startedAt);
+	return errors;
 }
 
 // --- Load test scenarios ---
 
 async function benchMarkets() {
-	await runLoadTest(
+	return runLoadTest(
 		"GET /v1/markets (public)",
 		async () => {
 			try {
@@ -83,7 +86,7 @@ async function benchMarkets() {
 }
 
 async function benchOrderbook() {
-	await runLoadTest(
+	return runLoadTest(
 		"GET /v1/markets/SOL_USD/orderbook (public)",
 		async () => {
 			try {
@@ -98,7 +101,7 @@ async function benchOrderbook() {
 }
 
 async function benchCreateOrder() {
-	await runLoadTest(
+	return runLoadTest(
 		"POST /v1/orders (LIMIT, no match)",
 		async () => {
 			try {
@@ -127,8 +130,26 @@ async function benchCreateOrder() {
 	);
 }
 
+async function seedServiceBalance() {
+	if (!SERVICE_TOKEN || !SERVICE_EMAIL) return;
+
+	const res = await fetch(`${API_URL}/v1/deposits`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"X-Api-Key": SERVICE_TOKEN,
+			"X-Service-Email": SERVICE_EMAIL,
+		},
+		body: JSON.stringify({ asset: "USD", amount: BENCHMARK_BALANCE }),
+	});
+
+	if (!res.ok) {
+		throw new Error(`Failed to fund benchmark service account (${res.status}): ${await res.text()}`);
+	}
+}
+
 async function benchTrades() {
-	await runLoadTest(
+	return runLoadTest(
 		"GET /v1/markets/SOL_USD/trades (public)",
 		async () => {
 			try {
@@ -162,15 +183,20 @@ try {
 	process.exit(1);
 }
 
-await benchMarkets();
+let totalErrors = 0;
+
+totalErrors += await benchMarkets();
 console.log();
-await benchOrderbook();
+totalErrors += await benchOrderbook();
 console.log();
 if (SERVICE_TOKEN && SERVICE_EMAIL) {
-	await benchCreateOrder();
+	await seedServiceBalance();
+	totalErrors += await benchCreateOrder();
 	console.log();
 } else {
 	console.log("  POST /v1/orders skipped (no service token or email)\n");
 }
-await benchTrades();
+totalErrors += await benchTrades();
 console.log();
+
+if (totalErrors > 0) process.exitCode = 1;

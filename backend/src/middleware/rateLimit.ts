@@ -26,7 +26,9 @@ function createLimiter(prefix: string, windowMs: number, limit: number) {
 		windowMs,
 		limit,
 		keyGenerator: bucketKey,
-		store: new RedisStore({ prefix, sendCommand }),
+		...(config.rateLimit.enabled && {
+			store: new RedisStore({ prefix, sendCommand }),
+		}),
 		standardHeaders: true,
 		legacyHeaders: false,
 		skip: (req) => !config.rateLimit.enabled || req.principal?.type === "service",

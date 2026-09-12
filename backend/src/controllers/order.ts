@@ -146,5 +146,11 @@ export async function cancelOrder(req: Request, res: Response) {
 		return;
 	}
 
-	res.status(200).json(formatCancel(engineResponse.data as Record<string, unknown>));
+	const result = engineResponse.data as Record<string, unknown>;
+	if (typeof result.message === "string") {
+		res.status(200).json({ message: result.message });
+		return;
+	}
+
+	res.status(200).json(formatCancel(result));
 }
