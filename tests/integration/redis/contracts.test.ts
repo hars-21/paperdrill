@@ -22,7 +22,7 @@ test("backend writes complete place and cancel commands to the Redis broker", as
 		qty: "0.2500",
 	});
 
-	expect(created).toMatchObject({ status: 200, data: { status: "OPEN" } });
+	expect(created).toMatchObject({ status: 201, data: { status: "OPEN" } });
 
 	const placeCommand = await engine.findBrokerCommand(
 		"create_order",

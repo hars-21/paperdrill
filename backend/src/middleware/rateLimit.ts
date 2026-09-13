@@ -4,6 +4,7 @@ import { RedisStore } from "rate-limit-redis";
 import { config } from "../config";
 import { rateLimiterClient } from "../redis";
 import { logger } from "../utils/logger";
+import { sendApiError } from "../utils/apiError";
 
 async function sendCommand(...args: string[]): Promise<number> {
 	if (!rateLimiterClient.isOpen) {
@@ -34,7 +35,7 @@ function createLimiter(prefix: string, windowMs: number, limit: number) {
 		skip: (req) => !config.rateLimit.enabled || req.principal?.type === "service",
 		handler: (req, res) => {
 			logger.warn("Rate limit exceeded", { key: bucketKey(req), path: req.originalUrl });
-			res.status(429).json({ error: "Too many requests, please try again later" });
+			sendApiError(res, 429, "RATE_LIMITED", "Too many requests; try again later");
 		},
 	});
 }

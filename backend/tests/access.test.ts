@@ -45,8 +45,8 @@ test("requireAccess rejects users with unverified email", () => {
 
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(res.json).toHaveBeenCalledWith({
-		error: "Verify your email to continue",
-		code: "EMAIL_NOT_VERIFIED",
+		error: { code: "EMAIL_NOT_VERIFIED", message: "Verify your email to continue" },
+		requestId: expect.any(String),
 	});
 	expect(next).not.toHaveBeenCalled();
 });
@@ -89,7 +89,11 @@ test("requireAccess rejects api keys missing a required scope", () => {
 
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(res.json).toHaveBeenCalledWith({
-		error: "You do not have permission to perform this action",
+		error: {
+			code: "FORBIDDEN",
+			message: "You do not have permission to perform this action",
+		},
+		requestId: expect.any(String),
 	});
 	expect(next).not.toHaveBeenCalled();
 });

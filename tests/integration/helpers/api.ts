@@ -7,6 +7,15 @@ export interface ApiResponse<T> {
 	headers: Headers;
 }
 
+export interface ErrorResponse {
+	error: {
+		code: string;
+		message: string;
+		details?: Array<{ field?: string; message: string }>;
+	};
+	requestId: string;
+}
+
 export interface OrderInput {
 	type: "LIMIT" | "MARKET";
 	side: "BUY" | "SELL";
@@ -79,7 +88,7 @@ export class ApiClient {
 	}
 
 	getOrder(id: string) {
-		return this.request<OrderResponse | { error: string }>(`/v1/orders/${id}`);
+		return this.request<OrderResponse | ErrorResponse>(`/v1/orders/${id}`);
 	}
 
 	getTrades() {

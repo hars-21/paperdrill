@@ -38,6 +38,9 @@ test("an account without base inventory cannot place a sell order", async () => 
 		qty: "0.1000",
 	});
 
-	expect(response).toMatchObject({ status: 400, data: { error: "Insufficient balance" } });
+	expect(response).toMatchObject({
+		status: 422,
+		data: { error: { code: "INSUFFICIENT_BALANCE", message: "Insufficient balance" } },
+	});
 	expect(await client.getOpenOrders()).toMatchObject({ status: 200, data: [] });
 });

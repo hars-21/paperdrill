@@ -29,7 +29,11 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
 	try {
 		const data = await res.json();
-		if (!res.ok) throw new Error((data as any)?.error || `API ${res.status}`);
+		if (!res.ok) {
+			const error = (data as any)?.error;
+			const message = typeof error === "object" ? error?.message : error;
+			throw new Error(message || `API ${res.status}`);
+		}
 		return data as T;
 	} catch (err) {
 		log(`API error: ${err}`);

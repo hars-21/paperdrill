@@ -8,6 +8,7 @@ import { formatOrder, formatOrders, formatCancel } from "../utils/formatter";
 import { getUserId } from "./user";
 import { prisma } from "../db";
 import { logger } from "../utils/logger";
+import { sendApiError, sendEngineError } from "../utils/apiError";
 
 export async function createOrder(req: Request, res: Response) {
 	const userId = getUserId(req);
@@ -23,13 +24,26 @@ export async function createOrder(req: Request, res: Response) {
 	const market = marketStore.get(symbol);
 
 	if (!market) {
-		res.status(400).json({ error: `Unknown market: ${symbol}` });
+		sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);
 		return;
 	}
 
-	const scaledQty = toBigInt(qty, market.qtyPrecision);
-	const scaledPrice =
-		type === "MARKET" ? null : toBigInt(parsedBody.data.price, market.pricePrecision);
+	let scaledQty: bigint;
+	let scaledPrice: bigint | null;
+	try {
+		scaledQty = toBigInt(qty, market.qtyPrecision);
+		scaledPrice =
+			type === "MARKET" ? null : toBigInt(parsedBody.data.price, market.pricePrecision);
+	} catch (error) {
+		sendApiError(
+			res,
+			400,
+			"VALIDATION_ERROR",
+			"Order precision is invalid for this market",
+			[{ message: error instanceof Error ? error.message : "Invalid order precision" }],
+		);
+		return;
+	}
 	const id = crypto.randomUUID();
 
 	const engineResponse = await sendToEngine("create_order", {
@@ -43,11 +57,11 @@ export async function createOrder(req: Request, res: Response) {
 	});
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
-	res.status(200).json(formatOrder(engineResponse.data as Record<string, unknown>));
+	res.status(201).json(formatOrder(engineResponse.data as Record<string, unknown>));
 }
 
 export async function getOpenOrders(req: Request, res: Response) {
@@ -56,7 +70,7 @@ export async function getOpenOrders(req: Request, res: Response) {
 	const engineResponse = await sendToEngine("get_open_orders", { userId });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
@@ -86,15 +100,10 @@ export async function getOrders(req: Request, res: Response) {
 			orderBy: { createdAt: "desc" },
 		});
 
-		if (!orders) {
-			res.status(404).json({ error: "Order not found" });
-			return;
-		}
-
 		res.status(200).json(formatOrders(orders));
 	} catch (err) {
 		logger.error("Failed to fetch order", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Order history could not be loaded");
 	}
 }
 
@@ -118,14 +127,14 @@ export async function getOrderById(req: Request, res: Response) {
 		});
 
 		if (!order) {
-			res.status(404).json({ error: "Order not found" });
+			sendApiError(res, 404, "ORDER_NOT_FOUND", "Order not found");
 			return;
 		}
 
 		res.status(200).json(formatOrder(order as Record<string, unknown>));
 	} catch (err) {
 		logger.error("Failed to fetch order", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Order could not be loaded");
 	}
 }
 
@@ -142,7 +151,7 @@ export async function cancelOrder(req: Request, res: Response) {
 	const engineResponse = await sendToEngine("cancel_order", { userId, id: orderId });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 

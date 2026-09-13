@@ -1,10 +1,15 @@
 import type { EngineCommandType, EngineResponse } from "../types/engine";
-import { resolveEngineResponse, waitForEngineResponse } from "../store/pendingResponses";
+import {
+	rejectEngineResponse,
+	resolveEngineResponse,
+	waitForEngineResponse,
+} from "../store/pendingResponses";
 import { activeSubscriptions } from "./websocket";
 import { config } from "../config";
 import { logger } from "./logger";
 import { marketSubscriber, publisher, responsesubscriber } from "../redis";
 import { formatCandle, formatDepth, formatTrade, formatTicker } from "./formatter";
+import { ApiError } from "./apiError";
 
 export const engineAbortController = new AbortController();
 
@@ -15,25 +20,36 @@ export async function sendToEngine(
 	const correlationId = crypto.randomUUID();
 	const responsePromise = waitForEngineResponse(correlationId, config.engine.timeout);
 
-	await publisher.xAdd(
-		config.engine.incomingStream,
-		"*",
-		{
-			correlationId,
-			responseQueue: config.engine.responseQueue,
-			type,
-			payload: JSON.stringify(payload),
-		},
-		{
-			TRIM: {
-				strategy: "MINID",
-				strategyModifier: "=",
-				threshold: Date.now() - config.redis.retentionMs,
+	try {
+		await publisher.xAdd(
+			config.engine.incomingStream,
+			"*",
+			{
+				correlationId,
+				responseQueue: config.engine.responseQueue,
+				type,
+				payload: JSON.stringify(payload),
 			},
-		},
-	);
+			{
+				TRIM: {
+					strategy: "MINID",
+					strategyModifier: "=",
+					threshold: Date.now() - config.redis.retentionMs,
+				},
+			},
+		);
 
-	return responsePromise;
+		return await responsePromise;
+	} catch (error) {
+		const cause = error instanceof Error ? error : new Error(String(error));
+		if (cause.message === "Engine response timed out") {
+			throw new ApiError(504, "ENGINE_TIMEOUT", "The matching engine did not respond in time");
+		}
+
+		rejectEngineResponse(correlationId, cause);
+		void responsePromise.catch(() => undefined);
+		throw new ApiError(503, "ENGINE_UNAVAILABLE", "The matching engine is unavailable");
+	}
 }
 
 export async function listenForEngineresponses(): Promise<void> {

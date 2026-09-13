@@ -45,9 +45,9 @@ test("a complete trade settles live balances and persists user-visible history",
 		qty: "0.5000",
 	});
 
-	expect(sell).toMatchObject({ status: 200, data: { status: "OPEN", filledQty: "0.0000" } });
+	expect(sell).toMatchObject({ status: 201, data: { status: "OPEN", filledQty: "0.0000" } });
 	expect(buy).toMatchObject({
-		status: 200,
+		status: 201,
 		data: { status: "FILLED", filledQty: "0.5000", averagePrice: "100.00" },
 	});
 	expect(await buyer.client.getBalances()).toMatchObject({
@@ -120,8 +120,13 @@ test("a complete trade settles live balances and persists user-visible history",
 	});
 
 	expect(await buyer.client.cancelOrder(buy.data.id)).toMatchObject({
-		status: 400,
-		data: { error: "Filled orders cannot be cancelled" },
+		status: 409,
+		data: {
+			error: {
+				code: "ORDER_NOT_CANCELLABLE",
+				message: "Filled orders cannot be cancelled",
+			},
+		},
 	});
 });
 
@@ -145,7 +150,7 @@ test("a partial fill propagates through balances, open orders, fills, and persis
 		qty: "4.00",
 	});
 
-	expect(buy).toMatchObject({ status: 200, data: { status: "FILLED", filledQty: "4.00" } });
+	expect(buy).toMatchObject({ status: 201, data: { status: "FILLED", filledQty: "4.00" } });
 	expect(await seller.client.getOpenOrders()).toMatchObject({
 		status: 200,
 		data: [
@@ -198,7 +203,7 @@ test("cancelling an open order releases funds and persists ownership-safe state"
 		qty: "1.000",
 	});
 
-	expect(created).toMatchObject({ status: 200, data: { status: "OPEN" } });
+	expect(created).toMatchObject({ status: 201, data: { status: "OPEN" } });
 	expect(await owner.client.getBalances()).toMatchObject({
 		data: { USD: { available: "9900.00", locked: "100.00" } },
 	});
@@ -206,11 +211,11 @@ test("cancelling an open order releases funds and persists ownership-safe state"
 	await waitForOrder(created.data.id, "OPEN");
 	expect(await other.client.getOrder(created.data.id)).toMatchObject({
 		status: 404,
-		data: { error: "Order not found" },
+		data: { error: { code: "ORDER_NOT_FOUND", message: "Order not found" } },
 	});
 	expect(await other.client.cancelOrder(created.data.id)).toMatchObject({
-		status: 400,
-		data: { error: "Order not found" },
+		status: 404,
+		data: { error: { code: "ORDER_NOT_FOUND", message: "Order not found" } },
 	});
 
 	expect(await owner.client.cancelOrder(created.data.id)).toMatchObject({
