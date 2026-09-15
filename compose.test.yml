@@ -49,6 +49,10 @@ services:
         condition: service_healthy
       setup:
         condition: service_completed_successfully
+      engine:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -71,6 +75,17 @@ services:
         condition: service_healthy
       setup:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 20
     tmpfs:
       - /usr/src/app/snapshots
 
@@ -84,3 +99,14 @@ services:
         condition: service_healthy
       setup:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 20

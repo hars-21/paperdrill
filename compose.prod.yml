@@ -27,6 +27,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      engine:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
     networks:
       - paperdrill
 
@@ -36,6 +40,18 @@ services:
       target: runner
     restart: unless-stopped
     env_file: ./.env.prod
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     logging:
       driver: json-file
       options:
@@ -55,6 +71,18 @@ services:
       target: runner
     restart: unless-stopped
     env_file: ./.env.prod
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     logging:
       driver: json-file
       options:

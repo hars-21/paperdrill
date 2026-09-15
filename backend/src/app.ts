@@ -19,9 +19,6 @@ app.use(cors(config.cors));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(authenticate);
-app.use(apiLimiter);
-
 app.get("/", (_req: Request, res: Response) => {
 	res.status(200).json({
 		message: "Welcome to PaperDrill",
@@ -41,6 +38,9 @@ app.get("/health", async (_req: Request, res: Response) => {
 		sendApiError(res, 503, "SERVICE_UNAVAILABLE", "A required service is unavailable");
 	}
 });
+
+app.use(authenticate);
+app.use(apiLimiter);
 
 app.use("/v1", appRouter);
 app.use(notFoundHandler);

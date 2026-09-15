@@ -14,6 +14,7 @@ import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer } from "./util";
 import { initMarkets } from "./modules/market";
 import { registerEventHandlers } from "./core/events";
+import { startHealth, stopHealth } from "./health";
 
 const abortController = new AbortController();
 
@@ -22,6 +23,7 @@ await connectDB();
 await initMarkets();
 await loadSnapshot();
 registerEventHandlers();
+await startHealth();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
@@ -148,6 +150,7 @@ async function gracefulShutdown(signal: string) {
 	}, 10000);
 
 	abortController.abort();
+	await stopHealth();
 	await disconnectRedis();
 	await disconnectDB();
 

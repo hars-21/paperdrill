@@ -7,6 +7,7 @@ import { flushCandles } from "./candle";
 import { warmUpTickers } from "./ticker";
 import { flushBatch, queueFill, queueOrder, loadServiceUserIds } from "./persistence";
 import type { StreamFill, StreamOrder } from "./types";
+import { startHealth, stopHealth } from "./health";
 
 const abortController = new AbortController();
 
@@ -26,6 +27,7 @@ await loadServiceUserIds().catch((err) => {
 });
 
 await warmUpTickers();
+await startHealth();
 
 logger.info("Worker started, listening for stream events");
 
@@ -155,6 +157,7 @@ async function gracefulShutdown(signal: string) {
 	abortController.abort();
 	clearTimeout(candleFlushInterval);
 	clearInterval(batchInterval);
+	await stopHealth();
 
 	try {
 		await flushCandles();
