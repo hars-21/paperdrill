@@ -2,6 +2,7 @@ import type { ErrorRequestHandler, NextFunction, Request, Response } from "expre
 import { config } from "../config";
 import { ApiError, sendApiError } from "../utils/apiError";
 import { logger } from "../utils/logger";
+import { captureBackendException } from "../instrument";
 
 export function requestContext(req: Request, res: Response, next: NextFunction) {
 	req.requestId = crypto.randomUUID();
@@ -49,6 +50,10 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
 		method: req.method,
 		path: req.originalUrl,
 		error: message,
+	});
+	captureBackendException(error, {
+		tags: { source: "express", request_id: req.requestId },
+		extra: { method: req.method, path: req.path },
 	});
 
 	const publicMessage =

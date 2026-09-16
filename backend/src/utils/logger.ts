@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { captureBackendException } from "../instrument";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -13,6 +14,13 @@ function log(level: LogLevel, message: string, meta?: unknown) {
 		meta !== undefined ? `${prefix} ${message} ${JSON.stringify(meta)}` : `${prefix} ${message}`;
 	if (level === "error") console.error(line);
 	else console.log(line);
+
+	if (level === "error" && meta instanceof Error) {
+		captureBackendException(meta, {
+			tags: { source: "logger" },
+			extra: { logMessage: message },
+		});
+	}
 }
 
 export const logger = {

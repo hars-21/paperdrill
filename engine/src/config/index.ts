@@ -12,6 +12,8 @@ export const envSchema = z.object({
 	RECENT_TRADES_LIMIT: z.coerce.number().positive().default(50),
 	STREAM_READ_BATCH_SIZE: z.coerce.number().positive().default(200),
 	RESPONSE_BATCH_SIZE: z.coerce.number().positive().default(50),
+	SENTRY_DSN: z.string().trim().optional(),
+	SENTRY_ENVIRONMENT: z.string().trim().optional(),
 });
 
 const env = envSchema.parse(process.env);
@@ -27,4 +29,9 @@ export const config = {
 	recentTradesLimit: env.RECENT_TRADES_LIMIT,
 	streamReadBatchSize: env.STREAM_READ_BATCH_SIZE,
 	responseBatchSize: env.RESPONSE_BATCH_SIZE,
+	sentry: {
+		enabled: Boolean(env.SENTRY_DSN) && env.NODE_ENV !== "test",
+		dsn: env.SENTRY_DSN,
+		environment: env.SENTRY_ENVIRONMENT ?? env.NODE_ENV,
+	},
 };

@@ -34,6 +34,9 @@ const envSchema = z.object({
 	STREAM_RETENTION_MS: z.coerce.number().default(30 * 60 * 1000),
 
 	LOG_LEVEL: z.enum(["debug", "info"]),
+
+	SENTRY_DSN: z.string().trim().optional(),
+	SENTRY_ENVIRONMENT: z.string().trim().optional(),
 });
 
 const env = envSchema.parse(process.env);
@@ -102,4 +105,10 @@ export const config = {
 		sameSite: isProduction ? "none" : "lax",
 		path: "/",
 	} satisfies CookieOptions,
+
+	sentry: {
+		enabled: Boolean(env.SENTRY_DSN) && env.NODE_ENV !== "test",
+		dsn: env.SENTRY_DSN,
+		environment: env.SENTRY_ENVIRONMENT ?? env.NODE_ENV,
+	},
 };

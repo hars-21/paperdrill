@@ -1,3 +1,4 @@
+import "./instrument";
 import "dotenv";
 import {
 	engineAbortController,
@@ -11,6 +12,7 @@ import { logger } from "./utils/logger";
 import { prisma } from "./db";
 import { loadMarkets } from "./store/market";
 import { startLeaderboardRefresh, stopLeaderboardRefresh } from "./services/leaderboard";
+import { flushSentry } from "./instrument";
 
 const { httpServer, wss } = createAppServer();
 
@@ -67,6 +69,8 @@ async function gracefulShutdown(signal: string) {
 		logger.error("Error disconnecting Prisma", err);
 	}
 
+	await flushSentry();
+
 	clearTimeout(forceExit);
 	process.exit(0);
 }
@@ -83,7 +87,8 @@ process.on("uncaughtException", (err) => {
 	gracefulShutdown("uncaughtException").then(() => process.exit(1));
 });
 
-main().catch((err) => {
+main().catch(async (err) => {
 	logger.error("Fatal startup error", err);
+	await flushSentry();
 	process.exit(1);
 });
