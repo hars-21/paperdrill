@@ -1,3 +1,10 @@
+x-test-app: &test-app
+  env_file: ./.env.test
+  healthcheck:
+    interval: 2s
+    timeout: 5s
+    retries: 20
+
 services:
   postgres:
     image: timescale/timescaledb:2.28.2-pg17
@@ -16,97 +23,33 @@ services:
       - /var/lib/postgresql/data
 
   redis:
-    image: redis:7.2
     ports:
       - "6381:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 2s
       timeout: 5s
       retries: 15
     tmpfs:
       - /data
 
-  setup:
-    build:
-      context: ./backend
-      target: dev
-    command: sh -c "bun prisma migrate deploy && bun prisma db seed"
-    env_file: ./.env.test
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   backend:
+    <<: *test-app
     build:
       context: ./backend
       target: runner
     ports:
       - "8001:8000"
-    env_file: ./.env.test
-    depends_on:
-      redis:
-        condition: service_healthy
-      setup:
-        condition: service_completed_successfully
-      engine:
-        condition: service_healthy
-      worker:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const r = await fetch('http://localhost:8000/health'); if (!r.ok) process.exit(1)",
-        ]
-      interval: 2s
-      timeout: 5s
-      retries: 20
 
   engine:
+    <<: *test-app
     build:
       context: ./engine
       target: runner
-    env_file: ./.env.test
-    depends_on:
-      redis:
-        condition: service_healthy
-      setup:
-        condition: service_completed_successfully
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
-        ]
-      interval: 2s
-      timeout: 5s
-      retries: 20
     tmpfs:
       - /usr/src/app/snapshots
 
   worker:
+    <<: *test-app
     build:
       context: ./worker
       target: runner
-    env_file: ./.env.test
-    depends_on:
-      redis:
-        condition: service_healthy
-      setup:
-        condition: service_completed_successfully
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
-        ]
-      interval: 2s
-      timeout: 5s
-      retries: 20

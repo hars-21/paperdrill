@@ -1,100 +1,48 @@
+x-prod-runtime: &prod-runtime
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-prod-app: &prod-app
+  <<: *prod-runtime
+  env_file: ./.env.prod
+
+x-bot-service: &bot-service
+  <<: *prod-app
+  image: "ghcr.io/hars-21/paperdrill-bot:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
+  profiles: ["bots"]
+  restart: on-failure:5
+  depends_on:
+    backend:
+      condition: service_healthy
+
 services:
   backend:
-    build:
-      context: ./backend
-      target: runner
-    restart: unless-stopped
-    expose:
-      - 8000
-    env_file: ./.env.prod
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const r = await fetch('http://localhost:8000/health'); if (!r.ok) process.exit(1)",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    depends_on:
-      redis:
-        condition: service_healthy
-      engine:
-        condition: service_healthy
-      worker:
-        condition: service_healthy
-    networks:
-      - paperdrill
+    <<: *prod-app
+    image: "ghcr.io/hars-21/paperdrill-backend:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
 
   engine:
-    build:
-      context: ./engine
-      target: runner
-    restart: unless-stopped
-    env_file: ./.env.prod
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    depends_on:
-      redis:
-        condition: service_healthy
+    <<: *prod-app
+    image: "ghcr.io/hars-21/paperdrill-engine:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
     volumes:
       - engine-snapshots:/usr/src/app/snapshots
-    networks:
-      - paperdrill
 
   worker:
-    build:
-      context: ./worker
-      target: runner
-    restart: unless-stopped
-    env_file: ./.env.prod
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - paperdrill
+    <<: *prod-app
+    image: "ghcr.io/hars-21/paperdrill-worker:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
+
+  redis:
+    <<: *prod-runtime
+    image: redis:7.2
+    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction --tcp-keepalive 60 --appendfsync everysec --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb
+    volumes:
+      - redis-data:/data
 
   nginx:
+    <<: *prod-runtime
     image: nginx:stable
     ports:
       - "80:80"
@@ -105,34 +53,28 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - paperdrill
 
-  redis:
-    image: redis:7.2
-    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction --tcp-keepalive 60 --appendfsync everysec --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    volumes:
-      - redis-data:/data
-    networks:
-      - paperdrill
+  btc-bot:
+    <<: *bot-service
+    environment:
+      MARKET: BTC_USD
+      SERVICE_EMAIL: btc.service@paperdrill.dev
+      MAX_ORDER_QTY: 0.1
+
+  sol-bot:
+    <<: *bot-service
+    environment:
+      MARKET: SOL_USD
+      SERVICE_EMAIL: sol.service@paperdrill.dev
+      MAX_ORDER_QTY: 10
+
+  eth-bot:
+    <<: *bot-service
+    environment:
+      MARKET: ETH_USD
+      SERVICE_EMAIL: eth.service@paperdrill.dev
+      MAX_ORDER_QTY: 1
 
 volumes:
   engine-snapshots:
   redis-data:
-
-networks:
-  paperdrill:
-    name: paperdrill-network
-    external: true

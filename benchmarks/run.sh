@@ -3,7 +3,7 @@
 set -u
 
 compose() {
-	docker compose -p paperdrill-benchmark -f compose.test.yml "$@"
+	PAPERDRILL_PROJECT=paperdrill-benchmark ./scripts/compose.sh test "$@"
 }
 
 cleanup() {
@@ -18,6 +18,14 @@ compose down --volumes --remove-orphans || true
 compose build || status=$?
 
 if [ "$status" -eq 0 ]; then
+	compose up -d --wait postgres redis || status=$?
+fi
+
+if [ "$status" -eq 0 ]; then
+	PAPERDRILL_PROJECT=paperdrill-benchmark ./scripts/database.sh test prepare || status=$?
+fi
+
+if [ "$status" -eq 0 ]; then
 	compose up -d --wait backend engine worker || status=$?
 fi
 
@@ -27,7 +35,7 @@ if [ "$status" -eq 0 ]; then
 		. ./.env.test
 		set +a
 
-		if [ "$NODE_ENV" != "test" ] || [ "$TEST_ENVIRONMENT" != "integration" ]; then
+		if [ "$NODE_ENV" != "test" ]; then
 			echo "Refusing to benchmark outside the test environment" >&2
 			exit 1
 		fi
@@ -41,7 +49,7 @@ fi
 
 if [ "$status" -ne 0 ]; then
 	compose ps
-	compose logs --no-color backend engine worker postgres redis setup
+	compose logs --no-color backend engine worker
 fi
 
 exit "$status"

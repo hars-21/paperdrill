@@ -37,6 +37,20 @@ async function seed() {
 			qtyPrecision: 3,
 		},
 	];
+	const serviceEmails = [
+		"btc.service@paperdrill.dev",
+		"sol.service@paperdrill.dev",
+		"eth.service@paperdrill.dev",
+	];
+	const [marketCount, serviceCount] = await Promise.all([
+		prisma.market.count({ where: { symbol: { in: markets.map((market) => market.symbol) } } }),
+		prisma.user.count({ where: { email: { in: serviceEmails }, type: UserType.SERVICE } }),
+	]);
+
+	if (marketCount === markets.length && serviceCount === serviceEmails.length) {
+		console.log("Seed data already exists, skipping");
+		return;
+	}
 
 	await prisma.market.createMany({
 		data: markets,
@@ -74,7 +88,6 @@ async function seed() {
 	});
 
 	console.log("Seeded: 3 markets, 3 services");
-	process.exit(0);
 }
 
 seed()

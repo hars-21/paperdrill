@@ -3,7 +3,7 @@
 set -u
 
 compose() {
-	docker compose -p paperdrill-test -f compose.test.yml "$@"
+	./scripts/compose.sh test "$@"
 }
 
 cleanup() {
@@ -17,6 +17,14 @@ status=0
 compose down --volumes --remove-orphans || true
 
 compose build || status=$?
+
+if [ "$status" -eq 0 ]; then
+	compose up -d --wait postgres redis || status=$?
+fi
+
+if [ "$status" -eq 0 ]; then
+	./scripts/database.sh test prepare || status=$?
+fi
 
 if [ "$status" -eq 0 ]; then
 	compose up -d --wait backend engine worker || status=$?
@@ -39,7 +47,7 @@ fi
 
 if [ "$status" -ne 0 ]; then
 	compose ps
-	compose logs --no-color backend engine worker postgres redis setup
+	compose logs --no-color backend engine worker
 fi
 
 exit "$status"
