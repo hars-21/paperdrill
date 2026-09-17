@@ -41,9 +41,10 @@ if [ "$status" -eq 0 ]; then
 		fi
 
 		export API_URL="http://127.0.0.1:8001"
+		export WS_URL="ws://127.0.0.1:8001"
 
 		cd benchmarks
-		bun run bench:api
+		bun run bench
 	) || status=$?
 fi
 
