@@ -22,6 +22,7 @@ if (redisUrl.protocol !== "redis:" && redisUrl.protocol !== "rediss:") {
 
 export const env = {
 	apiBaseUrl: required("API_BASE_URL").replace(/\/$/, ""),
+	wsUrl: required("WS_URL").replace(/\/$/, ""),
 	databaseUrl: databaseUrl.toString(),
 	redisUrl: redisUrl.toString(),
 	incomingStream: required("INCOMING_STREAM"),

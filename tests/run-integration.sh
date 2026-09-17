@@ -37,6 +37,7 @@ if [ "$status" -eq 0 ]; then
 		set +a
 
 		export API_BASE_URL="http://127.0.0.1:8001"
+		export WS_URL="ws://127.0.0.1:8001"
 		export DATABASE_URL="postgresql://postgres:password@127.0.0.1:5434/paperdrill_test"
 		export REDIS_URL="redis://127.0.0.1:6381"
 
