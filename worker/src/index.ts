@@ -56,32 +56,38 @@ const batchInterval = setInterval(() => {
 	void flushAndCheckpoint();
 }, config.flushIntervalMs);
 
-let flushing = false;
+let flushPromise: Promise<void> | null = null;
 
-async function flushAndCheckpoint() {
-	if (flushing) return;
-	flushing = true;
+function flushAndCheckpoint() {
+	if (flushPromise) return flushPromise;
 
-	const fillCursor = lastFillId;
-	const orderCursor = lastOrderId;
+	flushPromise = (async () => {
+		const fillCursor = lastFillId;
+		const orderCursor = lastOrderId;
 
-	try {
-		await flushBatch();
-	} catch {
-		flushing = false;
-		return;
-	}
+		try {
+			await flushBatch();
+		} catch {
+			return;
+		}
 
-	try {
-		await Promise.all([
-			cacheClient.set("worker:fill:last_id", fillCursor),
-			cacheClient.set("worker:order:last_id", orderCursor),
-		]);
-	} catch (err) {
-		logger.error("Failed to checkpoint stream cursors", err);
-	}
+		try {
+			await Promise.all([
+				cacheClient.set("worker:fill:last_id", fillCursor),
+				cacheClient.set("worker:order:last_id", orderCursor),
+			]);
+		} catch (err) {
+			logger.error("Failed to checkpoint stream cursors", err);
+		}
+	})().finally(() => {
+		flushPromise = null;
+	});
 
-	flushing = false;
+	return flushPromise;
+}
+
+function wait(ms: number) {
+	return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 async function main() {
@@ -96,7 +102,7 @@ async function main() {
 					{ key: "stream:fill", id: lastFillId },
 					{ key: "stream:order", id: lastOrderId },
 				],
-				{ BLOCK: 5000 },
+				{ BLOCK: 5000, COUNT: 500 },
 			);
 			if (signal.aborted) break;
 			if (!streams) continue;
@@ -140,6 +146,7 @@ async function main() {
 		} catch (err) {
 			if (signal.aborted) break;
 			logger.error("Stream read error", err);
+			await wait(500);
 		}
 	}
 }

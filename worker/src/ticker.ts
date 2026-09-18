@@ -34,7 +34,12 @@ const tickers = new Map<string, TickerState>();
 
 let warmingUp = false;
 
-function createTickerState(symbol: string, price: bigint, qty: bigint, timestamp: number): TickerState {
+function createTickerState(
+	symbol: string,
+	price: bigint,
+	qty: bigint,
+	timestamp: number,
+): TickerState {
 	return {
 		symbol,
 		trades: [{ price, qty, timestamp }],
@@ -147,14 +152,21 @@ function toPayload(state: TickerState) {
 export async function publishTicker(state: TickerState) {
 	if (!state.dirty) return;
 	state.dirty = false;
-	state.lastPublishedAt = Date.now();
 
 	const payload = toPayload(state);
 
-	await Promise.all([
-		publisher.publish(`${TICKER_CHANNEL_PREFIX}${state.symbol}`, payload),
-		publisher.set(`${TICKER_STATE_KEY_PREFIX}${state.symbol}`, payload),
-	]);
+	try {
+		await Promise.all([
+			publisher.publish(`${TICKER_CHANNEL_PREFIX}${state.symbol}`, payload),
+			publisher.set(`${TICKER_STATE_KEY_PREFIX}${state.symbol}`, payload),
+		]);
+		state.lastPublishedAt = Date.now();
+	} catch (error) {
+		state.dirty = true;
+		state.lastPublishedAt = Date.now();
+		schedulePublish(state);
+		throw error;
+	}
 }
 
 export async function warmUpTickers() {
