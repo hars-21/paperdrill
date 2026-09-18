@@ -18,6 +18,11 @@ export function useBalance({ asset, enabled = true }: UseBalanceOptions = {}) {
 	}, []);
 
 	useEffect(() => {
+		window.addEventListener("paperdrill:account-updated", refresh);
+		return () => window.removeEventListener("paperdrill:account-updated", refresh);
+	}, [refresh]);
+
+	useEffect(() => {
 		if (!enabled) {
 			setBalances({});
 			setError(null);

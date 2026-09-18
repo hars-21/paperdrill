@@ -1,4 +1,4 @@
-import { ASSETS, BALANCES } from "../store";
+import { APPLIED_CREDITS, ASSETS, BALANCES } from "../store";
 import type { CreateOrderInput, InternalOrder, Fill, UserBalance } from "../types/domain";
 import { getMarket } from "./market";
 
@@ -57,6 +57,17 @@ export function addBalance(userId: string, asset: string, amount: bigint) {
 	assetBalance.available += amount;
 
 	return { [asset]: assetBalance };
+}
+
+export function applyCredit(creditId: string, userId: string, asset: string, amount: bigint) {
+	if (APPLIED_CREDITS.has(creditId)) {
+		return { applied: false, balance: getUserBalance(userId, asset) };
+	}
+
+	const balance = addBalance(userId, asset, amount);
+	APPLIED_CREDITS.add(creditId);
+
+	return { applied: true, balance };
 }
 
 export function getUserBalance(userId: string, asset?: string): UserBalance {

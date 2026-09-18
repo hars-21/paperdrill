@@ -1,10 +1,10 @@
 import fs from "fs/promises";
-import { BALANCES, ORDERBOOK, ORDERS, RECENT_TRADES } from "../store";
+import { APPLIED_CREDITS, BALANCES, ORDERBOOK, ORDERS, RECENT_TRADES } from "../store";
 import type { Fill, InternalOrder, PriceLevel } from "../types/domain";
 import { logger } from "./logger";
 import { cacheClient } from "../redis/client";
 
-const SNAPSHOT_VERSION = 3;
+const SNAPSHOT_VERSION = 4;
 const SNAPSHOT_PATH = "snapshots/snapshot.json";
 
 function bigintReplacer(_key: string, value: unknown) {
@@ -45,6 +45,7 @@ export async function snapshot() {
 		),
 		recentTrades: RECENT_TRADES,
 		orders: Object.fromEntries(ORDERS),
+		appliedCreditIds: [...APPLIED_CREDITS],
 	};
 
 	const tmpPath = `${SNAPSHOT_PATH}.tmp`;
@@ -82,6 +83,11 @@ export async function loadSnapshot() {
 
 		for (const [key, value] of Object.entries(parsed.orders)) {
 			ORDERS.set(key, value as InternalOrder);
+		}
+
+		APPLIED_CREDITS.clear();
+		for (const creditId of parsed.appliedCreditIds ?? []) {
+			if (typeof creditId === "string") APPLIED_CREDITS.add(creditId);
 		}
 
 		if (parsed.recentTrades) {

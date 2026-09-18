@@ -49,3 +49,7 @@ export const depositPayloadSchema = userPayloadSchema.extend({
 });
 
 export const initializeBalancePayloadSchema = depositPayloadSchema;
+
+export const creditPayloadSchema = depositPayloadSchema.extend({
+	creditId: z.string().trim().min(1, "creditId is required"),
+});

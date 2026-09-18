@@ -18,6 +18,14 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export interface DailyCredit {
+	credited: boolean;
+	asset: string;
+	amount: string;
+	creditDate: string;
+	nextEligibleAt: string;
+}
+
 export interface PortfolioPosition {
 	asset: string;
 	available: string;

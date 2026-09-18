@@ -10,6 +10,7 @@ import { calculatePortfolio, type Balance } from "../utils/portfolio";
 import { getReferencePrices } from "../utils/referencePrice";
 import { config } from "../config";
 import { ApiError, sendApiError, sendEngineError } from "../utils/apiError";
+import { claimDailyCredit } from "../services/dailyCredit";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
@@ -143,7 +144,12 @@ export async function getPortfolio(req: Request, res: Response) {
 		res.status(200).json(formatPortfolio(portfolio, user.pnlBaseline, user.pnlBaselineAt));
 	} catch (error) {
 		logger.error("Failed to calculate portfolio", error);
-		sendApiError(res, 503, "PORTFOLIO_UNAVAILABLE", "Portfolio valuation is temporarily unavailable");
+		sendApiError(
+			res,
+			503,
+			"PORTFOLIO_UNAVAILABLE",
+			"Portfolio valuation is temporarily unavailable",
+		);
 	}
 }
 
@@ -168,4 +174,9 @@ export async function createDeposit(req: Request, res: Response) {
 	res
 		.status(200)
 		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
+}
+
+export async function claimDailyReward(req: Request, res: Response) {
+	const reward = await claimDailyCredit(getUserId(req));
+	res.status(200).json(reward);
 }

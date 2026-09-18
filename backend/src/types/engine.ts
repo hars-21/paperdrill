@@ -6,6 +6,7 @@ export type EngineCommandType =
 	| "get_open_orders"
 	| "get_trades"
 	| "cancel_order"
+	| "apply_credit"
 	| "create_deposit"
 	| "initialize_balance";
 

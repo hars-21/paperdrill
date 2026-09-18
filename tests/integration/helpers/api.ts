@@ -39,6 +39,22 @@ export interface OrderResponse {
 
 export type Balances = Record<string, { available: string; locked: string }>;
 
+export interface DailyCreditResponse {
+	credited: boolean;
+	asset: string;
+	amount: string;
+	creditDate: string;
+	nextEligibleAt: string;
+}
+
+export interface PortfolioResponse {
+	quoteAsset: string;
+	equity: string;
+	baselineEquity: string;
+	pnl: string;
+	pnlPercent: string;
+}
+
 export class ApiClient {
 	private cookie: string | undefined;
 
@@ -66,6 +82,14 @@ export class ApiClient {
 
 	getBalances() {
 		return this.request<Balances>("/v1/balances");
+	}
+
+	getPortfolio() {
+		return this.request<PortfolioResponse>("/v1/portfolio");
+	}
+
+	claimDailyCredit() {
+		return this.request<DailyCreditResponse>("/v1/users/me/daily-credit", { method: "POST" });
 	}
 
 	createOrder(input: OrderInput) {

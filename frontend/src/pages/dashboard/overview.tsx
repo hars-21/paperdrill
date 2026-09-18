@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Database, KeyRound, WalletCards } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -26,17 +26,27 @@ export function DashboardOverviewPage() {
 	const { balances, loading: balanceLoading } = useBalance();
 	const [data, setData] = useState<OverviewData | null>(null);
 
-	useEffect(() => {
-		Promise.all([api.getOpenOrders(), api.getTradeHistory(5), api.getPortfolio()])
-			.then(([openOrders, trades, portfolio]) => {
-				setData({ openOrders, trades, portfolio });
-			})
-			.catch((error) => {
-				console.error("Failed to load dashboard:", error);
-				setData({ openOrders: [], trades: [], portfolio: null });
-				toast.error("Failed to load dashboard overview");
-			});
+	const loadDashboard = useCallback(async () => {
+		try {
+			const [openOrders, trades, portfolio] = await Promise.all([
+				api.getOpenOrders(),
+				api.getTradeHistory(5),
+				api.getPortfolio(),
+			]);
+			setData({ openOrders, trades, portfolio });
+		} catch (error) {
+			console.error("Failed to load dashboard:", error);
+			setData({ openOrders: [], trades: [], portfolio: null });
+			toast.error("Failed to load dashboard overview");
+		}
 	}, []);
+
+	useEffect(() => {
+		void loadDashboard();
+		const refresh = () => void loadDashboard();
+		window.addEventListener("paperdrill:account-updated", refresh);
+		return () => window.removeEventListener("paperdrill:account-updated", refresh);
+	}, [loadDashboard]);
 
 	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
 	const portfolio = data?.portfolio;

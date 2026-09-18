@@ -5,6 +5,7 @@ import type {
 	ApiKeyScope,
 	Candle,
 	CreatedApiKey,
+	DailyCredit,
 	LeaderboardResponse,
 	Market,
 	MyLeaderboardResponse,
@@ -66,11 +67,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 				);
 			}
 
-			const message = typeof payloadError === "string"
-				? payloadError
-				: typeof data?.message === "string"
-					? data.message
-					: `Request failed: ${res.status}`;
+			const message =
+				typeof payloadError === "string"
+					? payloadError
+					: typeof data?.message === "string"
+						? data.message
+						: `Request failed: ${res.status}`;
 			throw new ApiError(message, res.status);
 		}
 
@@ -156,6 +158,10 @@ export const api = {
 
 	getPortfolio() {
 		return request<Portfolio>("/portfolio");
+	},
+
+	claimDailyCredit() {
+		return request<DailyCredit>("/users/me/daily-credit", { method: "POST" });
 	},
 
 	getLeaderboard(limit = 25, offset = 0) {

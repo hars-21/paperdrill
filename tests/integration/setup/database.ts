@@ -25,6 +25,14 @@ export interface PersistedFill {
 	sellerId: string;
 }
 
+export interface PersistedDailyCredit {
+	userId: string;
+	creditDate: Date;
+	asset: string;
+	amount: string;
+	status: "PENDING" | "APPLIED";
+}
+
 export class TestDatabase {
 	private readonly pool = new Pool({ connectionString: env.databaseUrl });
 
@@ -58,5 +66,22 @@ export class TestDatabase {
 			[id],
 		);
 		return Number(result.rows[0]?.count ?? 0);
+	}
+
+	async dailyCredits(userId: string): Promise<PersistedDailyCredit[]> {
+		const result = await this.pool.query<PersistedDailyCredit>(
+			`SELECT "userId", "creditDate", asset, amount::text, status
+			 FROM "DailyCredit" WHERE "userId" = $1 ORDER BY "creditDate"`,
+			[userId],
+		);
+		return result.rows;
+	}
+
+	async pnlBaseline(userId: string): Promise<string | undefined> {
+		const result = await this.pool.query<{ pnlBaseline: string }>(
+			`SELECT "pnlBaseline"::text FROM "User" WHERE id = $1`,
+			[userId],
+		);
+		return result.rows[0]?.pnlBaseline;
 	}
 }

@@ -1,4 +1,12 @@
-import { ASSETS, BALANCES, ORDERBOOK, ORDERS, ARCHIVED_ORDERS, RECENT_TRADES } from "../src/store";
+import {
+	APPLIED_CREDITS,
+	ASSETS,
+	BALANCES,
+	ORDERBOOK,
+	ORDERS,
+	ARCHIVED_ORDERS,
+	RECENT_TRADES,
+} from "../src/store";
 import { createOrderHandler } from "../src/handlers/createOrder";
 import { cancelOrderHandler } from "../src/handlers/cancelOrder";
 
@@ -6,6 +14,7 @@ export function resetState() {
 	for (const symbol of Object.keys(ORDERBOOK)) delete ORDERBOOK[symbol];
 	for (const symbol of Object.keys(RECENT_TRADES)) delete RECENT_TRADES[symbol];
 	for (const userId of Object.keys(BALANCES)) delete BALANCES[userId];
+	APPLIED_CREDITS.clear();
 	ASSETS.clear();
 	ASSETS.add("BTC");
 	ASSETS.add("USD");

@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, isUnauthorized } from "@/lib/api";
+import { toast } from "sonner";
 
 type User = {
 	id: string;
@@ -42,6 +43,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	useEffect(() => {
 		refreshUser();
 	}, [refreshUser]);
+
+	useEffect(() => {
+		if (!user?.emailVerified) return;
+
+		api
+			.claimDailyCredit()
+			.then((credit) => {
+				if (!credit.credited) return;
+				toast.success(`Daily credit: +${credit.amount} ${credit.asset}`);
+				window.dispatchEvent(new Event("paperdrill:account-updated"));
+			})
+			.catch((error) => console.warn("Daily credit could not be claimed:", error));
+	}, [user?.id, user?.emailVerified]);
 
 	return (
 		<AuthContext.Provider value={{ user, loading, authenticated: !!user, verified: !!user?.emailVerified, refreshUser, setUser }}>

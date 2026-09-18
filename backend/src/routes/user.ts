@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { requireAccess } from "../middleware/auth";
 import { asyncHandler } from "../utils/asyncHandler";
-import { createDeposit, getBalance, getPortfolio, getUserData } from "../controllers/user";
+import {
+	claimDailyReward,
+	createDeposit,
+	getBalance,
+	getPortfolio,
+	getUserData,
+} from "../controllers/user";
 import { getTradeHistory } from "../controllers/user";
 
 export const userRouter = Router();
@@ -27,3 +33,8 @@ userRouter.get(
 	asyncHandler(getPortfolio),
 );
 userRouter.post("/deposits", requireAccess({ types: ["service"] }), asyncHandler(createDeposit));
+userRouter.post(
+	"/users/me/daily-credit",
+	requireAccess({ types: ["session"] }),
+	asyncHandler(claimDailyReward),
+);
