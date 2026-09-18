@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { DashboardPage } from "@/components/dashboard-page";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/table";
 import { useMarkets } from "@/context/MarketContext";
 import { useBalance } from "@/hooks/use-balance";
-import { api } from "@/lib/api";
+import { usePortfolio } from "@/hooks/use-portfolio";
 import { cn } from "@/lib/utils";
-import type { Portfolio, PortfolioPosition } from "@/types";
+import type { PortfolioPosition } from "@/types";
 import { formatPrice, formatQty } from "@/utils/format";
 
 type BalanceRow = PortfolioPosition & { precision: number };
@@ -23,25 +23,11 @@ type BalanceRow = PortfolioPosition & { precision: number };
 export function DashboardBalancesPage() {
 	const { markets } = useMarkets();
 	const { balances, loading: balanceLoading } = useBalance();
-	const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-	const [portfolioLoading, setPortfolioLoading] = useState(true);
-
-	const loadPortfolio = useCallback(async () => {
-		try {
-			setPortfolio(await api.getPortfolio());
-		} catch {
-			toast.error("Portfolio valuation is temporarily unavailable");
-		} finally {
-			setPortfolioLoading(false);
-		}
-	}, []);
+	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
 
 	useEffect(() => {
-		void loadPortfolio();
-		const refresh = () => void loadPortfolio();
-		window.addEventListener("paperdrill:account-updated", refresh);
-		return () => window.removeEventListener("paperdrill:account-updated", refresh);
-	}, [loadPortfolio]);
+		if (portfolioError) toast.error("Portfolio valuation is temporarily unavailable");
+	}, [portfolioError]);
 
 	const loading = balanceLoading || portfolioLoading;
 

@@ -20,7 +20,6 @@ export function TradePage() {
 	const { loading: authLoading, authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
 	const { tickers, loading: tickerLoading } = useTickers();
-	const [orderbookRefreshKey, setOrderbookRefreshKey] = useState(0);
 	const [leftTab, setLeftTab] = useState<"book" | "trades">("book");
 	const { orderbook, loading: orderbookLoading, bestBid, bestAsk } = useOrderbook(symbol);
 	const { trades, loading: tradesLoading } = useTrades(symbol);
@@ -129,7 +128,6 @@ export function TradePage() {
 							lastPrice={ticker?.lastPrice}
 							bestBid={bestBid}
 							bestAsk={bestAsk}
-							onOrderPlaced={() => setOrderbookRefreshKey((key) => key + 1)}
 						/>
 					</div>
 					<div className="hidden lg:block">
@@ -140,7 +138,7 @@ export function TradePage() {
 				<div
 					className={`overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
 				>
-					<DataPanel loading={isDataLoading} refreshKey={orderbookRefreshKey} symbol={symbol} />
+					<DataPanel loading={isDataLoading} symbol={symbol} />
 				</div>
 			</div>
 		</Page>

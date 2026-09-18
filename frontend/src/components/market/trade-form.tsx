@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useMarket } from "@/context/MarketContext";
+import { useCreateOrder } from "@/hooks/use-account";
 import { useBalance } from "@/hooks/use-balance";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatQty } from "@/utils/format";
 import { Button } from "../ui/button";
@@ -19,7 +19,6 @@ interface TradeFormProps {
 	lastPrice?: string | null;
 	bestBid?: string | null;
 	bestAsk?: string | null;
-	onOrderPlaced?: () => void;
 }
 
 function isPositive(value: number) {
@@ -35,27 +34,17 @@ function editablePrice(value: number, precision: number) {
 	return Number.isFinite(value) && value > 0 ? value.toFixed(precision) : "";
 }
 
-export function TradeForm({
-	symbol,
-	loading,
-	lastPrice,
-	bestBid,
-	bestAsk,
-	onOrderPlaced,
-}: TradeFormProps) {
+export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: TradeFormProps) {
 	const [side, setSide] = useState<"BUY" | "SELL">("BUY");
 	const [orderType, setOrderType] = useState<"LIMIT" | "MARKET">("LIMIT");
 	const [price, setPrice] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [percent, setPercent] = useState(0);
-	const [submitting, setSubmitting] = useState(false);
 	const { authenticated, verified, loading: authLoading } = useAuth();
+	const createOrder = useCreateOrder();
+	const submitting = createOrder.isPending;
 	const canTrade = authenticated && verified;
-	const {
-		balances: balance,
-		loading: balanceLoading,
-		refresh: refreshBalance,
-	} = useBalance({ enabled: authenticated });
+	const { balances: balance, loading: balanceLoading } = useBalance({ enabled: authenticated });
 	const market = useMarket(symbol);
 
 	const base = market?.baseAsset ?? symbol.split("_")[0] ?? symbol;
@@ -87,9 +76,7 @@ export function TradeForm({
 
 	const requestedQuantity = Number(quantity);
 	const exceedsMaximum =
-		canTrade &&
-		isPositive(requestedQuantity) &&
-		requestedQuantity > maxQuantity + Number.EPSILON;
+		canTrade && isPositive(requestedQuantity) && requestedQuantity > maxQuantity + Number.EPSILON;
 	const maximumMessage =
 		side === "BUY"
 			? `You can buy a maximum of ${maximumQuantityText} ${base} with your available ${quote}.`
@@ -155,15 +142,14 @@ export function TradeForm({
 			return;
 		}
 
-		setSubmitting(true);
 		try {
-			const result = await api.createOrder(
+			const result = await createOrder.mutateAsync({
 				side,
-				orderType,
+				type: orderType,
 				symbol,
-				quantity,
-				orderType === "LIMIT" ? price : null,
-			);
+				qty: quantity,
+				price: orderType === "LIMIT" ? price : null,
+			});
 
 			const statusMessage =
 				result.status === "FILLED"
@@ -175,12 +161,8 @@ export function TradeForm({
 			toast.success(statusMessage);
 			setQuantity("");
 			setPercent(0);
-			refreshBalance();
-			onOrderPlaced?.();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Order failed");
-		} finally {
-			setSubmitting(false);
 		}
 	};
 

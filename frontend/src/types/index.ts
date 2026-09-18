@@ -172,3 +172,11 @@ export interface Candle {
 	volume: string;
 	symbol: string;
 }
+
+export interface CreateOrderInput {
+	side: "BUY" | "SELL";
+	type: "LIMIT" | "MARKET";
+	symbol: string;
+	qty: string;
+	price?: string | null;
+}

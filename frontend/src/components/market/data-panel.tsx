@@ -14,8 +14,13 @@ import { toast } from "sonner";
 import type { OrderRecord, UserBalance, UserTrade } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
+import {
+	useCancelOrder,
+	useOpenOrders,
+	useOrderHistory,
+	useTradeHistory,
+} from "@/hooks/use-account";
 import { useBalance } from "@/hooks/use-balance";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 import { AssetIcon } from "../icons/asset-icon";
@@ -44,11 +49,11 @@ type SortDirection = "asc" | "desc";
 
 type DataPanelProps = {
 	loading?: boolean;
-	refreshKey?: number;
 	symbol?: string;
 };
 
 const PAGE_SIZE = 10;
+const ORDER_HISTORY_PARAMS = { limit: 100 } as const;
 
 function titleCase(value: string) {
 	return value
@@ -205,15 +210,10 @@ function Pagination({
 	);
 }
 
-export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProps) {
+export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	const { authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [tab, setTab] = useState<Tab>("open");
-	const [openOrders, setOpenOrders] = useState<OrderRecord[]>([]);
-	const [orders, setOrders] = useState<OrderRecord[]>([]);
-	const [trades, setTrades] = useState<UserTrade[]>([]);
-	const [fetching, setFetching] = useState(true);
-	const [cancelling, setCancelling] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentMarketOnly, setCurrentMarketOnly] = useState(Boolean(symbol));
 	const [marketFilter, setMarketFilter] = useState("all");
@@ -228,29 +228,31 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 		loading: balanceLoading,
 		error: balanceError,
 	} = useBalance({ enabled: authenticated });
-
-	const fetchData = useCallback(async () => {
-		setFetching(true);
-		try {
-			const [open, orderHistory, tradeHistory] = await Promise.all([
-				api.getOpenOrders(),
-				api.getOrders({ limit: 100 }),
-				api.getTradeHistory(100),
-			]);
-			setOpenOrders(open);
-			setOrders(orderHistory);
-			setTrades(tradeHistory);
-		} catch (error) {
-			console.error("Failed to load account data:", error);
-			toast.error("Failed to load account data");
-		} finally {
-			setFetching(false);
-		}
-	}, []);
+	const {
+		openOrders,
+		loading: openOrdersLoading,
+		error: openOrdersError,
+	} = useOpenOrders({ enabled: authenticated });
+	const {
+		orders,
+		loading: ordersLoading,
+		error: ordersError,
+	} = useOrderHistory(ORDER_HISTORY_PARAMS, { enabled: authenticated });
+	const {
+		trades,
+		loading: tradesLoading,
+		error: tradesError,
+	} = useTradeHistory(100, { enabled: authenticated });
+	const cancelOrder = useCancelOrder();
+	const cancelling = cancelOrder.isPending ? (cancelOrder.variables ?? null) : null;
+	const fetching = openOrdersLoading || ordersLoading || tradesLoading;
+	const accountDataError = balanceError ?? openOrdersError ?? ordersError ?? tradesError;
 
 	useEffect(() => {
-		if (authenticated) fetchData();
-	}, [authenticated, refreshKey, fetchData]);
+		if (!accountDataError) return;
+		console.error("Failed to load account data:", accountDataError);
+		toast.error("Failed to load account data");
+	}, [accountDataError]);
 
 	useEffect(() => {
 		setPage(1);
@@ -357,15 +359,11 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 
 	const handleCancel = async (orderId: string) => {
 		if (!verified) return;
-		setCancelling(orderId);
 		try {
-			await api.cancelOrder(orderId);
+			await cancelOrder.mutateAsync(orderId);
 			toast.success("Order cancelled");
-			await fetchData();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to cancel order");
-		} finally {
-			setCancelling(null);
 		}
 	};
 

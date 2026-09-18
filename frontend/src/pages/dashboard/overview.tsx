@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowRight, Database, KeyRound, WalletCards } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -9,47 +9,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
+import { useOpenOrders, useTradeHistory } from "@/hooks/use-account";
 import { useBalance } from "@/hooks/use-balance";
-import { api } from "@/lib/api";
-import type { OrderRecord, Portfolio, UserTrade } from "@/types";
+import { usePortfolio } from "@/hooks/use-portfolio";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
-
-type OverviewData = {
-	openOrders: OrderRecord[];
-	trades: UserTrade[];
-	portfolio: Portfolio | null;
-};
 
 export function DashboardOverviewPage() {
 	const { user } = useAuth();
 	const { markets } = useMarkets();
 	const { balances, loading: balanceLoading } = useBalance();
-	const [data, setData] = useState<OverviewData | null>(null);
-
-	const loadDashboard = useCallback(async () => {
-		try {
-			const [openOrders, trades, portfolio] = await Promise.all([
-				api.getOpenOrders(),
-				api.getTradeHistory(5),
-				api.getPortfolio(),
-			]);
-			setData({ openOrders, trades, portfolio });
-		} catch (error) {
-			console.error("Failed to load dashboard:", error);
-			setData({ openOrders: [], trades: [], portfolio: null });
-			toast.error("Failed to load dashboard overview");
-		}
-	}, []);
+	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
+	const { openOrders, loading: openOrdersLoading, error: openOrdersError } = useOpenOrders();
+	const { trades, loading: tradesLoading, error: tradesError } = useTradeHistory(5);
+	const dashboardError = portfolioError ?? openOrdersError ?? tradesError;
 
 	useEffect(() => {
-		void loadDashboard();
-		const refresh = () => void loadDashboard();
-		window.addEventListener("paperdrill:account-updated", refresh);
-		return () => window.removeEventListener("paperdrill:account-updated", refresh);
-	}, [loadDashboard]);
+		if (!dashboardError) return;
+		console.error("Failed to load dashboard:", dashboardError);
+		toast.error("Failed to load dashboard overview");
+	}, [dashboardError]);
 
 	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
-	const portfolio = data?.portfolio;
 	const pnl = Number(portfolio?.pnl ?? 0);
 	const pnlClassName = pnl >= 0 ? "text-green-text!" : "text-red-text!";
 
@@ -76,7 +56,7 @@ export function DashboardOverviewPage() {
 					className="border-b sm:border-r xl:border-b-0"
 					label="Portfolio value"
 					value={
-						!data
+						portfolioLoading
 							? null
 							: portfolio
 								? `${formatPrice(portfolio.equity)} ${portfolio.quoteAsset}`
@@ -87,7 +67,7 @@ export function DashboardOverviewPage() {
 					className="border-b xl:border-r xl:border-b-0"
 					label="Total PnL"
 					value={
-						!data
+						portfolioLoading
 							? null
 							: portfolio
 								? `${pnl > 0 ? "+" : ""}${formatPrice(portfolio.pnl)} ${portfolio.quoteAsset}`
@@ -98,10 +78,16 @@ export function DashboardOverviewPage() {
 				<Metric
 					className="border-b sm:border-r sm:border-b-0"
 					label="PnL return"
-					value={!data ? null : portfolio ? `${pnl > 0 ? "+" : ""}${portfolio.pnlPercent}%` : "-"}
+					value={
+						portfolioLoading
+							? null
+							: portfolio
+								? `${pnl > 0 ? "+" : ""}${portfolio.pnlPercent}%`
+								: "-"
+					}
 					valueClassName={pnlClassName}
 				/>
-				<Metric label="Open orders" value={data ? String(data.openOrders.length) : null} />
+				<Metric label="Open orders" value={openOrdersLoading ? null : String(openOrders.length)} />
 			</div>
 
 			<div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
@@ -110,7 +96,7 @@ export function DashboardOverviewPage() {
 						<CardTitle className="text-base">Balances</CardTitle>
 					</CardHeader>
 					<CardContent className="px-0">
-						{!data || balanceLoading ? (
+						{balanceLoading ? (
 							<div className="space-y-4 p-5">
 								<Skeleton className="h-8" />
 								<Skeleton className="h-8" />
@@ -144,17 +130,17 @@ export function DashboardOverviewPage() {
 						<CardTitle className="text-base">Recent trades</CardTitle>
 					</CardHeader>
 					<CardContent className="px-0">
-						{!data ? (
+						{tradesLoading ? (
 							<div className="space-y-4 p-5">
 								<Skeleton className="h-8" />
 								<Skeleton className="h-8" />
 							</div>
-						) : data.trades.length === 0 ? (
+						) : trades.length === 0 ? (
 							<p className="p-5 text-sm text-medium-emphasis">
 								Your completed trades will appear here.
 							</p>
 						) : (
-							data.trades.map((trade) => {
+							trades.map((trade) => {
 								const market = markets.find((item) => item.symbol === trade.symbol);
 								return (
 									<div
