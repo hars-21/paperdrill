@@ -10,7 +10,7 @@ export function Footer() {
 						<BrandLogo href="/" />
 						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
 							The exchange built for developers, not spectators. Real matching engine, real order
-							book, zero risk.
+							book, no real funds at risk.
 						</p>
 					</div>
 
@@ -43,11 +43,6 @@ export function Footer() {
 									Documentation
 								</Link>
 							</li>
-							<li>
-								<Link to="/changelog" className="transition-colors hover:text-high-emphasis">
-									Changelog
-								</Link>
-							</li>
 						</ul>
 					</div>
 
@@ -73,7 +68,7 @@ export function Footer() {
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						v0.4.0-beta - Simulated environment. No real funds or assets are involved.
+						Simulated trading only. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>

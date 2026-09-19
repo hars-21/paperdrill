@@ -83,7 +83,7 @@ export function Navbar() {
 
 							<div className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-4">
 								<SheetClose asChild>
-									<BrandLogo href="/markets" showText={false} showBeta={false} />
+									<BrandLogo href="/markets" showText={false} />
 								</SheetClose>
 
 								<SheetClose asChild>

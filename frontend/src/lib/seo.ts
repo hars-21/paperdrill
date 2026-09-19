@@ -3,9 +3,9 @@ export const SITE = {
 	tagline: "The Exchange Built for Developers",
 	url: "https://paperdrill.dev",
 	description:
-		"PaperDrill is a live paper-trading exchange with a real matching engine and order book. Trade on the UI or connect a bot via API — no KYC, no real money, no risk.",
+		"PaperDrill is a live paper-trading exchange with a real matching engine and order book. Trade on the UI or connect a bot via API — no KYC and no real funds at risk.",
 	shortDescription:
-		"Real matching engine. Real order book. Trade on the UI or connect a bot. Zero risk.",
+		"Real matching engine. Real order book. Trade on the UI or connect a bot. No real funds at risk.",
 	keywords: [
 		"paper trading",
 		"crypto exchange simulator",
@@ -20,7 +20,7 @@ export const SITE = {
 	],
 	locale: "en_US",
 	twitter: "@paperdrill",
-	contact: "hello@paperdrill.dev",
+	contact: "support@paperdrill.dev",
 	securityContact: "security@paperdrill.dev",
 } as const;
 
@@ -50,11 +50,6 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 		description:
 			"Learn how PaperDrill works — markets, trading, REST API, WebSocket feeds, and paper-trading sandbox setup for developers.",
 		path: "/docs",
-	},
-	"/changelog": {
-		title: `Changelog | ${SITE.name}`,
-		description: "Release notes and product updates for the PaperDrill paper-trading exchange.",
-		path: "/changelog",
 	},
 	"/terms": {
 		title: `Terms of Service | ${SITE.name}`,

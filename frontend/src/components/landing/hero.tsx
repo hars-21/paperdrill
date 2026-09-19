@@ -16,7 +16,7 @@ export function Hero() {
 
 				<p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-medium-emphasis sm:text-lg">
 					A live, always-on exchange with a real matching engine and order book. Trade on the UI or
-					connect a bot via API - no KYC, no real money, no risk.
+					connect a bot via API - no KYC and no real funds at risk.
 				</p>
 
 				<div className="flex flex-wrap items-center justify-center gap-3">
