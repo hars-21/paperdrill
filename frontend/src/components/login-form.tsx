@@ -7,6 +7,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { usePostHog } from "@posthog/react";
 import { toast } from "sonner";
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -14,6 +15,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const { setUser } = useAuth();
+	const posthog = usePostHog();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
@@ -27,6 +29,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 		try {
 			const user = await api.signin(email.trim(), password);
 			setUser(user);
+			posthog.capture("user_signed_in", { email_verified: user.emailVerified });
 			toast.success("Signed in successfully");
 			navigate(user.emailVerified ? "/dashboard" : "/verify-email");
 		} catch (err) {

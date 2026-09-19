@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePostHog } from "@posthog/react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { accountQueryKeys, invalidateTradingQueries } from "@/lib/query-client";
@@ -72,11 +73,18 @@ export function useTradeHistory(limit = 100, { enabled = true }: QueryOptions = 
 export function useCreateOrder() {
 	const { user } = useAuth();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	return useMutation({
 		mutationFn: (input: CreateOrderInput) =>
 			api.createOrder(input.side, input.type, input.symbol, input.qty, input.price),
-		onSuccess: async () => {
+		onSuccess: async (order, input) => {
+			posthog.capture("order_placed", {
+				symbol: input.symbol,
+				side: input.side,
+				order_type: input.type,
+				status: order.status,
+			});
 			if (user) await invalidateTradingQueries(queryClient, user.id);
 		},
 	});
@@ -85,10 +93,12 @@ export function useCreateOrder() {
 export function useCancelOrder() {
 	const { user } = useAuth();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	return useMutation({
 		mutationFn: api.cancelOrder,
 		onSuccess: async () => {
+			posthog.capture("order_cancelled");
 			if (user) await invalidateTradingQueries(queryClient, user.id);
 		},
 	});

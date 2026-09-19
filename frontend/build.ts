@@ -137,6 +137,10 @@ const result = await Bun.build({
 		"process.env.NODE_ENV": JSON.stringify("production"),
 		__API_BASE_URL__: JSON.stringify(process.env.API_BASE_URL ?? "http://localhost:8000"),
 		__WS_URL__: JSON.stringify(process.env.WS_URL ?? "ws://localhost:8000"),
+		"process.env.BUN_PUBLIC_POSTHOG_HOST": JSON.stringify(process.env.BUN_PUBLIC_POSTHOG_HOST ?? ""),
+		"process.env.BUN_PUBLIC_POSTHOG_PROJECT_TOKEN": JSON.stringify(
+			process.env.BUN_PUBLIC_POSTHOG_PROJECT_TOKEN ?? "",
+		),
 	},
 	...cliConfig,
 });

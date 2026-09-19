@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePostHog } from "@posthog/react";
 import { api, isUnauthorized } from "@/lib/api";
 import { accountQueryKeys, invalidateAccountQueries } from "@/lib/query-client";
 import { toast } from "sonner";
@@ -26,11 +27,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 	const previousUserId = useRef<string | null>(null);
+	const setCurrentUser = useCallback(
+		(nextUser: User | null) => {
+			setUser(nextUser);
+			if (nextUser) {
+				posthog.identify(nextUser.id, { email_verified: nextUser.emailVerified });
+			} else {
+				posthog.reset();
+			}
+		},
+		[posthog],
+	);
 	const dailyCredit = useMutation({
 		mutationFn: (_userId: string) => api.claimDailyCredit(),
 		onSuccess: async (credit, userId) => {
-			if (credit.credited) toast.success(`Daily credit: +${credit.amount} ${credit.asset}`);
+			if (credit.credited) {
+				posthog.capture("daily_credit_claimed", { asset: credit.asset, amount: credit.amount });
+				toast.success(`Daily credit: +${credit.amount} ${credit.asset}`);
+			}
 			await invalidateAccountQueries(queryClient, userId);
 		},
 		onError: (error) => console.warn("Daily credit could not be claimed:", error),
@@ -39,10 +55,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const refreshUser = useCallback(async () => {
 		try {
 			const user = await api.getCurrentUser();
-			setUser(user);
+			setCurrentUser(user);
 		} catch (err) {
 			if (isUnauthorized(err)) {
-				setUser(null);
+				setCurrentUser(null);
 				return;
 			}
 
@@ -50,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [setCurrentUser]);
 
 	useEffect(() => {
 		refreshUser();
@@ -70,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	}, [user?.id, user?.emailVerified]);
 
 	return (
-		<AuthContext.Provider value={{ user, loading, authenticated: !!user, verified: !!user?.emailVerified, refreshUser, setUser }}>
+		<AuthContext.Provider value={{ user, loading, authenticated: !!user, verified: !!user?.emailVerified, refreshUser, setUser: setCurrentUser }}>
 			{children}
 		</AuthContext.Provider>
 	);

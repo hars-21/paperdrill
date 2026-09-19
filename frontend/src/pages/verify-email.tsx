@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -13,6 +14,7 @@ export function VerifyEmailPage() {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get("token");
 	const { user, verified, loading, refreshUser } = useAuth();
+	const posthog = usePostHog();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const emailWasJustSent = Boolean((location.state as { emailSent?: boolean } | null)?.emailSent);
@@ -46,6 +48,7 @@ export function VerifyEmailPage() {
 			.then((result) => {
 				if (!active) return;
 				refreshUser();
+				posthog.capture("email_verified");
 				setStatus("success");
 				toast.success(result.message);
 			})
@@ -58,7 +61,7 @@ export function VerifyEmailPage() {
 		return () => {
 			active = false;
 		};
-	}, [token, loading, verified]);
+	}, [token, loading, verified, posthog, refreshUser]);
 
 	useEffect(() => {
 		if (!verified) return;
