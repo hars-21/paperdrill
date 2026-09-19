@@ -72,6 +72,7 @@ async function gracefulShutdown(signal: string) {
 	await flushSentry();
 
 	clearTimeout(forceExit);
+	logger.info("Backend shutdown complete");
 	process.exit(0);
 }
 

@@ -53,6 +53,11 @@ export async function snapshot() {
 	await fs.mkdir("snapshots", { recursive: true });
 	await fs.writeFile(tmpPath, JSON.stringify(snapshotData, bigintReplacer));
 	await fs.rename(tmpPath, SNAPSHOT_PATH);
+	logger.info("Snapshot saved", {
+		jobsLastId,
+		orders: ORDERS.size,
+		appliedCredits: APPLIED_CREDITS.size,
+	});
 }
 
 function restorePriceLevels(savedLevels: Record<string, PriceLevel> | undefined) {

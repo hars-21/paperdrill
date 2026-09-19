@@ -177,6 +177,7 @@ async function gracefulShutdown(signal: string) {
 	await pool.end();
 
 	clearTimeout(forceExit);
+	logger.info("Worker shutdown complete");
 	process.exit(0);
 }
 

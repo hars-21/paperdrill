@@ -136,6 +136,10 @@ async function start() {
 	await loadSnapshot();
 	registerEventHandlers();
 	await startHealth();
+	logger.info("Engine started", {
+		incomingStream: config.incomingStream,
+		snapshotIntervalMs: config.snapshotInterval,
+	});
 
 	setInterval(() => {
 		snapshot().catch((err) => logger.error("Snapshot error", err));
@@ -160,6 +164,7 @@ async function gracefulShutdown(signal: string) {
 	await flushSentry();
 
 	clearTimeout(forceExit);
+	logger.info("Engine shutdown complete");
 	process.exit(0);
 }
 
