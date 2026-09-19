@@ -5,6 +5,9 @@ import {
 	ArrowUpDown,
 	ChevronLeft,
 	ChevronRight,
+	CircleAlert,
+	Inbox,
+	LockKeyhole,
 	Search,
 	SlidersHorizontal,
 	X,
@@ -158,8 +161,26 @@ function TableLoading({ columns }: { columns: number }) {
 
 function EmptyState({ children }: { children: string }) {
 	return (
-		<div className="flex min-h-44 items-center justify-center text-sm text-medium-emphasis">
-			{children}
+		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+			<div className="flex size-9 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+				<Inbox className="size-4" />
+			</div>
+			<p className="text-sm font-medium text-high-emphasis">{children}</p>
+			<p className="max-w-sm text-xs text-medium-emphasis">
+				There is nothing to show for this view yet.
+			</p>
+		</div>
+	);
+}
+
+function ErrorState({ message }: { message: string }) {
+	return (
+		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+			<div className="flex size-9 items-center justify-center rounded-full bg-red-bg text-red-text">
+				<CircleAlert className="size-4" />
+			</div>
+			<p className="text-sm font-medium text-high-emphasis">Could not load account data</p>
+			<p className="max-w-sm text-xs text-medium-emphasis">{message}</p>
 		</div>
 	);
 }
@@ -247,6 +268,14 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	const cancelling = cancelOrder.isPending ? (cancelOrder.variables ?? null) : null;
 	const fetching = openOrdersLoading || ordersLoading || tradesLoading;
 	const accountDataError = balanceError ?? openOrdersError ?? ordersError ?? tradesError;
+	const activeDataError =
+		tab === "balance"
+			? balanceError
+			: tab === "open"
+				? openOrdersError
+				: tab === "orders"
+					? ordersError
+					: tradesError;
 
 	useEffect(() => {
 		if (!accountDataError) return;
@@ -384,24 +413,30 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 
 	if (!authenticated) {
 		return (
-			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
-				Please&nbsp;
-				<Link to="/login" className="font-medium text-primary">
-					sign in
-				</Link>
-				&nbsp;or&nbsp;
-				<Link to="/signup" className="font-medium text-primary">
-					sign up
-				</Link>
-				&nbsp;to view account data.
+			<div className="flex min-h-75 flex-col items-center justify-center gap-3 px-4 text-center">
+				<div className="flex size-10 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+					<LockKeyhole className="size-4" />
+				</div>
+				<div>
+					<p className="text-sm font-medium text-high-emphasis">Your account activity</p>
+					<p className="mt-1 text-xs text-medium-emphasis">Sign in to view balances and orders.</p>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button asChild size="sm">
+						<Link to="/login">Sign in</Link>
+					</Button>
+					<Button asChild size="sm" variant="outline">
+						<Link to="/signup">Create account</Link>
+					</Button>
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex h-full min-h-144 select-none flex-col overflow-hidden">
+		<div className="flex h-full min-h-96 select-none flex-col overflow-hidden sm:min-h-120 lg:min-h-144">
 			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
-				<div className="flex min-w-0 items-center gap-1 overflow-x-auto">
+				<div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto">
 					{tabs.map((item) => (
 						<button
 							key={item.key}
@@ -559,6 +594,14 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				{loading || fetching || (tab === "balance" && balanceLoading) ? (
 					<TableLoading
 						columns={tab === "balance" ? 4 : tab === "trades" ? 7 : tab === "open" ? 10 : 9}
+					/>
+				) : activeDataError ? (
+					<ErrorState
+						message={
+							activeDataError instanceof Error
+								? activeDataError.message
+								: "Please try again in a moment."
+						}
 					/>
 				) : tab === "balance" ? (
 					<BalanceTable entries={balanceEntries} precisionFor={assetPrecision} />

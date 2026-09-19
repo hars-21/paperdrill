@@ -13,9 +13,15 @@ type MarketWatchlistProps = {
 export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistProps) {
 	const navigate = useNavigate();
 
+	if (markets.length === 0) {
+		return null;
+	}
+
 	return (
 		<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
-			<div className="border-b border-border/40 px-3 py-2.5 text-sm font-semibold text-high-emphasis">Markets</div>
+			<div className="border-b border-border/40 px-3 py-2.5 text-sm font-semibold text-high-emphasis">
+				Markets
+			</div>
 			<div className="p-1.5">
 				{markets.map((market) => {
 					const ticker = tickers[market.symbol];
@@ -33,14 +39,24 @@ export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistPro
 							<AssetIcon asset={market.baseAsset} className="size-7 shrink-0" />
 							<div className="min-w-0 flex-1">
 								<div className="text-sm font-semibold text-high-emphasis">
-									{market.baseAsset}<span className="font-normal text-medium-emphasis">/{market.quoteAsset}</span>
+									{market.baseAsset}
+									<span className="font-normal text-medium-emphasis">/{market.quoteAsset}</span>
 								</div>
 							</div>
 							<div className="text-right">
 								<div className="text-sm font-medium tabular-nums text-high-emphasis">
 									{ticker ? formatPrice(ticker.lastPrice, market.pricePrecision) : "—"}
 								</div>
-								<div className={cn("text-xs tabular-nums", ticker ? (change.isUp ? "text-green-text" : "text-red-text") : "text-medium-emphasis")}>
+								<div
+									className={cn(
+										"text-xs tabular-nums",
+										ticker
+											? change.isUp
+												? "text-green-text"
+												: "text-red-text"
+											: "text-medium-emphasis",
+									)}
+								>
 									{ticker ? change.text : "—"}
 								</div>
 							</div>

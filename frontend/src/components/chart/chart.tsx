@@ -1,3 +1,4 @@
+import { Activity, CircleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Candle, OrderBook, Ticker } from "@/types";
 import { type CandleInterval, useCandles } from "../../hooks/use-candles";
@@ -82,7 +83,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 
 	return (
 		<div ref={panelRef} className="flex h-full min-h-0 flex-col bg-card">
-			<div className="flex h-11 shrink-0 items-center overflow-x-auto border-b border-border/40 px-2 sm:px-3">
+			<div className="no-scrollbar flex h-11 shrink-0 items-center overflow-x-auto border-b border-border/40 px-2 sm:px-3">
 				<div className="flex items-center gap-1">
 					{TABS.map((item) => (
 						<button
@@ -156,16 +157,27 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 						</div>
 
 						{loading && candles.length === 0 ? (
-							<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+							<div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+								<div className="size-5 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
 								Loading chart…
 							</div>
 						) : error && candles.length === 0 ? (
-							<div className="flex h-full items-center justify-center text-sm text-red-text">
-								{error}
+							<div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+								<div className="flex size-9 items-center justify-center rounded-full bg-secondary text-red-text">
+									<CircleAlert className="size-4" />
+								</div>
+								<p className="text-sm font-medium text-high-emphasis">Could not load chart</p>
+								<p className="max-w-sm text-xs text-medium-emphasis">{error}</p>
 							</div>
 						) : candles.length === 0 ? (
-							<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-								No candle data yet
+							<div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+								<div className="flex size-9 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+									<Activity className="size-4" />
+								</div>
+								<p className="text-sm font-medium text-high-emphasis">No candle data yet</p>
+								<p className="text-xs text-medium-emphasis">
+									The chart will update after the first trade.
+								</p>
 							</div>
 						) : (
 							<PriceChart
@@ -180,7 +192,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 						)}
 					</div>
 
-					<div className="flex h-9 shrink-0 items-center justify-between gap-2 overflow-x-auto border-t border-border/40 px-2 sm:px-3">
+					<div className="no-scrollbar flex h-9 shrink-0 items-center justify-between gap-2 overflow-x-auto border-t border-border/40 px-2 sm:px-3">
 						<div className="flex items-center gap-1 sm:gap-3">
 							{CHART_RANGES.map((item) => (
 								<Button

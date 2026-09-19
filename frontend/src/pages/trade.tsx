@@ -56,11 +56,11 @@ export function TradePage() {
 	return (
 		<Page fixed className="px-2 pb-2 sm:px-4">
 			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_minmax(38rem,1fr)_auto]">
-				<div className="lg:col-start-1 lg:row-start-1">
+				<div className="order-1 lg:col-start-1 lg:row-start-1">
 					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
-				<div className="flex flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:min-h-0 lg:flex-row">
+				<div className="order-3 flex min-w-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:min-h-0 lg:flex-row">
 					<div className="hidden w-1/3 min-w-65 max-w-75 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:flex">
 						<div className="shrink-0 p-3">{bookTradesTabs}</div>
 						<div className="min-h-0 flex-1">
@@ -78,7 +78,7 @@ export function TradePage() {
 						</div>
 					</div>
 
-					<div className="flex h-96 w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:hidden">
+					<div className="order-2 flex h-80 w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:h-96 lg:hidden">
 						<div className="shrink-0 p-3">{bookTradesTabs}</div>
 						<div className="min-h-0 flex-1">
 							{leftTab === "book" ? (
@@ -96,7 +96,7 @@ export function TradePage() {
 						</div>
 					</div>
 
-					<div className="relative min-h-96 flex-1 overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:min-h-0">
+					<div className="relative order-1 min-h-80 flex-1 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:min-h-96 lg:order-0 lg:min-h-0">
 						{isDataLoading ? (
 							<div className="flex h-full flex-col justify-between p-6">
 								<div className="flex items-center justify-between">
@@ -120,8 +120,8 @@ export function TradePage() {
 					</div>
 				</div>
 
-				<div className="flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
-					<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
+				<div className="order-2 flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+					<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
 						<TradeForm
 							symbol={symbol}
 							loading={isDataLoading}
@@ -136,7 +136,7 @@ export function TradePage() {
 				</div>
 
 				<div
-					className={`overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
+					className={`order-4 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
 				>
 					<DataPanel loading={isDataLoading} symbol={symbol} />
 				</div>
