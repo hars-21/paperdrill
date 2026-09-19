@@ -9,6 +9,16 @@ function getBucket(time: number) {
 	return time - (time % 60000);
 }
 
+function publishCandle(candle: Candle) {
+	const payload = JSON.stringify({ event: "candle", ...candle }, (_, value) =>
+		typeof value === "bigint" ? value.toString() : value,
+	);
+
+	void publisher.publish(`candle:${candle.symbol}`, payload).catch((err) => {
+		logger.error("Failed to publish candle update", { symbol: candle.symbol, error: err });
+	});
+}
+
 export function deriveData(data: Trade) {
 	const { symbol, price, qty, timestamp } = data;
 
@@ -26,11 +36,13 @@ export function deriveData(data: Trade) {
 			symbol,
 		};
 		openCandles.set(`${symbol}_${bucket}`, candle);
+		publishCandle(candle);
 	} else {
 		currentCandle.high = price > currentCandle.high ? price : currentCandle.high;
 		currentCandle.low = price < currentCandle.low ? price : currentCandle.low;
 		currentCandle.close = price;
 		currentCandle.volume += qty;
+		publishCandle(currentCandle);
 	}
 }
 
@@ -41,13 +53,6 @@ export async function flushCandles() {
 			const timestamp = new Date(candle.time);
 
 			try {
-				await publisher.publish(
-					`candle:${candle.symbol}`,
-					JSON.stringify({ event: "candle", ...candle }, (_, v) =>
-						typeof v === "bigint" ? v.toString() : v,
-					),
-				);
-
 				await pool.query(
 					`INSERT INTO "Candle" (symbol, open, high, low, close, volume, time) Values ($1, $2, $3, $4, $5, $6, $7)
 					 ON CONFLICT (symbol, time) DO UPDATE SET

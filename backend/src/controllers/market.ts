@@ -16,7 +16,10 @@ import { marketStore } from "../store/market";
 import { sendApiError, sendEngineError } from "../utils/apiError";
 
 const intervalMap = {
+	"1M": "1 minute",
+	"5M": "5 minutes",
 	"15M": "15 minutes",
+	"30M": "30 minutes",
 	"1H": "1 hour",
 	"4H": "4 hours",
 	"1D": "1 day",

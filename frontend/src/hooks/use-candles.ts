@@ -3,11 +3,14 @@ import type { Candle } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 
-export const CANDLE_INTERVALS = ["15M", "1H", "4H", "1D"] as const;
+export const CANDLE_INTERVALS = ["1M", "5M", "15M", "30M", "1H", "4H", "1D"] as const;
 export type CandleInterval = (typeof CANDLE_INTERVALS)[number];
 
 export const CANDLE_INTERVAL_MS: Record<CandleInterval, number> = {
+	"1M": 60 * 1000,
+	"5M": 5 * 60 * 1000,
 	"15M": 15 * 60 * 1000,
+	"30M": 30 * 60 * 1000,
 	"1H": 60 * 60 * 1000,
 	"4H": 4 * 60 * 60 * 1000,
 	"1D": 24 * 60 * 60 * 1000,
@@ -44,7 +47,12 @@ function fillCandleGaps(candles: Candle[], intMs: number): Candle[] {
 	return r;
 }
 
-function mergeMinuteCandle(into: Candle[], inc: Candle, intMs: number): Candle[] {
+function mergeMinuteCandle(
+	into: Candle[],
+	inc: Candle,
+	previousMinute: Candle | null,
+	intMs: number,
+): Candle[] {
 	const bs = getBucketStart(inc.time, intMs);
 	const c = [...into];
 	const l = c[c.length - 1];
@@ -63,12 +71,17 @@ function mergeMinuteCandle(into: Candle[], inc: Candle, intMs: number): Candle[]
 			g += intMs;
 		}
 	}
-	const b = c.find((x) => x.time === bs);
+	const bucketIndex = c.findIndex((x) => x.time === bs);
+	const b = c[bucketIndex];
 	if (b) {
-		b.high = Number(inc.high) > Number(b.high) ? inc.high : b.high;
-		b.low = Number(inc.low) < Number(b.low) ? inc.low : b.low;
-		b.close = inc.close;
-		b.volume = String(Number(b.volume) + Number(inc.volume));
+		const previousVolume = previousMinute?.time === inc.time ? Number(previousMinute.volume) : 0;
+		c[bucketIndex] = {
+			...b,
+			high: Number(inc.high) > Number(b.high) ? inc.high : b.high,
+			low: Number(inc.low) < Number(b.low) ? inc.low : b.low,
+			close: inc.close,
+			volume: String(Number(b.volume) + Number(inc.volume) - previousVolume),
+		};
 	} else {
 		c.push({ ...inc, time: bs });
 	}
@@ -81,6 +94,7 @@ export function useCandles(symbol: string, interval: CandleInterval = "1H") {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const candlesRef = useRef<Candle[]>([]);
+	const liveMinuteRef = useRef<Candle | null>(null);
 	const intervalRef = useRef(interval);
 	intervalRef.current = interval;
 
@@ -91,6 +105,7 @@ export function useCandles(symbol: string, interval: CandleInterval = "1H") {
 		setLastCandle(null);
 		setError(null);
 		candlesRef.current = [];
+		liveMinuteRef.current = null;
 
 		const intMs = CANDLE_INTERVAL_MS[interval];
 
@@ -100,10 +115,12 @@ export function useCandles(symbol: string, interval: CandleInterval = "1H") {
 				if (!active) return;
 				const data = res?.data ?? [];
 				const raw: Candle[] = data.map((c) => ({ ...c, symbol, time: c.time }));
-				const filled = fillCandleGaps(raw, intMs);
-				candlesRef.current = filled;
-				setCandles(filled);
-				const last = filled[filled.length - 1];
+				let next = fillCandleGaps(raw, intMs);
+				const liveMinute = liveMinuteRef.current;
+				if (liveMinute) next = mergeMinuteCandle(next, liveMinute, null, intMs);
+				candlesRef.current = next;
+				setCandles(next);
+				const last = next[next.length - 1];
 				if (last) setLastCandle(last);
 			})
 			.catch((err) => {
@@ -119,10 +136,16 @@ export function useCandles(symbol: string, interval: CandleInterval = "1H") {
 			const candle = raw as Candle;
 			if (!candle.time || candle.open === undefined || candle.close === undefined) return;
 			const m = CANDLE_INTERVAL_MS[intervalRef.current];
-			const merged = mergeMinuteCandle(candlesRef.current, candle, m);
+			const merged = mergeMinuteCandle(
+				candlesRef.current,
+				candle,
+				liveMinuteRef.current,
+				m,
+			);
+			liveMinuteRef.current = candle;
 			candlesRef.current = merged;
 			setCandles(merged);
-			setLastCandle(candle);
+			setLastCandle(merged[merged.length - 1] ?? candle);
 		});
 
 		return () => {

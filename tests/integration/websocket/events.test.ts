@@ -65,6 +65,7 @@ test("a real match reaches trade subscribers with formatted price and quantity",
 		seller = await createTestUser("websocket-trade-seller");
 		await seedBalance(engine, seller.id, "ETH", "1000");
 		await probe.subscribe("trade:ETH_USD");
+		await probe.subscribe("candle:ETH_USD");
 
 		const tradeMessage = probe.next<Record<string, unknown>>(
 			(message) =>
@@ -75,6 +76,16 @@ test("a real match reaches trade subscribers with formatted price and quantity",
 				"symbol" in message &&
 				message.symbol === "ETH_USD",
 			"ETH trade update",
+		);
+		const candleMessage = probe.next<Record<string, unknown>>(
+			(message) =>
+				typeof message === "object" &&
+				message !== null &&
+				"event" in message &&
+				message.event === "candle" &&
+				"symbol" in message &&
+				message.symbol === "ETH_USD",
+			"live ETH candle update",
 		);
 
 		const sell = await seller.client.createOrder({
@@ -104,6 +115,16 @@ test("a real match reaches trade subscribers with formatted price and quantity",
 			qty: "0.250",
 			maker: false,
 			timestamp: expect.any(Number),
+		});
+		expect(await candleMessage).toMatchObject({
+			event: "candle",
+			symbol: "ETH_USD",
+			open: "321.00",
+			high: "321.00",
+			low: "321.00",
+			close: "321.00",
+			volume: "0.250",
+			time: expect.any(Number),
 		});
 		sellOrderId = undefined;
 	} finally {
