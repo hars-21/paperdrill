@@ -7,7 +7,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { usePostHog } from "@posthog/react";
+import { useAnalytics } from "@/lib/analytics";
 import { toast } from "sonner";
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -16,7 +16,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const { setUser } = useAuth();
-	const posthog = usePostHog();
+	const posthog = useAnalytics();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (event: React.SubmitEvent) => {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePostHog } from "@posthog/react";
+import { useAnalytics } from "@/lib/analytics";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { accountQueryKeys, invalidateTradingQueries } from "@/lib/query-client";
@@ -73,7 +73,7 @@ export function useTradeHistory(limit = 100, { enabled = true }: QueryOptions = 
 export function useCreateOrder() {
 	const { user } = useAuth();
 	const queryClient = useQueryClient();
-	const posthog = usePostHog();
+	const posthog = useAnalytics();
 
 	return useMutation({
 		mutationFn: (input: CreateOrderInput) =>
@@ -93,7 +93,7 @@ export function useCreateOrder() {
 export function useCancelOrder() {
 	const { user } = useAuth();
 	const queryClient = useQueryClient();
-	const posthog = usePostHog();
+	const posthog = useAnalytics();
 
 	return useMutation({
 		mutationFn: api.cancelOrder,

@@ -15,23 +15,27 @@ const options = {
 	defaults: "2026-05-30",
 } as const;
 
+const analyticsEnabled = process.env.NODE_ENV === "production";
+
 const elem = document.getElementById("root")!;
-const app = (
-	<StrictMode>
-		<PostHogProvider apiKey={process.env.BUN_PUBLIC_POSTHOG_PROJECT_TOKEN ?? ""} options={options}>
-			<ErrorBoundary>
-				<QueryClientProvider client={queryClient}>
-					<ThemeProvider>
-						<BrowserRouter>
-							<App />
-							<Toaster />
-						</BrowserRouter>
-					</ThemeProvider>
-				</QueryClientProvider>
-			</ErrorBoundary>
-		</PostHogProvider>
-	</StrictMode>
+const content = (
+	<ErrorBoundary>
+		<QueryClientProvider client={queryClient}>
+			<ThemeProvider>
+				<BrowserRouter>
+					<App />
+					<Toaster />
+				</BrowserRouter>
+			</ThemeProvider>
+		</QueryClientProvider>
+	</ErrorBoundary>
 );
+
+const app = <StrictMode>{analyticsEnabled ? (
+	<PostHogProvider apiKey={process.env.BUN_PUBLIC_POSTHOG_PROJECT_TOKEN ?? ""} options={options}>
+		{content}
+	</PostHogProvider>
+) : content}</StrictMode>;
 
 if (import.meta.hot) {
 	const root = (import.meta.hot.data.root ??= createRoot(elem));

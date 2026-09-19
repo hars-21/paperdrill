@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePostHog } from "@posthog/react";
+import { useAnalytics } from "@/lib/analytics";
 import { api, isUnauthorized } from "@/lib/api";
 import { accountQueryKeys, invalidateAccountQueries } from "@/lib/query-client";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 	const queryClient = useQueryClient();
-	const posthog = usePostHog();
+	const posthog = useAnalytics();
 	const previousUserId = useRef<string | null>(null);
 	const setCurrentUser = useCallback(
 		(nextUser: User | null) => {

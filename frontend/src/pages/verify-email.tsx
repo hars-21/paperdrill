@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { usePostHog } from "@posthog/react";
+import { useAnalytics } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +14,7 @@ export function VerifyEmailPage() {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get("token");
 	const { user, verified, loading, refreshUser } = useAuth();
-	const posthog = usePostHog();
+	const posthog = useAnalytics();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const emailWasJustSent = Boolean((location.state as { emailSent?: boolean } | null)?.emailSent);
