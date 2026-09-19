@@ -62,7 +62,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 			req.principal = {
 				type: "service",
 				userId: service.id,
-				scopes: ["ORDER_READ", "ORDER_CREATE", "ORDER_CANCEL"],
+				scopes: ["ACCOUNT_READ", "ORDER_READ", "ORDER_CREATE", "ORDER_CANCEL"],
 			};
 			next();
 			return;

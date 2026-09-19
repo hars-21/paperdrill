@@ -104,3 +104,13 @@ test("requireAccess rejects service principals on scoped user routes", () => {
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(next).not.toHaveBeenCalled();
 });
+
+test("requireAccess allows service principals with the required scope", () => {
+	const { res, next } = run(
+		{ type: "service", userId: "bot-1", scopes: ["ACCOUNT_READ"] },
+		{ scopes: ["ACCOUNT_READ"] },
+	);
+
+	expect(next).toHaveBeenCalled();
+	expect(res.status).not.toHaveBeenCalled();
+});

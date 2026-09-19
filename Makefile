@@ -35,7 +35,7 @@ shell:
 	@if [ -z "$(SERVICE)" ]; then echo "Set SERVICE, for example: make shell SERVICE=backend" >&2; exit 1; fi
 	$(DEV_COMPOSE) exec $(SERVICE) sh
 
-bots-up: up
+bots-up:
 	$(DEV_COMPOSE) --profile bots up -d --build btc-bot sol-bot eth-bot
 
 bots-stop:
