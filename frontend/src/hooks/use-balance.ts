@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import type { UserBalance } from "@/types";
+import { accountQueryKeys } from "@/lib/query-client";
 
 type UseBalanceOptions = {
 	asset?: string;
@@ -8,44 +9,19 @@ type UseBalanceOptions = {
 };
 
 export function useBalance({ asset, enabled = true }: UseBalanceOptions = {}) {
-	const [balances, setBalances] = useState<UserBalance>({});
-	const [loading, setLoading] = useState(enabled);
-	const [error, setError] = useState<Error | null>(null);
-	const [refreshCount, setRefreshCount] = useState(0);
+	const { user } = useAuth();
+	const active = enabled && Boolean(user?.id);
+	const query = useQuery({
+		queryKey: accountQueryKeys.balances(user?.id ?? "anonymous", asset),
+		queryFn: () => api.getBalance(asset),
+		enabled: active,
+		refetchInterval: 15_000,
+	});
 
-	const refresh = useCallback(() => {
-		setRefreshCount((count) => count + 1);
-	}, []);
-
-	useEffect(() => {
-		if (!enabled) {
-			setBalances({});
-			setError(null);
-			setLoading(false);
-			return;
-		}
-
-		let active = true;
-		setLoading(true);
-		setError(null);
-
-		api
-			.getBalance(asset)
-			.then((data) => {
-				if (active) setBalances(data);
-			})
-			.catch((cause) => {
-				if (!active) return;
-				setError(cause instanceof Error ? cause : new Error("Failed to load balances"));
-			})
-			.finally(() => {
-				if (active) setLoading(false);
-			});
-
-		return () => {
-			active = false;
-		};
-	}, [asset, enabled, refreshCount]);
-
-	return { balances, loading, error, refresh };
+	return {
+		balances: query.data ?? {},
+		loading: active && query.isPending,
+		error: query.data === undefined ? query.error : null,
+		refresh: query.refetch,
+	};
 }

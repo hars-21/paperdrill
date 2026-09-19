@@ -1,0 +1,66 @@
+services:
+  backend:
+    expose:
+      - "8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      engine:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const r = await fetch('http://localhost:8000/health'); if (!r.ok) process.exit(1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  engine:
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const value = Number(await Bun.file('/tmp/health').text()); const age = Date.now() - value; if (!Number.isFinite(age) || age < 0 || age > 30000) process.exit(1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  redis:
+    image: redis:7.2
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

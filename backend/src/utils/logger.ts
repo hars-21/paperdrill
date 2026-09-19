@@ -1,8 +1,17 @@
 import { config } from "../config";
+import { captureBackendException } from "../instrument";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const LEVEL = { debug: 0, info: 1, warn: 2, error: 3 };
+
+function serialize(meta: unknown) {
+	return JSON.stringify(meta, (_key, value) =>
+		value instanceof Error
+			? { name: value.name, message: value.message, stack: value.stack }
+			: value,
+	);
+}
 
 function log(level: LogLevel, message: string, meta?: unknown) {
 	if (LEVEL[level] < LEVEL[config.app.logLevel]) return;
@@ -10,9 +19,16 @@ function log(level: LogLevel, message: string, meta?: unknown) {
 	const prefix = `[${ts}] [${level.toUpperCase()}]`;
 
 	const line =
-		meta !== undefined ? `${prefix} ${message} ${JSON.stringify(meta)}` : `${prefix} ${message}`;
+		meta !== undefined ? `${prefix} ${message} ${serialize(meta)}` : `${prefix} ${message}`;
 	if (level === "error") console.error(line);
 	else console.log(line);
+
+	if (level === "error" && meta instanceof Error) {
+		captureBackendException(meta, {
+			tags: { source: "logger" },
+			extra: { logMessage: message },
+		});
+	}
 }
 
 export const logger = {

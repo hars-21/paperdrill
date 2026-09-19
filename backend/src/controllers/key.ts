@@ -7,6 +7,7 @@ import { hashSecret } from "../middleware/auth";
 import { API_KEY_PREFIX } from "../types/principal";
 import { getUserId } from "./user";
 import { logger } from "../utils/logger";
+import { sendApiError } from "../utils/apiError";
 
 const MAX_ACTIVE_KEYS_PER_USER = 10;
 
@@ -27,9 +28,12 @@ export async function createKey(req: Request, res: Response) {
 		});
 
 		if (activeKeys >= MAX_ACTIVE_KEYS_PER_USER) {
-			res
-				.status(400)
-				.json({ error: `Maximum of ${MAX_ACTIVE_KEYS_PER_USER} active API keys reached` });
+			sendApiError(
+				res,
+				409,
+				"API_KEY_LIMIT_REACHED",
+				`Maximum of ${MAX_ACTIVE_KEYS_PER_USER} active API keys reached`,
+			);
 			return;
 		}
 
@@ -51,7 +55,7 @@ export async function createKey(req: Request, res: Response) {
 		});
 	} catch (e) {
 		logger.error("createKey failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "API key could not be created");
 	}
 }
 
@@ -75,7 +79,7 @@ export async function listKeys(req: Request, res: Response) {
 		res.status(200).json({ keys });
 	} catch (e) {
 		logger.error("listKeys failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "API keys could not be loaded");
 	}
 }
 
@@ -90,13 +94,13 @@ export async function revokeKey(req: Request, res: Response) {
 		});
 
 		if (result.count === 0) {
-			res.status(404).json({ error: "API key not found or already revoked" });
+			sendApiError(res, 404, "API_KEY_NOT_FOUND", "API key not found or already revoked");
 			return;
 		}
 
 		res.status(200).json({ success: true, message: "API key revoked" });
 	} catch (e) {
 		logger.error("revokeKey failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "API key could not be revoked");
 	}
 }

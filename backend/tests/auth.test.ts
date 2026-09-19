@@ -83,6 +83,9 @@ test("authenticate returns 401 for malformed api key", async () => {
 	await authenticate(req, res, next);
 
 	expect(res.status).toHaveBeenCalledWith(401);
-	expect(res.json).toHaveBeenCalledWith({ error: "Malformed API key" });
+	expect(res.json).toHaveBeenCalledWith({
+		error: { code: "INVALID_API_KEY", message: "Malformed API key" },
+		requestId: expect.any(String),
+	});
 	expect(next).not.toHaveBeenCalled();
 });

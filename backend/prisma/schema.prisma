@@ -36,6 +36,11 @@ enum UserType {
   SERVICE
 }
 
+enum DailyCreditStatus {
+  PENDING
+  APPLIED
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -53,6 +58,23 @@ model User {
   buyFills      Fill[]    @relation("FillBuyer")
   sellFills     Fill[]    @relation("FillSeller")
   leaderboardEntry LeaderboardEntry?
+  dailyCredits  DailyCredit[]
+}
+
+model DailyCredit {
+  id         String            @id @default(uuid())
+  userId     String
+  creditDate DateTime          @db.Date
+  asset      String
+  amount     BigInt
+  status     DailyCreditStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  appliedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, creditDate])
+  @@index([status, createdAt])
 }
 
 model LeaderboardEntry {

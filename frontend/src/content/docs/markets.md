@@ -1,10 +1,10 @@
-# Markets
+# Markets and candles
 
-Market endpoints are public. They do not require an API key.
+Market endpoints are public. Values representing price, quantity, or volume are decimal strings.
 
 ## List markets
 
-`GET /markets` returns the available spot markets and the precision accepted for their price and quantity fields.
+`GET /markets` returns every tradable market and its precision rules.
 
 ```bash
 curl https://api.paperdrill.dev/v1/markets
@@ -14,7 +14,7 @@ curl https://api.paperdrill.dev/v1/markets
 {
 	"data": [
 		{
-			"id": "d4e15a52-dc8e-49b0-83d7-46f19d178c55",
+			"id": "market_123",
 			"name": "Solana",
 			"symbol": "SOL_USD",
 			"baseAsset": "SOL",
@@ -26,19 +26,11 @@ curl https://api.paperdrill.dev/v1/markets
 }
 ```
 
-`pricePrecision` and `qtyPrecision` are the maximum decimal places accepted when creating orders. Market symbols use an underscore, such as `SOL_USD`.
+Use the underscore form (`SOL_USD`) in all API paths and requests.
 
-## Get all tickers
+## Tickers
 
-`GET /markets/tickers` returns the latest 24-hour ticker for every market that has trade data.
-
-```bash
-curl https://api.paperdrill.dev/v1/markets/tickers
-```
-
-The response is an array of ticker objects. It is empty until a market records its first trade.
-
-## Get one ticker
+`GET /markets/tickers` returns an array of current tickers. `GET /markets/:symbol/ticker` returns one.
 
 ```bash
 curl https://api.paperdrill.dev/v1/markets/SOL_USD/ticker
@@ -53,11 +45,39 @@ curl https://api.paperdrill.dev/v1/markets/SOL_USD/ticker
 	"high": "128.00",
 	"low": "120.25",
 	"volume": "340.50",
-	"quoteVolume": "42540.7500",
+	"quoteVolume": "42540.75",
 	"priceChange": "+3.40",
 	"priceChangePercent": 2.78,
-	"timestamp": "2026-09-02T12:00:00.000Z"
+	"timestamp": "2026-09-19T12:00:00.000Z"
 }
 ```
 
-Prices and volumes are decimal strings. `priceChangePercent` is a JSON number, and `timestamp` is an ISO 8601 string. The endpoint returns `null values` until the market records its first trade.
+Before the first trade, price and volume values can be `null`.
+
+## Candles
+
+`GET /markets/:symbol/candles?interval=15M` returns historical OHLCV candles in chronological order.
+
+Supported intervals: `1M`, `5M`, `15M`, `30M`, `1H`, `4H`, and `1D`. The default is `15M`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/markets/SOL_USD/candles?interval=1H"
+```
+
+```json
+{
+	"data": [
+		{
+			"time": 1789812000000,
+			"symbol": "SOL_USD",
+			"open": "125.00",
+			"high": "126.00",
+			"low": "124.50",
+			"close": "125.50",
+			"volume": "20.00"
+		}
+	]
+}
+```
+
+For live ticker and candle updates, use [WebSocket](/docs/websocket).

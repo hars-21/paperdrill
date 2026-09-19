@@ -13,9 +13,13 @@ import {
 } from "../utils/formatter";
 import { logger } from "../utils/logger";
 import { marketStore } from "../store/market";
+import { sendApiError, sendEngineError } from "../utils/apiError";
 
 const intervalMap = {
+	"1M": "1 minute",
+	"5M": "5 minutes",
 	"15M": "15 minutes",
+	"30M": "30 minutes",
 	"1H": "1 hour",
 	"4H": "4 hours",
 	"1D": "1 day",
@@ -28,7 +32,7 @@ export async function getMarkets(_req: Request, res: Response) {
 		res.status(200).json({ data: markets });
 	} catch (e) {
 		logger.error("Failed to fetch markets", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Markets could not be loaded");
 	}
 }
 
@@ -48,11 +52,15 @@ export async function getTrades(req: Request, res: Response) {
 
 	const { symbol } = parsedParams.data;
 	const { limit = 50 } = parsedQueries.data;
+	if (!marketStore.has(symbol)) {
+		sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);
+		return;
+	}
 
 	const engineResponse = await sendToEngine("get_trades", { symbol, limit });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
@@ -68,11 +76,15 @@ export async function getDepth(req: Request, res: Response) {
 	}
 
 	const { symbol } = parsedParams.data;
+	if (!marketStore.has(symbol)) {
+		sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);
+		return;
+	}
 
 	const engineResponse = await sendToEngine("get_depth", { symbol });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
@@ -97,6 +109,10 @@ export async function getCandles(req: Request, res: Response) {
 	const { symbol } = parsedParams.data;
 	const { interval = "15M" } = parsedQueries.data;
 	const bucket = intervalMap[interval];
+	if (!marketStore.has(symbol)) {
+		sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);
+		return;
+	}
 
 	try {
 		const candles = await prisma.$queryRaw`
@@ -124,7 +140,7 @@ export async function getCandles(req: Request, res: Response) {
 		});
 	} catch (err) {
 		logger.error("Failed to fetch candles", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Candles could not be loaded");
 	}
 }
 
@@ -142,7 +158,7 @@ export async function getTicker(req: Request, res: Response) {
 		const market = marketStore.get(symbol);
 
 		if (!market) {
-			res.status(404).json({ error: "Market not found" });
+			sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);
 			return;
 		}
 
@@ -156,7 +172,7 @@ export async function getTicker(req: Request, res: Response) {
 		res.status(200).json(formatTicker(JSON.parse(raw) as Record<string, unknown>));
 	} catch (err) {
 		logger.error("Failed to fetch ticker", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Ticker could not be loaded");
 	}
 }
 
@@ -178,6 +194,6 @@ export async function getTickers(_req: Request, res: Response) {
 		res.status(200).json(formatTickers(tickers));
 	} catch (err) {
 		logger.error("Failed to fetch tickers", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Tickers could not be loaded");
 	}
 }

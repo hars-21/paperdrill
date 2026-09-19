@@ -5,6 +5,7 @@ import type {
 	ApiKeyScope,
 	Candle,
 	CreatedApiKey,
+	DailyCredit,
 	LeaderboardResponse,
 	Market,
 	MyLeaderboardResponse,
@@ -21,6 +22,9 @@ export class ApiError extends Error {
 	constructor(
 		message: string,
 		public status: number,
+		public code?: string,
+		public details?: Array<{ field?: string; message: string }>,
+		public requestId?: string,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -47,13 +51,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 		}
 
 		if (!res.ok) {
+			const payloadError = data?.error;
+			if (payloadError && typeof payloadError === "object") {
+				const structured = payloadError as {
+					code?: string;
+					message?: string;
+					details?: Array<{ field?: string; message: string }>;
+				};
+				throw new ApiError(
+					structured.message ?? `Request failed: ${res.status}`,
+					res.status,
+					structured.code,
+					structured.details,
+					typeof data.requestId === "string" ? data.requestId : undefined,
+				);
+			}
+
 			const message =
-				typeof data?.error === "string"
-					? data.error
+				typeof payloadError === "string"
+					? payloadError
 					: typeof data?.message === "string"
 						? data.message
 						: `Request failed: ${res.status}`;
-
 			throw new ApiError(message, res.status);
 		}
 
@@ -139,6 +158,10 @@ export const api = {
 
 	getPortfolio() {
 		return request<Portfolio>("/portfolio");
+	},
+
+	claimDailyCredit() {
+		return request<DailyCredit>("/users/me/daily-credit", { method: "POST" });
 	},
 
 	getLeaderboard(limit = 25, offset = 0) {

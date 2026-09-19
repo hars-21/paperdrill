@@ -8,7 +8,6 @@ import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
 import { DocsPage } from "./pages/docs";
-import { ChangelogPage } from "./pages/changelog";
 import { TermsPage } from "./pages/terms";
 import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
@@ -43,7 +42,6 @@ export function App() {
 					<Route index element={<DocsPage />} />
 					<Route path=":slug" element={<DocsPage />} />
 				</Route>
-				<Route path="changelog" element={<ChangelogPage />} />
 				<Route path="terms" element={<TermsPage />} />
 				<Route path="privacy" element={<PrivacyPage />} />
 			</Route>

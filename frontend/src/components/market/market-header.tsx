@@ -45,6 +45,24 @@ export function MarketHeader({ symbol, markets, tickers }: MarketHeaderProps) {
 					markets={markets}
 					tickers={tickers}
 				/>
+				<div className="ml-auto flex shrink-0 flex-col items-end gap-0.5 sm:hidden">
+					<span
+						className={cn(
+							"text-base font-bold",
+							priceDirection === "up" ? "text-green-text" : "text-red-text",
+						)}
+					>
+						{formatPrice(ticker?.lastPrice)}
+					</span>
+					<span
+						className={cn(
+							"text-xs font-medium",
+							currentChange.isUp ? "text-green-text" : "text-red-text",
+						)}
+					>
+						{currentChange.text}
+					</span>
+				</div>
 
 				<div className="hidden sm:block h-8 w-px bg-border" />
 				<div className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex">

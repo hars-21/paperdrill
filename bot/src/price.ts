@@ -3,18 +3,6 @@ import { config } from "./config";
 let lastPrice: number | null = null;
 let lastFetch = 0;
 
-const IDS: Record<string, string> = {
-	BTC_USD: "bitcoin",
-	ETH_USD: "ethereum",
-	SOL_USD: "solana",
-};
-
-const fallbackPrice: Record<string, number> = {
-	BTC_USD: 65949,
-	ETH_USD: 1920,
-	SOL_USD: 77,
-};
-
 export async function getMidPrice() {
 	const now = Date.now();
 
@@ -22,28 +10,24 @@ export async function getMidPrice() {
 		return lastPrice;
 	}
 	try {
-		const id = IDS[config.market];
-		if (!id) throw new Error(`No price source configured for ${config.market}`);
-
+		const product = config.market.replace("_", "-");
 		const res = await fetch(
-			`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`,
+			`https://api.exchange.coinbase.com/products/${product}/ticker`,
 		);
+		if (!res.ok) throw new Error(`Price request failed with ${res.status}`);
 
-		const data = (await res.json()) as Record<string, { usd: number }>;
-		const entry = data[id];
-		if (!entry) throw new Error("No price data");
+		const data = (await res.json()) as { bid?: string; ask?: string };
+		const bid = Number(data.bid);
+		const ask = Number(data.ask);
+		if (!Number.isFinite(bid) || !Number.isFinite(ask) || bid <= 0 || ask <= 0) {
+			throw new Error("Invalid price data");
+		}
 
-		lastPrice = entry.usd;
+		lastPrice = (bid + ask) / 2;
 		lastFetch = now;
 
 		return lastPrice;
 	} catch {
-		if (lastPrice) {
-			return lastPrice;
-		}
-
-		const fallback = fallbackPrice[config.market];
-		if (fallback == null) throw new Error(`No fallback price configured for ${config.market}`);
-		return fallback;
+		return null;
 	}
 }

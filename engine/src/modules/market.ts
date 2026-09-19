@@ -52,7 +52,7 @@ export async function initMarkets() {
 			break;
 		} catch (err) {
 			logger.error("Failed to load markets from database", err);
-			wait(5000);
+			await wait(5000);
 		}
 	}
 }

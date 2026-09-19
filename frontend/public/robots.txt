@@ -3,7 +3,6 @@ Allow: /
 
 # Public marketing and docs pages
 Allow: /docs
-Allow: /changelog
 Allow: /terms
 Allow: /privacy
 Allow: /markets

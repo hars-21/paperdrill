@@ -12,8 +12,8 @@ function formatPrice(price: number): string {
 }
 
 function randomQty(): string {
-	const maxQty = config.maxOrderQty ?? 0.5;
-	return (Math.random() * maxQty).toFixed(MARKET.qtyPrecision);
+	const minimumQty = 10 ** -MARKET.qtyPrecision;
+	return Math.max(Math.random() * config.maxOrderQty, minimumQty).toFixed(MARKET.qtyPrecision);
 }
 
 export function generateOrders(midPrice: number): Order[] {

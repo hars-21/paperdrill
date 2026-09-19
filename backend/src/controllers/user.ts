@@ -9,12 +9,14 @@ import { marketStore } from "../store/market";
 import { calculatePortfolio, type Balance } from "../utils/portfolio";
 import { getReferencePrices } from "../utils/referencePrice";
 import { config } from "../config";
+import { ApiError, sendApiError, sendEngineError } from "../utils/apiError";
+import { claimDailyCredit } from "../services/dailyCredit";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
 
 	if (!userId) {
-		throw new Error("Missing authenticated user");
+		throw new ApiError(401, "AUTHENTICATION_REQUIRED", "Authentication required");
 	}
 
 	return userId;
@@ -31,10 +33,8 @@ export async function getUserData(req: Request, res: Response) {
 		});
 
 		if (!user) {
-			res
-				.clearCookie("token", config.cookie)
-				.status(401)
-				.json({ error: "Authentication required" });
+			res.clearCookie("token", config.cookie);
+			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 			return;
 		}
 
@@ -46,7 +46,7 @@ export async function getUserData(req: Request, res: Response) {
 		});
 	} catch (e) {
 		logger.error("getUserData failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "User profile could not be loaded");
 	}
 }
 
@@ -75,7 +75,7 @@ export async function getTradeHistory(req: Request, res: Response) {
 			);
 	} catch (err) {
 		logger.error("Failed to fetch trade history", err);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Trade history could not be loaded");
 	}
 }
 
@@ -94,7 +94,7 @@ export async function getBalance(req: Request, res: Response) {
 	const engineResponse = await sendToEngine("get_user_balance", { userId, asset });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
@@ -108,7 +108,7 @@ export async function getPortfolio(req: Request, res: Response) {
 	const engineResponse = await sendToEngine("get_user_balance", { userId });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
@@ -131,20 +131,25 @@ export async function getPortfolio(req: Request, res: Response) {
 		});
 
 		if (!user) {
-			res.status(404).json({ error: "User not found" });
+			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 			return;
 		}
 
 		if (user.pnlBaseline == null || user.pnlBaselineAt == null) {
 			logger.warn("Portfolio requested for user without a baseline", { userId });
-			res.status(503).json({ error: "Portfolio baseline is not configured" });
+			sendApiError(res, 503, "PORTFOLIO_UNAVAILABLE", "Portfolio baseline is not configured");
 			return;
 		}
 
 		res.status(200).json(formatPortfolio(portfolio, user.pnlBaseline, user.pnlBaselineAt));
 	} catch (error) {
 		logger.error("Failed to calculate portfolio", error);
-		res.status(503).json({ error: "Portfolio valuation is temporarily unavailable" });
+		sendApiError(
+			res,
+			503,
+			"PORTFOLIO_UNAVAILABLE",
+			"Portfolio valuation is temporarily unavailable",
+		);
 	}
 }
 
@@ -162,11 +167,16 @@ export async function createDeposit(req: Request, res: Response) {
 	const engineResponse = await sendToEngine("create_deposit", { userId, amount, asset });
 
 	if (!engineResponse.success) {
-		res.status(400).json({ error: engineResponse.error });
+		sendEngineError(res, engineResponse.error);
 		return;
 	}
 
 	res
 		.status(200)
 		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
+}
+
+export async function claimDailyReward(req: Request, res: Response) {
+	const reward = await claimDailyCredit(getUserId(req));
+	res.status(200).json(reward);
 }

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 interface BrandLogoProps {
 	href?: string;
 	showText?: boolean;
-	showBeta?: boolean;
 	className?: string;
 	imageClassName?: string;
 }
@@ -14,7 +13,6 @@ interface BrandLogoProps {
 export function BrandLogo({
 	href = "/",
 	showText = true,
-	showBeta = true,
 	className,
 	imageClassName,
 }: BrandLogoProps) {
@@ -32,14 +30,7 @@ export function BrandLogo({
 				decoding="async"
 			/>
 			{showText && (
-				<span className="text-lg font-semibold border-l border-l-border pl-2">
-					PaperDrill
-					{showBeta && (
-						<span className="text-[10px] font-medium text-primary p-0.5 tracking-tighter">
-							Beta
-						</span>
-					)}
-				</span>
+				<span className="text-lg font-semibold border-l border-l-border pl-2">PaperDrill</span>
 			)}
 		</>
 	);

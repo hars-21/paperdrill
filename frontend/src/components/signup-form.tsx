@@ -7,6 +7,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { useAnalytics } from "@/lib/analytics";
 import { toast } from "sonner";
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -15,6 +16,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const { setUser } = useAuth();
+	const posthog = useAnalytics();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (event: React.SubmitEvent) => {
@@ -28,6 +30,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 		try {
 			const { message, ...user } = await api.signup(email.trim(), name.trim(), password);
 			setUser(user);
+			posthog.capture("user_signed_up", { email_verified: user.emailVerified });
 			toast.success(message);
 			navigate(user.emailVerified ? "/dashboard" : "/verify-email", {
 				state: user.emailVerified ? undefined : { emailSent: true },

@@ -36,7 +36,6 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 			<SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
 				<BrandLogo
 					href="/dashboard"
-					showBeta={false}
 					className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&_span]:hidden"
 					imageClassName="size-7"
 				/>

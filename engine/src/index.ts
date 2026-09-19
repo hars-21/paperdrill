@@ -1,3 +1,4 @@
+import { flushSentry } from "./instrument";
 import type { EngineRequest, EngineResponse } from "./types/request";
 import {
 	cacheClient,
@@ -14,14 +15,9 @@ import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer } from "./util";
 import { initMarkets } from "./modules/market";
 import { registerEventHandlers } from "./core/events";
+import { startHealth, stopHealth } from "./health";
 
 const abortController = new AbortController();
-
-await connectRedis();
-await connectDB();
-await initMarkets();
-await loadSnapshot();
-registerEventHandlers();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
 	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
@@ -133,27 +129,50 @@ async function main() {
 	}
 }
 
-main().catch((err) => logger.error("Engine process error", err));
+async function start() {
+	await connectRedis();
+	await connectDB();
+	await initMarkets();
+	await loadSnapshot();
+	registerEventHandlers();
+	await startHealth();
+	logger.info("Engine started", {
+		incomingStream: config.incomingStream,
+		snapshotIntervalMs: config.snapshotInterval,
+	});
 
-setInterval(() => {
-	snapshot().catch((err) => logger.error("Snapshot error", err));
-}, config.snapshotInterval).unref();
+	setInterval(() => {
+		snapshot().catch((err) => logger.error("Snapshot error", err));
+	}, config.snapshotInterval).unref();
+
+	await main();
+}
 
 async function gracefulShutdown(signal: string) {
 	logger.info(`Received ${signal}, shutting down...`);
 
-	const forceExit = setTimeout(() => {
+	const forceExit = setTimeout(async () => {
 		logger.error("Graceful shutdown timed out, forcing exit");
+		await flushSentry(1_000);
 		process.exit(1);
 	}, 10000);
 
 	abortController.abort();
+	await stopHealth();
 	await disconnectRedis();
 	await disconnectDB();
+	await flushSentry();
 
 	clearTimeout(forceExit);
+	logger.info("Engine shutdown complete");
 	process.exit(0);
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+start().catch(async (err) => {
+	logger.error("Engine process error", err);
+	await flushSentry();
+	process.exit(1);
+});

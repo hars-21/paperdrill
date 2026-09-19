@@ -5,6 +5,9 @@ import {
 	ArrowUpDown,
 	ChevronLeft,
 	ChevronRight,
+	CircleAlert,
+	Inbox,
+	LockKeyhole,
 	Search,
 	SlidersHorizontal,
 	X,
@@ -14,8 +17,13 @@ import { toast } from "sonner";
 import type { OrderRecord, UserBalance, UserTrade } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
+import {
+	useCancelOrder,
+	useOpenOrders,
+	useOrderHistory,
+	useTradeHistory,
+} from "@/hooks/use-account";
 import { useBalance } from "@/hooks/use-balance";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 import { AssetIcon } from "../icons/asset-icon";
@@ -44,11 +52,11 @@ type SortDirection = "asc" | "desc";
 
 type DataPanelProps = {
 	loading?: boolean;
-	refreshKey?: number;
 	symbol?: string;
 };
 
 const PAGE_SIZE = 10;
+const ORDER_HISTORY_PARAMS = { limit: 100 } as const;
 
 function titleCase(value: string) {
 	return value
@@ -153,8 +161,26 @@ function TableLoading({ columns }: { columns: number }) {
 
 function EmptyState({ children }: { children: string }) {
 	return (
-		<div className="flex min-h-44 items-center justify-center text-sm text-medium-emphasis">
-			{children}
+		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+			<div className="flex size-9 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+				<Inbox className="size-4" />
+			</div>
+			<p className="text-sm font-medium text-high-emphasis">{children}</p>
+			<p className="max-w-sm text-xs text-medium-emphasis">
+				There is nothing to show for this view yet.
+			</p>
+		</div>
+	);
+}
+
+function ErrorState({ message }: { message: string }) {
+	return (
+		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+			<div className="flex size-9 items-center justify-center rounded-full bg-red-bg text-red-text">
+				<CircleAlert className="size-4" />
+			</div>
+			<p className="text-sm font-medium text-high-emphasis">Could not load account data</p>
+			<p className="max-w-sm text-xs text-medium-emphasis">{message}</p>
 		</div>
 	);
 }
@@ -205,15 +231,10 @@ function Pagination({
 	);
 }
 
-export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProps) {
+export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	const { authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [tab, setTab] = useState<Tab>("open");
-	const [openOrders, setOpenOrders] = useState<OrderRecord[]>([]);
-	const [orders, setOrders] = useState<OrderRecord[]>([]);
-	const [trades, setTrades] = useState<UserTrade[]>([]);
-	const [fetching, setFetching] = useState(true);
-	const [cancelling, setCancelling] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentMarketOnly, setCurrentMarketOnly] = useState(Boolean(symbol));
 	const [marketFilter, setMarketFilter] = useState("all");
@@ -228,29 +249,39 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 		loading: balanceLoading,
 		error: balanceError,
 	} = useBalance({ enabled: authenticated });
-
-	const fetchData = useCallback(async () => {
-		setFetching(true);
-		try {
-			const [open, orderHistory, tradeHistory] = await Promise.all([
-				api.getOpenOrders(),
-				api.getOrders({ limit: 100 }),
-				api.getTradeHistory(100),
-			]);
-			setOpenOrders(open);
-			setOrders(orderHistory);
-			setTrades(tradeHistory);
-		} catch (error) {
-			console.error("Failed to load account data:", error);
-			toast.error("Failed to load account data");
-		} finally {
-			setFetching(false);
-		}
-	}, []);
+	const {
+		openOrders,
+		loading: openOrdersLoading,
+		error: openOrdersError,
+	} = useOpenOrders({ enabled: authenticated });
+	const {
+		orders,
+		loading: ordersLoading,
+		error: ordersError,
+	} = useOrderHistory(ORDER_HISTORY_PARAMS, { enabled: authenticated });
+	const {
+		trades,
+		loading: tradesLoading,
+		error: tradesError,
+	} = useTradeHistory(100, { enabled: authenticated });
+	const cancelOrder = useCancelOrder();
+	const cancelling = cancelOrder.isPending ? (cancelOrder.variables ?? null) : null;
+	const fetching = openOrdersLoading || ordersLoading || tradesLoading;
+	const accountDataError = balanceError ?? openOrdersError ?? ordersError ?? tradesError;
+	const activeDataError =
+		tab === "balance"
+			? balanceError
+			: tab === "open"
+				? openOrdersError
+				: tab === "orders"
+					? ordersError
+					: tradesError;
 
 	useEffect(() => {
-		if (authenticated) fetchData();
-	}, [authenticated, refreshKey, fetchData]);
+		if (!accountDataError) return;
+		console.error("Failed to load account data:", accountDataError);
+		toast.error("Failed to load account data");
+	}, [accountDataError]);
 
 	useEffect(() => {
 		setPage(1);
@@ -357,15 +388,11 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 
 	const handleCancel = async (orderId: string) => {
 		if (!verified) return;
-		setCancelling(orderId);
 		try {
-			await api.cancelOrder(orderId);
+			await cancelOrder.mutateAsync(orderId);
 			toast.success("Order cancelled");
-			await fetchData();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to cancel order");
-		} finally {
-			setCancelling(null);
 		}
 	};
 
@@ -386,24 +413,30 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 
 	if (!authenticated) {
 		return (
-			<div className="flex min-h-75 items-center justify-center text-sm text-high-emphasis">
-				Please&nbsp;
-				<Link to="/login" className="font-medium text-primary">
-					sign in
-				</Link>
-				&nbsp;or&nbsp;
-				<Link to="/signup" className="font-medium text-primary">
-					sign up
-				</Link>
-				&nbsp;to view account data.
+			<div className="flex min-h-75 flex-col items-center justify-center gap-3 px-4 text-center">
+				<div className="flex size-10 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+					<LockKeyhole className="size-4" />
+				</div>
+				<div>
+					<p className="text-sm font-medium text-high-emphasis">Your account activity</p>
+					<p className="mt-1 text-xs text-medium-emphasis">Sign in to view balances and orders.</p>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button asChild size="sm">
+						<Link to="/login">Sign in</Link>
+					</Button>
+					<Button asChild size="sm" variant="outline">
+						<Link to="/signup">Create account</Link>
+					</Button>
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex h-full min-h-144 select-none flex-col overflow-hidden">
+		<div className="flex h-full min-h-96 select-none flex-col overflow-hidden sm:min-h-120 lg:min-h-144">
 			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
-				<div className="flex min-w-0 items-center gap-1 overflow-x-auto">
+				<div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto">
 					{tabs.map((item) => (
 						<button
 							key={item.key}
@@ -561,6 +594,14 @@ export function DataPanel({ loading = false, refreshKey, symbol }: DataPanelProp
 				{loading || fetching || (tab === "balance" && balanceLoading) ? (
 					<TableLoading
 						columns={tab === "balance" ? 4 : tab === "trades" ? 7 : tab === "open" ? 10 : 9}
+					/>
+				) : activeDataError ? (
+					<ErrorState
+						message={
+							activeDataError instanceof Error
+								? activeDataError.message
+								: "Please try again in a moment."
+						}
 					/>
 				) : tab === "balance" ? (
 					<BalanceTable entries={balanceEntries} precisionFor={assetPrecision} />

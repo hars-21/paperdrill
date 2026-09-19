@@ -16,6 +16,7 @@ import { isEmailDeliveryEnabled, sendVerificationEmail } from "../utils/emailCli
 import { sendToEngine } from "../utils/engineClient";
 import { assetPrecision } from "../store/market";
 import { toBigInt } from "../utils/convert";
+import { ApiError, sendApiError } from "../utils/apiError";
 
 const INITIAL_BALANCE_ASSET = "USD";
 const INITIAL_BALANCE_AMOUNT = "10000";
@@ -55,7 +56,7 @@ export async function signup(req: Request, res: Response) {
 	const bypassEmailVerification = config.app.env !== "production" && !emailDeliveryEnabled;
 
 	if (config.app.env === "production" && !emailDeliveryEnabled) {
-		res.status(503).json({ error: "Account registration is currently unavailable" });
+		sendApiError(res, 503, "SERVICE_UNAVAILABLE", "Account registration is currently unavailable");
 		return;
 	}
 
@@ -63,7 +64,7 @@ export async function signup(req: Request, res: Response) {
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 
 		if (existingUser) {
-			res.status(400).json({ error: "User already exists" });
+			sendApiError(res, 409, "CONFLICT", "An account with this email already exists");
 			return;
 		}
 
@@ -116,7 +117,11 @@ export async function signup(req: Request, res: Response) {
 			});
 	} catch (e) {
 		logger.error("Signup failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		if (e instanceof ApiError) {
+			sendApiError(res, e.status, e.code, e.message, e.details);
+			return;
+		}
+		sendApiError(res, 500, "INTERNAL_ERROR", "Account creation failed unexpectedly");
 	}
 }
 
@@ -136,13 +141,13 @@ export async function signin(req: Request, res: Response) {
 		});
 
 		if (!user) {
-			res.status(400).json({ error: "Invalid email or password" });
+			sendApiError(res, 401, "INVALID_CREDENTIALS", "Invalid email or password");
 			return;
 		}
 
 		let match = await bcrypt.compare(password, user.password);
 		if (!match) {
-			res.status(400).json({ error: "Invalid email or password" });
+			sendApiError(res, 401, "INVALID_CREDENTIALS", "Invalid email or password");
 			return;
 		}
 
@@ -157,7 +162,7 @@ export async function signin(req: Request, res: Response) {
 			});
 	} catch (e) {
 		logger.error("Signin failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Sign in failed unexpectedly");
 	}
 }
 
@@ -186,17 +191,17 @@ export async function verifyEmail(req: Request, res: Response) {
 		});
 
 		if (!verification) {
-			res.status(404).json({ error: "Invalid verification token" });
+			sendApiError(res, 404, "INVALID_VERIFICATION_TOKEN", "Verification token was not found");
 			return;
 		}
 
 		if (verification.expiresAt < new Date()) {
-			res.status(400).json({ error: "Verification token has expired" });
+			sendApiError(res, 410, "VERIFICATION_TOKEN_EXPIRED", "Verification token has expired");
 			return;
 		}
 
 		if (verification.usedAt) {
-			res.status(400).json({ error: "Verification token has already been used" });
+			sendApiError(res, 409, "VERIFICATION_TOKEN_USED", "Verification token has already been used");
 			return;
 		}
 
@@ -213,7 +218,7 @@ export async function verifyEmail(req: Request, res: Response) {
 		res.status(200).json({ message: "Email verified successfully" });
 	} catch (e) {
 		logger.error("Email verification failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Email verification failed unexpectedly");
 	}
 }
 
@@ -227,7 +232,7 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 
 	const { email } = parsedBody.data;
 	if (!isEmailDeliveryEnabled()) {
-		res.status(503).json({ error: "Email delivery is currently unavailable" });
+		sendApiError(res, 503, "SERVICE_UNAVAILABLE", "Email delivery is currently unavailable");
 		return;
 	}
 
@@ -235,12 +240,12 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 		const user = await prisma.user.findUnique({ where: { email } });
 
 		if (!user) {
-			res.status(404).json({ error: "User not found" });
+			sendApiError(res, 404, "USER_NOT_FOUND", "User not found");
 			return;
 		}
 
 		if (user.emailVerified) {
-			res.status(400).json({ error: "Email is already verified" });
+			sendApiError(res, 409, "CONFLICT", "Email is already verified");
 			return;
 		}
 
@@ -262,6 +267,6 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 		});
 	} catch (e) {
 		logger.error("Resend verification email failed", e);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Verification email could not be sent");
 	}
 }

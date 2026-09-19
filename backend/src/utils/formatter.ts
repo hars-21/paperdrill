@@ -120,7 +120,9 @@ export function formatTicker(ticker: Record<string, unknown>) {
 		quoteVolume: fmt(ticker.quoteVolume, m.pricePrecision + m.qtyPrecision),
 		priceChange,
 		priceChangePercent,
-		timestamp: new Date(Number(ticker.timestamp)).toISOString(),
+		timestamp: new Date(
+			ticker.timestamp == null ? Date.now() : Number(ticker.timestamp),
+		).toISOString(),
 	};
 }
 
@@ -221,6 +223,7 @@ export function formatCancel(result: Record<string, unknown>) {
 	return {
 		id: result.id as string,
 		symbol: result.symbol,
+		status: result.status,
 		side: result.side,
 		qty: fmt(result.qty, m.qtyPrecision),
 		filledQty: fmt(result.filledQty, m.qtyPrecision),

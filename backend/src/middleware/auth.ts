@@ -7,6 +7,7 @@ import { prisma } from "../db";
 import { logger } from "../utils/logger";
 import { API_KEY_PREFIX, type PrincipalType } from "../types/principal";
 import type { Scope } from "../../generated/prisma/enums";
+import { sendApiError } from "../utils/apiError";
 
 interface TokenPayload {
 	id: string;
@@ -54,28 +55,28 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 			});
 
 			if (!service) {
-				res.status(401).json({ error: "Invalid service email" });
+				sendApiError(res, 401, "INVALID_API_KEY", "Invalid service credentials");
 				return;
 			}
 
 			req.principal = {
 				type: "service",
 				userId: service.id,
-				scopes: ["ORDER_READ", "ORDER_CREATE", "ORDER_CANCEL"],
+				scopes: ["ACCOUNT_READ", "ORDER_READ", "ORDER_CREATE", "ORDER_CANCEL"],
 			};
 			next();
 			return;
 		}
 
 		if (!credential.startsWith(API_KEY_PREFIX)) {
-			res.status(401).json({ error: "Malformed API key" });
+			sendApiError(res, 401, "INVALID_API_KEY", "Malformed API key");
 			return;
 		}
 
 		const token = credential.slice(API_KEY_PREFIX.length);
 		const separator = token.indexOf(".");
 		if (separator <= 0) {
-			res.status(401).json({ error: "Malformed API key" });
+			sendApiError(res, 401, "INVALID_API_KEY", "Malformed API key");
 			return;
 		}
 
@@ -84,7 +85,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 		const key = await prisma.apiKey.findUnique({ where: { id: keyId } });
 
 		if (!key || key.revokedAt || !secretsMatch(secret, key.hashedSecret)) {
-			res.status(401).json({ error: "Invalid API key" });
+			sendApiError(res, 401, "INVALID_API_KEY", "Invalid API key");
 			return;
 		}
 
@@ -133,12 +134,12 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 		const principal = req.principal;
 
 		if (!principal) {
-			res.status(401).json({ error: "Authentication required" });
+			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 			return;
 		}
 
 		if (types?.length && !types.includes(principal.type)) {
-			res.status(403).json({ error: "You do not have permission to perform this action" });
+			sendApiError(res, 403, "FORBIDDEN", "You do not have permission to perform this action");
 			return;
 		}
 
@@ -153,7 +154,7 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 
 				if (!user) {
 					if (principal.type === "session") res.clearCookie("token", config.cookie);
-					res.status(401).json({ error: "Authentication required" });
+					sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 					return;
 				}
 
@@ -162,10 +163,7 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 			}
 
 			if (!emailVerified) {
-				res.status(403).json({
-					error: "Verify your email to continue",
-					code: "EMAIL_NOT_VERIFIED",
-				});
+				sendApiError(res, 403, "EMAIL_NOT_VERIFIED", "Verify your email to continue");
 				return;
 			}
 		}
@@ -174,7 +172,7 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 			const authorized = scopes.every((scope) => principal.scopes?.includes(scope));
 
 			if (!authorized) {
-				res.status(403).json({ error: "You do not have permission to perform this action" });
+				sendApiError(res, 403, "FORBIDDEN", "You do not have permission to perform this action");
 				return;
 			}
 		}

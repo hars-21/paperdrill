@@ -45,8 +45,8 @@ test("requireAccess rejects users with unverified email", () => {
 
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(res.json).toHaveBeenCalledWith({
-		error: "Verify your email to continue",
-		code: "EMAIL_NOT_VERIFIED",
+		error: { code: "EMAIL_NOT_VERIFIED", message: "Verify your email to continue" },
+		requestId: expect.any(String),
 	});
 	expect(next).not.toHaveBeenCalled();
 });
@@ -89,7 +89,11 @@ test("requireAccess rejects api keys missing a required scope", () => {
 
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(res.json).toHaveBeenCalledWith({
-		error: "You do not have permission to perform this action",
+		error: {
+			code: "FORBIDDEN",
+			message: "You do not have permission to perform this action",
+		},
+		requestId: expect.any(String),
 	});
 	expect(next).not.toHaveBeenCalled();
 });
@@ -99,4 +103,14 @@ test("requireAccess rejects service principals on scoped user routes", () => {
 
 	expect(res.status).toHaveBeenCalledWith(403);
 	expect(next).not.toHaveBeenCalled();
+});
+
+test("requireAccess allows service principals with the required scope", () => {
+	const { res, next } = run(
+		{ type: "service", userId: "bot-1", scopes: ["ACCOUNT_READ"] },
+		{ scopes: ["ACCOUNT_READ"] },
+	);
+
+	expect(next).toHaveBeenCalled();
+	expect(res.status).not.toHaveBeenCalled();
 });

@@ -18,6 +18,14 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export interface DailyCredit {
+	credited: boolean;
+	asset: string;
+	amount: string;
+	creditDate: string;
+	nextEligibleAt: string;
+}
+
 export interface PortfolioPosition {
 	asset: string;
 	available: string;
@@ -163,4 +171,12 @@ export interface Candle {
 	close: string;
 	volume: string;
 	symbol: string;
+}
+
+export interface CreateOrderInput {
+	side: "BUY" | "SELL";
+	type: "LIMIT" | "MARKET";
+	symbol: string;
+	qty: string;
+	price?: string | null;
 }

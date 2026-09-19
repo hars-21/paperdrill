@@ -10,7 +10,6 @@ const LINKS = [
 	{ label: "Trading", to: "/trade/BTC_USD" },
 	{ label: "Leaderboard", to: "/leaderboard" },
 	{ label: "Docs", to: "/docs" },
-	{ label: "Changelog", to: "/changelog" },
 ];
 
 export function Navbar() {
@@ -63,7 +62,7 @@ export function Navbar() {
 
 							<div className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-4">
 								<SheetClose asChild>
-									<BrandLogo href="/" showText={false} showBeta={false} />
+									<BrandLogo href="/" showText={false} />
 								</SheetClose>
 
 								<SheetClose asChild>

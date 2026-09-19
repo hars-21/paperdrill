@@ -1,3 +1,4 @@
+import { ListX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AsksIcon from "../icons/asks-icon";
 import BidsAsksIcon from "../icons/bids-asks-icon";
@@ -153,10 +154,19 @@ export function Orderbook({
 				</div>
 
 				<div
-					className="flex flex-col no-scrollbar h-full flex-1 font-sans overflow-y-auto"
+					className="no-scrollbar relative flex h-full flex-1 flex-col overflow-y-auto font-sans"
 					ref={scrollRef}
 					onScroll={handleScroll}
 				>
+					{asksSliced.length === 0 && bidsSliced.length === 0 && (
+						<div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-card px-4 text-center">
+							<div className="flex size-8 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+								<ListX className="size-3.5" />
+							</div>
+							<p className="text-xs font-medium text-high-emphasis">No open orders yet</p>
+							<p className="text-[11px] text-medium-emphasis">The book will update in real time.</p>
+						</div>
+					)}
 					<div className="flex flex-col flex-1">
 						<div className="flex justify-end h-full w-full flex-col-reverse">
 							{displayMode !== "bids" &&

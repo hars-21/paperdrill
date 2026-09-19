@@ -1,3 +1,4 @@
+import { Activity } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import type { Trade } from "@/types";
 import { useMarket } from "@/context/MarketContext";
@@ -37,8 +38,12 @@ export function Trades({
 
 			<div className="flex flex-col justify-start flex-1 overflow-hidden overflow-y-auto">
 				{trades.length === 0 ? (
-					<div className="flex items-center justify-center h-full text-xs text-low-emphasis">
-						No trades yet
+					<div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+						<div className="flex size-8 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
+							<Activity className="size-3.5" />
+						</div>
+						<p className="text-xs font-medium text-high-emphasis">No trades yet</p>
+						<p className="text-[11px] text-medium-emphasis">Trades will stream here in real time.</p>
 					</div>
 				) : (
 					trades.map((t, i) => (

@@ -6,85 +6,70 @@ The public WebSocket streams live market updates without authentication.
 wss://api.paperdrill.dev
 ```
 
-## Subscribe
+## Subscribe and unsubscribe
 
-Send a `SUBSCRIBE` message after the connection opens. Multiple channels can be included in one request.
+Send `SUBSCRIBE` after the connection opens. One message may subscribe to multiple channels.
 
 ```json
 {
-  "method": "SUBSCRIBE",
-  "params": ["trade:SOL_USD", "depth:SOL_USD", "ticker:SOL_USD"]
+	"method": "SUBSCRIBE",
+	"params": ["trade:SOL_USD", "depth:SOL_USD", "ticker:SOL_USD", "candle:SOL_USD"]
 }
 ```
 
-Available channels:
+| Channel         | Message                               |
+| --------------- | ------------------------------------- |
+| `trade:SYMBOL`  | Completed public trade                |
+| `depth:SYMBOL`  | Changed order-book levels only        |
+| `ticker:SYMBOL` | Updated 24-hour statistics            |
+| `candle:SYMBOL` | Current candle updated on every trade |
 
-| Channel | Sends |
-| --- | --- |
-| `trade:SYMBOL` | A completed trade |
-| `depth:SYMBOL` | An updated order-book price level |
-| `ticker:SYMBOL` | Updated 24-hour market statistics |
-
-The server does not send a subscription acknowledgement. Data begins arriving when the selected market changes.
-
-## Browser example
+There is no subscription acknowledgement. Data begins when the selected market changes.
 
 ```js
 const socket = new WebSocket("wss://api.paperdrill.dev");
 
 socket.addEventListener("open", () => {
-  socket.send(JSON.stringify({
-    method: "SUBSCRIBE",
-    params: ["trade:SOL_USD"]
-  }));
+	socket.send(
+		JSON.stringify({
+			method: "SUBSCRIBE",
+			params: ["trade:SOL_USD", "ticker:SOL_USD"],
+		}),
+	);
 });
 
-socket.addEventListener("message", (event) => {
-  const message = JSON.parse(event.data);
-  console.log(message);
+socket.addEventListener("message", ({ data }) => {
+	const message = JSON.parse(data);
+	console.log(message.event, message);
 });
 ```
 
-## Trade message
+To stop a channel, send the same params with `UNSUBSCRIBE`.
+
+## Message shapes
+
+### Trade
 
 ```json
 {
-  "event": "trade",
-  "symbol": "SOL_USD",
-  "id": "3a96948f-aead-4b4b-93f4-78cc19427eaf",
-  "price": "125.50",
-  "qty": "1.25",
-  "maker": false,
-  "timestamp": 1788350400000
+	"event": "trade",
+	"symbol": "SOL_USD",
+	"id": "fill_123",
+	"price": "125.50",
+	"qty": "1.25",
+	"maker": false,
+	"timestamp": 1789812000000
 }
 ```
 
-## Depth message
+### Ticker and candle
 
-Depth messages contain changed levels only. Read [Order book](/docs/orderbook) before using them to maintain a local book.
+Ticker messages use the [REST ticker](/docs/markets) shape. Candle messages use the same OHLCV fields as the candle endpoint and have `event: "candle"`.
 
-```json
-{
-  "event": "depth",
-  "symbol": "SOL_USD",
-  "bids": [],
-  "asks": [{ "price": "125.60", "qty": "3.25" }],
-  "lastUpdateId": 1843,
-  "timestamp": 1788350400100
-}
-```
+### Depth
 
-## Ticker message
+Depth messages contain changed levels only. See [Order book](/docs/orderbook) for the snapshot-and-buffer procedure.
 
-Ticker messages use the same shape as the REST ticker response and are published at most once per second when trades change the market.
+## Reconnect
 
-## Unsubscribe and reconnect
-
-```json
-{
-  "method": "UNSUBSCRIBE",
-  "params": ["trade:SOL_USD"]
-}
-```
-
-Connections can close during deployments or network interruptions. Reconnect with backoff and subscribe to the required channels again after the new connection opens.
+Connections can close during a deployment or network interruption. Reconnect with exponential backoff, then resubscribe to every desired channel. Fetch a fresh depth snapshot after reconnecting before trusting a local order book.

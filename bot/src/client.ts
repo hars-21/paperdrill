@@ -11,6 +11,8 @@ interface OrderResponse {
 	qty: string;
 }
 
+type Balances = Record<string, { available: string | null; locked: string | null }>;
+
 export const MARKET: { pricePrecision: number; qtyPrecision: number } = {
 	pricePrecision: 0,
 	qtyPrecision: 0,
@@ -29,7 +31,11 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
 	try {
 		const data = await res.json();
-		if (!res.ok) throw new Error((data as any)?.error || `API ${res.status}`);
+		if (!res.ok) {
+			const error = (data as any)?.error;
+			const message = typeof error === "object" ? error?.message : error;
+			throw new Error(message || `API ${res.status}`);
+		}
 		return data as T;
 	} catch (err) {
 		log(`API error: ${err}`);
@@ -57,6 +63,10 @@ export async function getOpenOrders(): Promise<OrderResponse[]> {
 	return api("/orders/open");
 }
 
+export async function getBalances(): Promise<Balances> {
+	return api("/balances");
+}
+
 export async function placeOrder(
 	side: "BUY" | "SELL",
 	type: "LIMIT" | "MARKET",
@@ -73,9 +83,9 @@ export async function cancelOrder(orderId: string): Promise<void> {
 	await api(`/orders/${orderId}`, { method: "DELETE" });
 }
 
-export async function depositFunds(amount: string, asset: string) {
+export async function depositFunds(amount: bigint, asset: string) {
 	return api<{ [asset: string]: { available: string; locked: string } }>("/deposits", {
 		method: "POST",
-		body: JSON.stringify({ amount, asset }),
+		body: JSON.stringify({ amount: amount.toString(), asset }),
 	});
 }

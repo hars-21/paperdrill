@@ -9,6 +9,7 @@ import { logger } from "../utils/logger";
 import { sendValidationError } from "../utils/validation";
 import { config } from "../config";
 import { isLeaderboardStale } from "../utils/leaderboard";
+import { sendApiError } from "../utils/apiError";
 
 export async function getLeaderboard(req: Request, res: Response) {
 	const parsedQuery = leaderboardQuerySchema.safeParse(req.query);
@@ -42,7 +43,7 @@ export async function getLeaderboard(req: Request, res: Response) {
 		);
 
 		if (!snapshot) {
-			res.status(503).json({ error: "Leaderboard is being calculated" });
+			sendApiError(res, 503, "LEADERBOARD_UNAVAILABLE", "Leaderboard is being calculated");
 			return;
 		}
 
@@ -62,7 +63,7 @@ export async function getLeaderboard(req: Request, res: Response) {
 		});
 	} catch (error) {
 		logger.error("Failed to fetch leaderboard", error);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Leaderboard could not be loaded");
 	}
 }
 
@@ -75,10 +76,8 @@ export async function getMyLeaderboardEntry(req: Request, res: Response) {
 			select: { emailVerified: true },
 		});
 		if (!user) {
-			res
-				.clearCookie("token", config.cookie)
-				.status(401)
-				.json({ error: "Authentication required" });
+			res.clearCookie("token", config.cookie);
+			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 			return;
 		}
 		if (!user.emailVerified) {
@@ -120,6 +119,6 @@ export async function getMyLeaderboardEntry(req: Request, res: Response) {
 		});
 	} catch (error) {
 		logger.error("Failed to fetch personal leaderboard entry", error);
-		res.status(500).json({ error: "Internal server error" });
+		sendApiError(res, 500, "INTERNAL_ERROR", "Leaderboard entry could not be loaded");
 	}
 }

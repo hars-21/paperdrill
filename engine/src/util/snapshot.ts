@@ -1,10 +1,10 @@
 import fs from "fs/promises";
-import { BALANCES, ORDERBOOK, ORDERS, RECENT_TRADES } from "../store";
-import type { Fill, InternalOrder, PriceLevel } from "../types/domain";
+import { APPLIED_CREDITS, BALANCES, ORDERBOOK, ORDERS, RECENT_TRADES } from "../store";
+import type { Fill, InternalOrder, PriceLevel, RestingOrder } from "../types/domain";
 import { logger } from "./logger";
 import { cacheClient } from "../redis/client";
 
-const SNAPSHOT_VERSION = 3;
+const SNAPSHOT_VERSION = 4;
 const SNAPSHOT_PATH = "snapshots/snapshot.json";
 
 function bigintReplacer(_key: string, value: unknown) {
@@ -45,6 +45,7 @@ export async function snapshot() {
 		),
 		recentTrades: RECENT_TRADES,
 		orders: Object.fromEntries(ORDERS),
+		appliedCreditIds: [...APPLIED_CREDITS],
 	};
 
 	const tmpPath = `${SNAPSHOT_PATH}.tmp`;
@@ -52,6 +53,29 @@ export async function snapshot() {
 	await fs.mkdir("snapshots", { recursive: true });
 	await fs.writeFile(tmpPath, JSON.stringify(snapshotData, bigintReplacer));
 	await fs.rename(tmpPath, SNAPSHOT_PATH);
+	logger.info("Snapshot saved", {
+		jobsLastId,
+		orders: ORDERS.size,
+		appliedCredits: APPLIED_CREDITS.size,
+	});
+}
+
+function restorePriceLevels(savedLevels: Record<string, PriceLevel> | undefined) {
+	return new Map(
+		Object.entries(savedLevels ?? {}).map(([price, level]) => [
+			BigInt(price),
+			{
+				totalQty: level.totalQty,
+				orders: level.orders.map((savedOrder) => {
+					const order = ORDERS.get(savedOrder.id);
+					if (!order) {
+						throw new Error(`Snapshot order ${savedOrder.id} is missing from the order index`);
+					}
+					return order as RestingOrder;
+				}),
+			},
+		]),
+	);
 }
 
 export async function loadSnapshot() {
@@ -67,21 +91,22 @@ export async function loadSnapshot() {
 
 		Object.assign(BALANCES, parsed.balances);
 
+		for (const [key, value] of Object.entries(parsed.orders)) {
+			ORDERS.set(key, value as InternalOrder);
+		}
+
 		for (const [symbol, market] of Object.entries(ORDERBOOK)) {
 			const saved = parsed.orderbook?.[symbol];
 			if (!saved) continue;
 			market.bestBid = saved.bestBid;
 			market.bestAsk = saved.bestAsk;
-			market.bids = new Map(
-				Object.entries(saved.bids).map(([k, v]) => [BigInt(k), v as PriceLevel]),
-			);
-			market.asks = new Map(
-				Object.entries(saved.asks).map(([k, v]) => [BigInt(k), v as PriceLevel]),
-			);
+			market.bids = restorePriceLevels(saved.bids);
+			market.asks = restorePriceLevels(saved.asks);
 		}
 
-		for (const [key, value] of Object.entries(parsed.orders)) {
-			ORDERS.set(key, value as InternalOrder);
+		APPLIED_CREDITS.clear();
+		for (const creditId of parsed.appliedCreditIds ?? []) {
+			if (typeof creditId === "string") APPLIED_CREDITS.add(creditId);
 		}
 
 		if (parsed.recentTrades) {

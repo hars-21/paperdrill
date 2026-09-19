@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ChevronDown } from "lucide-react";
+import { useAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { AssetIcon } from "../icons/asset-icon";
@@ -17,6 +18,7 @@ interface MarketDropdownProps {
 
 export function MarketDropdown({ symbol, base, quote, markets, tickers }: MarketDropdownProps) {
 	const navigate = useNavigate();
+	const posthog = useAnalytics();
 	const [open, setOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 
@@ -84,6 +86,7 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 									key={m.id}
 									onClick={() => {
 										setOpen(false);
+										posthog.capture("market_selected", { symbol: m.symbol });
 										navigate(`/trade/${m.symbol}`);
 									}}
 									className={cn(

@@ -19,7 +19,7 @@ export const config = {
 	depthPerSide: 20,
 	cycleIntervalMs: [2000, 5000],
 	spreadPercent: 0.2,
-	randomnessPercent: 0.1,
-	priceRefreshMs: 20000,
+	randomnessPercent: 0.02,
+	priceRefreshMs: 5000,
 	maxOrderQty: env.MAX_ORDER_QTY,
 };
