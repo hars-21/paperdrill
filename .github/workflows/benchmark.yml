@@ -1,0 +1,83 @@
+name: Release Benchmarks
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Benchmark ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Install benchmark dependencies
+        working-directory: benchmarks
+        run: bun install --frozen-lockfile
+
+      - name: Run benchmarks
+        id: run-benchmarks
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+
+          {
+            echo "Tag: ${GITHUB_REF_NAME}"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Runner: ${RUNNER_OS} ${RUNNER_ARCH}"
+            echo
+            make bench
+          } 2>&1 | tee benchmark-results/full.log
+
+      - name: Prepare benchmark summary
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p benchmark-results
+
+          if [[ -f benchmark-results/full.log ]]; then
+            awk '
+              /PaperDrill v1 benchmark/ { capture = 1 }
+              capture { print }
+              /All benchmark correctness checks passed\./ { exit }
+            ' benchmark-results/full.log > benchmark-results/summary.txt
+
+            if [[ ! -s benchmark-results/summary.txt ]]; then
+              tail -n 200 benchmark-results/full.log > benchmark-results/summary.txt
+            fi
+          else
+            echo "The benchmark did not produce a log." > benchmark-results/summary.txt
+          fi
+
+          {
+            echo "## Release benchmark — ${GITHUB_REF_NAME}"
+            echo
+            echo "Commit: \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            cat benchmark-results/summary.txt
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: paperdrill-benchmark-${{ github.ref_name }}-${{ github.run_number }}
+          path: benchmark-results/
+          if-no-files-found: error
+          retention-days: 90
