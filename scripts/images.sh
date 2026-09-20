@@ -10,12 +10,12 @@ platform="linux/amd64"
 services=(backend engine worker bot)
 
 if [[ "$action" != "build" && "$action" != "push" ]]; then
-	echo "Usage: scripts/images.sh <build|push> <release-tag>" >&2
+	echo "Usage: scripts/images.sh <build|push> <image-version>" >&2
 	exit 2
 fi
 
-if [[ -z "$tag" || "$tag" == "latest" ]]; then
-	echo "Use an explicit immutable release tag, for example v1.0.0 or sha-abc1234" >&2
+if [[ ! "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+	echo "Image tag must use MAJOR.MINOR.PATCH, for example 1.0.0" >&2
 	exit 2
 fi
 
