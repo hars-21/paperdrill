@@ -5,7 +5,7 @@ import { type CandleInterval, useCandles } from "../../hooks/use-candles";
 import { useMarket } from "@/context/MarketContext";
 import { cn } from "@/lib/utils";
 import { ChartToolbar } from "./chart-toolbar";
-import { CHART_RANGES, type ChartRange } from "./chart-utils";
+import { CHART_RANGES, type ChartRange, type ChartStyle } from "./chart-utils";
 import { DepthChart } from "./depth-chart";
 import { MarketInfo } from "./market-info";
 import { PriceChart } from "./price-chart";
@@ -53,6 +53,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 	const panelRef = useRef<HTMLDivElement>(null);
 	const [tab, setTab] = useState<ChartTab>("chart");
 	const [interval, setInterval] = useState<CandleInterval>("1H");
+	const [chartStyle, setChartStyle] = useState<ChartStyle>("candlestick");
 	const [range, setRange] = useState<ChartRange>("All");
 	const [showVolume, setShowVolume] = useState(true);
 	const [hoveredCandle, setHoveredCandle] = useState<Candle | null>(null);
@@ -107,8 +108,10 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 				<>
 					<ChartToolbar
 						interval={interval}
+						chartStyle={chartStyle}
 						showVolume={showVolume}
 						onIntervalChange={setInterval}
+						onChartStyleChange={setChartStyle}
 						onToggleVolume={() => setShowVolume((visible) => !visible)}
 						onGoLive={() => setGoLiveKey((key) => key + 1)}
 						onReset={resetChart}
@@ -182,6 +185,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 						) : (
 							<PriceChart
 								candles={candles}
+								chartStyle={chartStyle}
 								showVolume={showVolume}
 								range={range}
 								resetKey={resetKey}

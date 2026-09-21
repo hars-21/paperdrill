@@ -109,6 +109,9 @@
   --chart-grid: var(--border);
   --chart-crosshair: #B0B0B8;
   --chart-border: var(--border);
+  --chart-line: #2F5FAE;
+  --chart-line-fill-top: rgba(47, 95, 174, 0.25);
+  --chart-line-fill-bottom: rgba(47, 95, 174, 0);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -168,6 +171,9 @@
   --chart-grid: color-mix(in srgb, var(--border) 40%, transparent);
   --chart-crosshair: #3E3E48;
   --chart-border: var(--border);
+  --chart-line: #4F73B3;
+  --chart-line-fill-top: rgba(79, 115, 179, 0.25);
+  --chart-line-fill-bottom: rgba(79, 115, 179, 0);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -219,6 +225,7 @@
 }
 
 @layer components {
+
   .hljs-comment,
   .hljs-quote {
     color: var(--low-emphasis);
