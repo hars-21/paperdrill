@@ -38,7 +38,7 @@ export function ChartToolbar({
 							<ChevronDown className="size-3" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="min-w-24">
+					<DropdownMenuContent align="start" className="min-w-24" portalled={false}>
 						<DropdownMenuRadioGroup
 							value={interval}
 							onValueChange={(value) => onIntervalChange(value as CandleInterval)}
