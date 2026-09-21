@@ -3,7 +3,7 @@
   <p><strong>The exchange built for developers, not spectators.</strong></p>
 
   <p>
-    <img alt="Release v1.0.0" src="https://img.shields.io/badge/release-v1.0.0-6d5dfc">
+    <img alt="Release v1.0.0" src="https://img.shields.io/badge/release-v1.1.0-6d5dfc">
     <img alt="Bun" src="https://img.shields.io/badge/runtime-Bun-000000?logo=bun&logoColor=white">
     <img alt="TypeScript" src="https://img.shields.io/badge/language-TypeScript-3178c6?logo=typescript&logoColor=white">
     <img alt="Docker" src="https://img.shields.io/badge/deployment-Docker-2496ed?logo=docker&logoColor=white">
