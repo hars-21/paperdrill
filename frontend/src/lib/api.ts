@@ -118,6 +118,13 @@ export const api = {
 		});
 	},
 
+	updateEmail(email: string) {
+		return request<UserData & { message: string }>("/users/me/email", {
+			method: "PATCH",
+			body: JSON.stringify({ email }),
+		});
+	},
+
 	signout() {
 		return request<{ success: boolean; message: string }>("/auth/logout", {
 			method: "POST",

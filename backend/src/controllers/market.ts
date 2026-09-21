@@ -16,10 +16,10 @@ import { marketStore } from "../store/market";
 import { sendApiError, sendEngineError } from "../utils/apiError";
 
 const intervalMap = {
-	"1M": "1 minute",
-	"5M": "5 minutes",
-	"15M": "15 minutes",
-	"30M": "30 minutes",
+	"1m": "1 minute",
+	"5m": "5 minutes",
+	"15m": "15 minutes",
+	"30m": "30 minutes",
 	"1H": "1 hour",
 	"4H": "4 hours",
 	"1D": "1 day",
@@ -107,7 +107,7 @@ export async function getCandles(req: Request, res: Response) {
 	}
 
 	const { symbol } = parsedParams.data;
-	const { interval = "15M" } = parsedQueries.data;
+	const { interval = "15m" } = parsedQueries.data;
 	const bucket = intervalMap[interval];
 	if (!marketStore.has(symbol)) {
 		sendApiError(res, 404, "MARKET_NOT_FOUND", `Market ${symbol} was not found`);

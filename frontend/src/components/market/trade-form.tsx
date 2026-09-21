@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -40,6 +40,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 	const [price, setPrice] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [percent, setPercent] = useState(0);
+	const initializedPriceSymbol = useRef<string | null>(null);
 	const { authenticated, verified, loading: authLoading } = useAuth();
 	const createOrder = useCreateOrder();
 	const submitting = createOrder.isPending;
@@ -88,10 +89,19 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 		(side === "BUY" && !isPositive(effectivePrice));
 
 	useEffect(() => {
-		setPrice(formatPrice(lastPrice ?? "", pricePrecision));
+		initializedPriceSymbol.current = null;
+		setPrice("");
 		setQuantity("");
 		setPercent(0);
-	}, [symbol, loading]);
+	}, [symbol]);
+
+	useEffect(() => {
+		if (initializedPriceSymbol.current === symbol) return;
+		const initialPrice = editablePrice(Number(lastPrice), pricePrecision);
+		if (!initialPrice) return;
+		setPrice(initialPrice);
+		initializedPriceSymbol.current = symbol;
+	}, [lastPrice, pricePrecision, symbol]);
 
 	const setTradeSide = (nextSide: "BUY" | "SELL") => {
 		setSide(nextSide);

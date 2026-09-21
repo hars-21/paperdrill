@@ -56,9 +56,9 @@ Before the first trade, price and volume values can be `null`.
 
 ## Candles
 
-`GET /markets/:symbol/candles?interval=15M` returns historical OHLCV candles in chronological order.
+`GET /markets/:symbol/candles?interval=15m` returns historical OHLCV candles in chronological order.
 
-Supported intervals: `1M`, `5M`, `15M`, `30M`, `1H`, `4H`, and `1D`. The default is `15M`.
+Supported intervals: `1m`, `5m`, `15m`, `30m`, `1H`, `4H`, and `1D`. The default is `15m`.
 
 ```bash
 curl "https://api.paperdrill.dev/v1/markets/SOL_USD/candles?interval=1H"

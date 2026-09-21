@@ -1,15 +1,18 @@
 import { useEffect, useRef } from "react";
 import {
+	AreaSeries,
 	CandlestickSeries,
 	ColorType,
 	CrosshairMode,
 	HistogramSeries,
+	LineSeries,
 	LineStyle,
 	createChart,
 	type CandlestickData,
 	type HistogramData,
 	type IChartApi,
 	type ISeriesApi,
+	type LineData,
 	type Time,
 } from "lightweight-charts";
 import type { Candle } from "@/types";
@@ -21,6 +24,7 @@ import {
 	formatTick,
 	getChartColors,
 	type ChartRange,
+	type ChartStyle,
 } from "./chart-utils";
 
 function candleData(candle: Candle): CandlestickData {
@@ -30,6 +34,13 @@ function candleData(candle: Candle): CandlestickData {
 		high: Number(candle.high),
 		low: Number(candle.low),
 		close: Number(candle.close),
+	};
+}
+
+function lineData(candle: Candle): LineData {
+	return {
+		time: Math.floor(candle.time / 1000) as Time,
+		value: Number(candle.close),
 	};
 }
 
@@ -54,6 +65,7 @@ function isRoutineUpdate(previous: Candle[], candles: Candle[]) {
 
 type PriceChartProps = {
 	candles: Candle[];
+	chartStyle: ChartStyle;
 	showVolume: boolean;
 	range: ChartRange;
 	resetKey: number;
@@ -64,6 +76,7 @@ type PriceChartProps = {
 
 export function PriceChart({
 	candles,
+	chartStyle,
 	showVolume,
 	range,
 	resetKey,
@@ -74,6 +87,8 @@ export function PriceChart({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<IChartApi | null>(null);
 	const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+	const lineSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+	const areaSeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
 	const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 	const previousCandlesRef = useRef<Candle[]>([]);
 	const candlesRef = useRef(candles);
@@ -134,20 +149,48 @@ export function PriceChart({
 				},
 				localization: { timeFormatter: formatChartTime },
 			});
-			const candleSeries = chart.addSeries(CandlestickSeries, {
-				upColor: colors.up,
-				downColor: colors.down,
-				borderVisible: false,
-				wickUpColor: colors.up,
-				wickDownColor: colors.down,
-				priceFormat: {
-					type: "price",
-					precision: pricePrecision,
-					minMove: 10 ** -pricePrecision,
-				},
-				priceLineVisible: true,
-				priceLineStyle: LineStyle.Dotted,
-			});
+			const priceFormat = {
+				type: "price" as const,
+				precision: pricePrecision,
+				minMove: 10 ** -pricePrecision,
+			};
+			const currentCandles = candlesRef.current;
+			if (chartStyle === "candlestick") {
+				const candleSeries = chart.addSeries(CandlestickSeries, {
+					upColor: colors.up,
+					downColor: colors.down,
+					borderVisible: false,
+					wickUpColor: colors.up,
+					wickDownColor: colors.down,
+					priceFormat,
+					priceLineVisible: true,
+					priceLineStyle: LineStyle.Dotted,
+				});
+				candleSeries.setData(currentCandles.map(candleData));
+				candleSeriesRef.current = candleSeries;
+			} else if (chartStyle === "line") {
+				const lineSeries = chart.addSeries(LineSeries, {
+					color: colors.line,
+					lineWidth: 2,
+					priceFormat,
+					priceLineVisible: true,
+					priceLineStyle: LineStyle.Dotted,
+				});
+				lineSeries.setData(currentCandles.map(lineData));
+				lineSeriesRef.current = lineSeries;
+			} else {
+				const areaSeries = chart.addSeries(AreaSeries, {
+					lineColor: colors.line,
+					topColor: colors.lineFillTop,
+					bottomColor: colors.lineFillBottom,
+					lineWidth: 2,
+					priceFormat,
+					priceLineVisible: true,
+					priceLineStyle: LineStyle.Dotted,
+				});
+				areaSeries.setData(currentCandles.map(lineData));
+				areaSeriesRef.current = areaSeries;
+			}
 			const volumeSeries = chart.addSeries(HistogramSeries, {
 				priceFormat: { type: "volume" },
 				priceScaleId: "volume",
@@ -155,8 +198,6 @@ export function PriceChart({
 			});
 			volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.83, bottom: 0 } });
 
-			const currentCandles = candlesRef.current;
-			candleSeries.setData(currentCandles.map(candleData));
 			volumeSeries.setData(
 				currentCandles.map((candle) => volumeData(candle, colors.volumeUp, colors.volumeDown)),
 			);
@@ -173,7 +214,6 @@ export function PriceChart({
 			});
 
 			chartRef.current = chart;
-			candleSeriesRef.current = candleSeries;
 			volumeSeriesRef.current = volumeSeries;
 		});
 
@@ -182,27 +222,35 @@ export function PriceChart({
 			chart?.remove();
 			chartRef.current = null;
 			candleSeriesRef.current = null;
+			lineSeriesRef.current = null;
+			areaSeriesRef.current = null;
 			volumeSeriesRef.current = null;
 			previousCandlesRef.current = [];
 		};
-	}, [theme, pricePrecision]);
+	}, [theme, pricePrecision, chartStyle]);
 
 	useEffect(() => {
 		const candleSeries = candleSeriesRef.current;
+		const lineSeries = lineSeriesRef.current;
+		const areaSeries = areaSeriesRef.current;
 		const volumeSeries = volumeSeriesRef.current;
 		const chart = chartRef.current;
-		if (!candleSeries || !volumeSeries || !chart) return;
+		if ((!candleSeries && !lineSeries && !areaSeries) || !volumeSeries || !chart) return;
 		const colors = getChartColors();
 		const previous = previousCandlesRef.current;
 
 		if (isRoutineUpdate(previous, candles)) {
 			const candle = candles[candles.length - 1];
 			if (candle) {
-				candleSeries.update(candleData(candle));
+				if (candleSeries) candleSeries.update(candleData(candle));
+				else if (lineSeries) lineSeries.update(lineData(candle));
+				else areaSeries?.update(lineData(candle));
 				volumeSeries.update(volumeData(candle, colors.volumeUp, colors.volumeDown));
 			}
 		} else {
-			candleSeries.setData(candles.map(candleData));
+			if (candleSeries) candleSeries.setData(candles.map(candleData));
+			else if (lineSeries) lineSeries.setData(candles.map(lineData));
+			else areaSeries?.setData(candles.map(lineData));
 			volumeSeries.setData(
 				candles.map((candle) => volumeData(candle, colors.volumeUp, colors.volumeDown)),
 			);

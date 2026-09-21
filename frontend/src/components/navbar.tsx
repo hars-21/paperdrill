@@ -58,7 +58,7 @@ export function Navbar() {
 			<div className="relative flex h-14 w-full items-center px-4">
 				<BrandLogo href="/markets" />
 
-				<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-4 md:flex lg:gap-7 xl:gap-8 ml-6">
+				<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-10 md:flex lg:gap-7 xl:gap-8 ml-6">
 					{NAV_LINKS.map((link) => (
 						<Link
 							key={link.to}

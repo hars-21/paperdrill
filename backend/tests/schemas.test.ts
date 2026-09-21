@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { signinSchema, signupSchema } from "../src/schema/auth";
+import { signinSchema, signupSchema, updateEmailSchema } from "../src/schema/auth";
 import { orderBodySchema, orderQuerySchema } from "../src/schema/exchange";
 import { leaderboardQuerySchema } from "../src/schema/leaderboard";
 
@@ -16,6 +16,11 @@ test("account credentials reject malformed or missing identity fields", () => {
 	}
 
 	expect(signinSchema.safeParse({ email: "alice@test.com", password: "" }).success).toBe(false);
+});
+
+test("email correction accepts only a valid email", () => {
+	expect(updateEmailSchema.safeParse({ email: "correct@example.com" }).success).toBe(true);
+	expect(updateEmailSchema.safeParse({ email: "wrong-email" }).success).toBe(false);
 });
 
 test("leaderboard pagination applies public query limits", () => {

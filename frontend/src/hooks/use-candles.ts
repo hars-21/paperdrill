@@ -3,14 +3,14 @@ import type { Candle } from "@/types";
 import { api } from "@/lib/api";
 import { wsManager } from "@/lib/ws";
 
-export const CANDLE_INTERVALS = ["1M", "5M", "15M", "30M", "1H", "4H", "1D"] as const;
+export const CANDLE_INTERVALS = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"] as const;
 export type CandleInterval = (typeof CANDLE_INTERVALS)[number];
 
 export const CANDLE_INTERVAL_MS: Record<CandleInterval, number> = {
-	"1M": 60 * 1000,
-	"5M": 5 * 60 * 1000,
-	"15M": 15 * 60 * 1000,
-	"30M": 30 * 60 * 1000,
+	"1m": 60 * 1000,
+	"5m": 5 * 60 * 1000,
+	"15m": 15 * 60 * 1000,
+	"30m": 30 * 60 * 1000,
 	"1H": 60 * 60 * 1000,
 	"4H": 4 * 60 * 60 * 1000,
 	"1D": 24 * 60 * 60 * 1000,

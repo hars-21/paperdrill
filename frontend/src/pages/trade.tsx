@@ -24,7 +24,6 @@ export function TradePage() {
 	const { orderbook, loading: orderbookLoading, bestBid, bestAsk } = useOrderbook(symbol);
 	const { trades, loading: tradesLoading } = useTrades(symbol);
 	const ticker = tickers[symbol] ?? null;
-	const isDataLoading = authLoading || orderbookLoading || tradesLoading || tickerLoading;
 
 	const bookTradesTabs = (
 		<div className="flex items-center gap-1">
@@ -55,7 +54,7 @@ export function TradePage() {
 
 	return (
 		<Page fixed className="px-2 pb-2 sm:px-4">
-			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_minmax(38rem,1fr)_auto]">
+			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto scrollbar-gutter:stable lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_clamp(30rem,60dvh,36rem)_auto]">
 				<div className="order-1 lg:col-start-1 lg:row-start-1">
 					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
@@ -68,12 +67,12 @@ export function TradePage() {
 								<Orderbook
 									bids={orderbook.bids}
 									asks={orderbook.asks}
-									loading={isDataLoading}
+									loading={orderbookLoading}
 									symbol={symbol}
 									lastPrice={ticker?.lastPrice}
 								/>
 							) : (
-								<Trades symbol={symbol} loading={isDataLoading} trades={trades} />
+								<Trades symbol={symbol} loading={tradesLoading} trades={trades} />
 							)}
 						</div>
 					</div>
@@ -86,18 +85,18 @@ export function TradePage() {
 									compact
 									bids={orderbook.bids}
 									asks={orderbook.asks}
-									loading={isDataLoading}
+									loading={orderbookLoading}
 									symbol={symbol}
 									lastPrice={ticker?.lastPrice}
 								/>
 							) : (
-								<Trades symbol={symbol} loading={isDataLoading} trades={trades.slice(0, 25)} />
+								<Trades symbol={symbol} loading={tradesLoading} trades={trades.slice(0, 25)} />
 							)}
 						</div>
 					</div>
 
 					<div className="relative order-1 min-h-80 flex-1 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:min-h-96 lg:order-0 lg:min-h-0">
-						{isDataLoading ? (
+						{tickerLoading && !ticker ? (
 							<div className="flex h-full flex-col justify-between p-6">
 								<div className="flex items-center justify-between">
 									<Skeleton className="h-4 w-32" />
@@ -124,7 +123,7 @@ export function TradePage() {
 					<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
 						<TradeForm
 							symbol={symbol}
-							loading={isDataLoading}
+							loading={tickerLoading && !ticker}
 							lastPrice={ticker?.lastPrice}
 							bestBid={bestBid}
 							bestAsk={bestAsk}
@@ -138,7 +137,7 @@ export function TradePage() {
 				<div
 					className={`order-4 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
 				>
-					<DataPanel loading={isDataLoading} symbol={symbol} />
+					<DataPanel loading={authLoading} symbol={symbol} />
 				</div>
 			</div>
 		</Page>

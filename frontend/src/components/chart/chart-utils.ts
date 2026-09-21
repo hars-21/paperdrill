@@ -3,6 +3,7 @@ import type { Candle } from "@/types";
 
 export const CHART_RANGES = ["All", "3M", "1M", "3D", "1D"] as const;
 export type ChartRange = (typeof CHART_RANGES)[number];
+export type ChartStyle = "candlestick" | "line" | "area";
 
 const RANGE_SECONDS: Record<ChartRange, number | null> = {
 	All: null,
@@ -21,6 +22,9 @@ export function getChartColors() {
 		text: token("--muted-foreground", "#8e8e93"),
 		grid: token("--border", "#1e1e24"),
 		crosshair: token("--chart-crosshair", "#3e3e48"),
+		line: token("--chart-line", "#3f6db5"),
+		lineFillTop: token("--chart-line-fill-top", "rgba(63, 109, 181, 0.14)"),
+		lineFillBottom: token("--chart-line-fill-bottom", "rgba(63, 109, 181, 0)"),
 		up: token("--green-text", "#00c087"),
 		down: token("--red-text", "#ff3b30"),
 		volumeUp: token("--green-bg", "#1a3a2a"),

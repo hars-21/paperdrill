@@ -34,7 +34,7 @@ export const orderBodySchema = z.discriminatedUnion("type", [
 ]);
 
 export const candleQuerySchema = z.object({
-	interval: z.enum(["1M", "5M", "15M", "30M", "1H", "4H", "1D"]).optional(),
+	interval: z.enum(["1m", "5m", "15m", "30m", "1H", "4H", "1D"]).optional(),
 });
 
 export const orderQuerySchema = z.object({

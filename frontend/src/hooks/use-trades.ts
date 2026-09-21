@@ -10,6 +10,7 @@ export function useTrades(symbol: string, limit = 50) {
 
 	useEffect(() => {
 		let active = true;
+		setLoading(true);
 		setTrades([]);
 		setError(null);
 
