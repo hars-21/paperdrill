@@ -18,3 +18,7 @@ export const verifyEmailSchema = z.object({
 export const resendVerificationEmailSchema = z.object({
 	email: z.email().trim().min(1, "email is required"),
 });
+
+export const updateEmailSchema = z.object({
+	email: z.email().trim().min(1, "email is required"),
+});

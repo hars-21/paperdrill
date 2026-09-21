@@ -11,6 +11,10 @@ import { getReferencePrices } from "../utils/referencePrice";
 import { config } from "../config";
 import { ApiError, sendApiError, sendEngineError } from "../utils/apiError";
 import { claimDailyCredit } from "../services/dailyCredit";
+import { updateEmailSchema } from "../schema/auth";
+import { isEmailDeliveryEnabled, sendVerificationEmail } from "../utils/emailClient";
+import { Prisma } from "../../generated/prisma/client";
+import crypto from "crypto";
 
 export function getUserId(req: Request): string {
 	const userId = req.principal?.userId;
@@ -47,6 +51,81 @@ export async function getUserData(req: Request, res: Response) {
 	} catch (e) {
 		logger.error("getUserData failed", e);
 		sendApiError(res, 500, "INTERNAL_ERROR", "User profile could not be loaded");
+	}
+}
+
+export async function updateUserEmail(req: Request, res: Response) {
+	const parsedBody = updateEmailSchema.safeParse(req.body);
+
+	if (!parsedBody.success) {
+		sendValidationError(res, parsedBody.error);
+		return;
+	}
+
+	const userId = getUserId(req);
+	const { email } = parsedBody.data;
+
+	if (!isEmailDeliveryEnabled()) {
+		sendApiError(res, 503, "SERVICE_UNAVAILABLE", "Email delivery is currently unavailable");
+		return;
+	}
+
+	try {
+		const user = await prisma.user.findUnique({ where: { id: userId } });
+
+		if (!user) {
+			res.clearCookie("token", config.cookie);
+			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
+			return;
+		}
+
+		if (user.emailVerified) {
+			sendApiError(res, 409, "EMAIL_ALREADY_VERIFIED", "Verified email cannot be changed here");
+			return;
+		}
+
+		if (user.email === email) {
+			sendApiError(res, 409, "EMAIL_UNCHANGED", "Enter a different email address");
+			return;
+		}
+
+		const existingUser = await prisma.user.findUnique({ where: { email } });
+		if (existingUser) {
+			sendApiError(res, 409, "EMAIL_IN_USE", "An account with this email already exists");
+			return;
+		}
+
+		const token = crypto.randomBytes(32).toString("hex");
+		const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+		const updatedUser = await prisma.$transaction(async (tx) => {
+			await tx.verificationToken.deleteMany({ where: { userId } });
+			const updated = await tx.user.update({ where: { id: userId }, data: { email } });
+			await tx.verificationToken.create({
+				data: {
+					userId,
+					tokenHash,
+					expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+				},
+			});
+			return updated;
+		});
+
+		void sendVerificationEmail(updatedUser.name, updatedUser.email, token);
+
+		res.status(200).json({
+			id: updatedUser.id,
+			name: updatedUser.name,
+			email: updatedUser.email,
+			emailVerified: updatedUser.emailVerified,
+			message: "Email updated. Check your inbox for a new verification link.",
+		});
+	} catch (error) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+			sendApiError(res, 409, "EMAIL_IN_USE", "An account with this email already exists");
+			return;
+		}
+		logger.error("Email update failed", error);
+		sendApiError(res, 500, "INTERNAL_ERROR", "Email could not be updated");
 	}
 }
 

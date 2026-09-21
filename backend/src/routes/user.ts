@@ -7,8 +7,10 @@ import {
 	getBalance,
 	getPortfolio,
 	getUserData,
+	updateUserEmail,
 } from "../controllers/user";
 import { getTradeHistory } from "../controllers/user";
+import { authLimiter } from "../middleware/rateLimit";
 
 export const userRouter = Router();
 
@@ -16,6 +18,12 @@ userRouter.get(
 	"/users/me",
 	requireAccess({ types: ["session"], allowUnverified: true }),
 	asyncHandler(getUserData),
+);
+userRouter.patch(
+	"/users/me/email",
+	authLimiter,
+	requireAccess({ types: ["session"], allowUnverified: true }),
+	asyncHandler(updateUserEmail),
 );
 userRouter.get(
 	"/trades",
