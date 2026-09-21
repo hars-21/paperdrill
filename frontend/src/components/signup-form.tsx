@@ -33,6 +33,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 			posthog.capture("user_signed_up", { email_verified: user.emailVerified });
 			toast.success(message);
 			navigate(user.emailVerified ? "/dashboard" : "/verify-email", {
+				replace: true,
 				state: user.emailVerified ? undefined : { emailSent: true },
 			});
 		} catch (error) {
