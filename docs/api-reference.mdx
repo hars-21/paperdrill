@@ -1,6 +1,12 @@
-# API Reference
+---
+title: "API reference"
+description: "Complete REST endpoint list for PaperDrill API v1."
+icon: "braces"
+---
 
-Base URL: `https://api.paperdrill.dev/v1`. Public endpoints need no credentials. Protected endpoints require an API key in the `x-api-key` header with the listed scope.
+Base URL: `https://api.paperdrill.dev/v1`
+
+Public endpoints need no credentials. Protected endpoints require an API key in the `x-api-key` header with the listed scope.
 
 ## Market data
 
@@ -30,3 +36,8 @@ Base URL: `https://api.paperdrill.dev/v1`. Public endpoints need no credentials.
 | ------ | ------------------ | -------------- | ----------------------------- |
 | `GET`  | `/balances?asset=` | `ACCOUNT_READ` | Available and locked balances |
 | `GET`  | `/portfolio`       | `ACCOUNT_READ` | Valued positions and PnL      |
+
+<Note>
+	See [Authentication](/authentication) for key scopes and [Errors and rate limits](/errors) for the
+	shared error envelope.
+</Note>

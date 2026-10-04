@@ -1,4 +1,8 @@
-# Markets and candles
+---
+title: "Markets and candles"
+description: "Discover tradable markets, read tickers, and request historical candles."
+icon: "chart-no-axes-candlestick"
+---
 
 Market endpoints are public. Values representing price, quantity, or volume are decimal strings.
 
@@ -26,11 +30,11 @@ curl https://api.paperdrill.dev/v1/markets
 }
 ```
 
-Use the underscore form (`SOL_USD`) in all API paths and requests.
+Use the underscore form, such as `SOL_USD`, in API paths and requests.
 
 ## Tickers
 
-`GET /markets/tickers` returns an array of current tickers. `GET /markets/:symbol/ticker` returns one.
+`GET /markets/tickers` returns an array of current tickers. `GET /markets/:symbol/ticker` returns one ticker.
 
 ```bash
 curl https://api.paperdrill.dev/v1/markets/SOL_USD/ticker
@@ -58,7 +62,7 @@ Before the first trade, price and volume values can be `null`.
 
 `GET /markets/:symbol/candles?interval=15m` returns historical OHLCV candles in chronological order.
 
-Supported intervals: `1m`, `5m`, `15m`, `30m`, `1H`, `4H`, and `1D`. The default is `15m`.
+Supported intervals are `1m`, `5m`, `15m`, `30m`, `1H`, `4H`, and `1D`. The default is `15m`.
 
 ```bash
 curl "https://api.paperdrill.dev/v1/markets/SOL_USD/candles?interval=1H"
@@ -80,4 +84,4 @@ curl "https://api.paperdrill.dev/v1/markets/SOL_USD/candles?interval=1H"
 }
 ```
 
-For live ticker and candle updates, use [WebSocket](/docs/websocket).
+For live ticker and candle updates, use [WebSocket](/websocket).

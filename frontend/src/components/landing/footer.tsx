@@ -39,9 +39,12 @@ export function Footer() {
 						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Developers</h4>
 						<ul className="space-y-2 text-sm text-medium-emphasis">
 							<li>
-								<Link to="/docs" className="transition-colors hover:text-high-emphasis">
+								<a
+									href="https://docs.paperdrill.dev"
+									className="transition-colors hover:text-high-emphasis"
+								>
 									Documentation
-								</Link>
+								</a>
 							</li>
 						</ul>
 					</div>

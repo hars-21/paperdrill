@@ -14,7 +14,7 @@ PaperDrill runs BTC/USD, ETH/USD, and SOL/USD spot markets with price-time prior
 
 ## Developers
 
-- [Documentation](https://paperdrill.dev/docs): How PaperDrill works — markets, trading, API overview
+- [Documentation](https://docs.paperdrill.dev): How PaperDrill works — markets, trading, API overview
 - [API](https://api.paperdrill.dev): REST API and WebSocket endpoints (see docs for usage)
 
 ## Legal

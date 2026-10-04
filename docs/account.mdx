@@ -1,4 +1,8 @@
-# Account and portfolio
+---
+title: "Account and portfolio"
+description: "Read balances, portfolio performance, and private trade history."
+icon: "wallet-cards"
+---
 
 These endpoints use API-key authentication. Decimal balances and values are returned as strings so clients do not lose precision.
 
@@ -22,7 +26,7 @@ curl https://api.paperdrill.dev/v1/balances \
 
 ## Read portfolio performance
 
-`GET /portfolio` requires `ACCOUNT_READ`. It values each position in the platform quote asset and compares it with the account’s PnL baseline.
+`GET /portfolio` requires `ACCOUNT_READ`. It values each position in the platform quote asset and compares it with the account's PnL baseline.
 
 ```bash
 curl https://api.paperdrill.dev/v1/portfolio \
@@ -40,7 +44,7 @@ curl https://api.paperdrill.dev/v1/portfolio \
 
 ## Read private trade history
 
-`GET /trades?limit=100` requires `ORDER_READ`. `limit` is optional and accepts 1–500.
+`GET /trades?limit=100` requires `ORDER_READ`. `limit` is optional and accepts values from 1 to 500.
 
 ```bash
 curl "https://api.paperdrill.dev/v1/trades?limit=2" \

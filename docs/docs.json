@@ -1,0 +1,103 @@
+{
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "PaperDrill",
+	"description": "Guides and API reference for PaperDrill's simulated trading platform.",
+	"colors": {
+		"primary": "#E11D48",
+		"light": "#FB7185",
+		"dark": "#BE123C"
+	},
+	"appearance": {
+		"default": "system"
+	},
+	"fonts": {
+		"family": "Inter"
+	},
+	"icons": {
+		"library": "lucide"
+	},
+	"background": {
+		"color": {
+			"light": "#FFFFFF",
+			"dark": "#0A0A0C"
+		}
+	},
+	"styling": {
+		"eyebrows": "breadcrumbs",
+		"codeblocks": {
+			"theme": {
+				"light": "github-light",
+				"dark": "github-dark"
+			}
+		}
+	},
+	"favicon": {
+		"light": "/favicon-light.svg",
+		"dark": "/favicon-dark.svg"
+	},
+	"logo": {
+		"light": "/logo/light.svg",
+		"dark": "/logo/dark.svg",
+		"href": "https://paperdrill.dev"
+	},
+	"navigation": {
+		"pages": [
+			{
+				"group": "Get started",
+				"pages": ["index", "quickstart", "authentication"]
+			},
+			{
+				"group": "Trading",
+				"pages": ["orders"]
+			},
+			{
+				"group": "Market data",
+				"pages": ["markets", "trades", "orderbook", "websocket"]
+			},
+			{
+				"group": "Account",
+				"pages": ["account"]
+			},
+			{
+				"group": "Reference",
+				"pages": ["errors", "api-reference"]
+			}
+		],
+		"global": {
+			"anchors": [
+				{
+					"anchor": "Platform",
+					"href": "https://paperdrill.dev",
+					"icon": "chart-candlestick"
+				},
+				{
+					"anchor": "Leaderboard",
+					"href": "https://paperdrill.dev/leaderboard",
+					"icon": "trophy"
+				}
+			]
+		}
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "Support",
+				"href": "mailto:support@paperdrill.dev"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Open PaperDrill",
+			"href": "https://paperdrill.dev/markets"
+		}
+	},
+	"contextual": {
+		"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+	},
+	"footer": {
+		"socials": {
+			"github": "https://github.com/hars-21/paperdrill"
+		}
+	}
+}

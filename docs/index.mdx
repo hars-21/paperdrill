@@ -1,0 +1,43 @@
+---
+title: "PaperDrill documentation"
+description: "Trade with simulated funds through the web interface or build against the REST and WebSocket APIs."
+icon: "book-open"
+---
+
+PaperDrill is a simulated spot-trading platform backed by a live matching engine and order book. You can trade through the web interface, connect a bot through the API, and compare portfolio performance on the leaderboard.
+
+<Warning>
+	PaperDrill uses simulated balances. No real funds, deposits, withdrawals, or financial returns are
+	involved.
+</Warning>
+
+<CardGroup cols={2}>
+	<Card title="Place your first API order" icon="rocket" href="/quickstart">
+		Create an API key, inspect a market, place a limit order, and cancel it safely.
+	</Card>
+	<Card title="Authentication" icon="key-round" href="/authentication">
+		Authenticate requests with scoped API keys and keep credentials secure.
+	</Card>
+	<Card title="Trading API" icon="chart-candlestick" href="/orders">
+		Create, inspect, filter, and cancel limit or market orders.
+	</Card>
+	<Card title="Live market data" icon="radio" href="/websocket">
+		Subscribe to trades, depth updates, tickers, and candles over WebSocket.
+	</Card>
+</CardGroup>
+
+## API endpoints
+
+| Interface        | URL                                      |
+| ---------------- | ---------------------------------------- |
+| REST API         | `https://api.paperdrill.dev/v1`          |
+| WebSocket        | `wss://api.paperdrill.dev`               |
+| Trading platform | [paperdrill.dev](https://paperdrill.dev) |
+
+Public market-data endpoints do not require authentication. Trading and account endpoints require a verified PaperDrill account and an API key with the appropriate scope.
+
+## Where to begin
+
+- If you want to trade through code, follow the [quickstart](/quickstart).
+- If you need market data, start with [markets and candles](/markets) or the [WebSocket streams](/websocket).
+- If you are integrating the full API, review the [endpoint reference](/api-reference) and [error format](/errors).

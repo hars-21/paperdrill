@@ -1,4 +1,8 @@
-# WebSocket
+---
+title: "WebSocket"
+description: "Subscribe to live public trades, depth, tickers, and candles."
+icon: "radio"
+---
 
 The public WebSocket streams live market updates without authentication.
 
@@ -64,11 +68,11 @@ To stop a channel, send the same params with `UNSUBSCRIBE`.
 
 ### Ticker and candle
 
-Ticker messages use the [REST ticker](/docs/markets) shape. Candle messages use the same OHLCV fields as the candle endpoint and have `event: "candle"`.
+Ticker messages use the [REST ticker](/markets) shape. Candle messages use the same OHLCV fields as the candle endpoint and include `event: "candle"`.
 
 ### Depth
 
-Depth messages contain changed levels only. See [Order book](/docs/orderbook) for the snapshot-and-buffer procedure.
+Depth messages contain changed levels only. See [Order book](/orderbook) for the snapshot-and-buffer procedure.
 
 ## Reconnect
 

@@ -1,6 +1,10 @@
-# Errors and rate limits
+---
+title: "Errors and rate limits"
+description: "Handle API errors, validation failures, retries, and rate limits."
+icon: "triangle-alert"
+---
 
-All API errors use the same JSON envelope. Save `requestId` when reporting an issue, it identifies the matching server log.
+All API errors use the same JSON envelope. Save `requestId` when reporting an issue because it identifies the matching server log.
 
 ```json
 {
@@ -45,5 +49,5 @@ For sustained usage above these limits, contact [support@paperdrill.dev](mailto:
 ## Retry safely
 
 - Retry read requests after `429`, `503`, or `504` with exponential backoff and jitter.
-- Do not blindly retry order creation after a timeout; check order history first to avoid duplicates.
+- Do not blindly retry order creation after a timeout. Check order history first to avoid duplicates.
 - Order cancellation is safe to retry after a network failure, but a filled order can no longer be cancelled.

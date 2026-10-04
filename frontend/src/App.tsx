@@ -7,7 +7,6 @@ import { VerifyEmailPage } from "./pages/verify-email";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
-import { DocsPage } from "./pages/docs";
 import { TermsPage } from "./pages/terms";
 import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
@@ -18,7 +17,6 @@ import { DashboardOverviewPage } from "./pages/dashboard/overview";
 import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
 import { DashboardBalancesPage } from "./pages/dashboard/balances";
 import { DashboardDataPage } from "./pages/dashboard/data";
-import { DocsLayout } from "./components/docs/docs-layout";
 import { LeaderboardPage } from "./pages/leaderboard";
 
 function NotFound() {
@@ -38,10 +36,6 @@ export function App() {
 		<Routes>
 			<Route element={<RootLayout />}>
 				<Route index element={<LandingPage />} />
-				<Route path="docs" element={<DocsLayout />}>
-					<Route index element={<DocsPage />} />
-					<Route path=":slug" element={<DocsPage />} />
-				</Route>
 				<Route path="terms" element={<TermsPage />} />
 				<Route path="privacy" element={<PrivacyPage />} />
 			</Route>

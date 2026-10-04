@@ -9,10 +9,11 @@ PaperDrill is a Bun/TypeScript monorepo without a root `package.json`. Each pack
 - `worker/`: Redis stream persistence, candles, and tickers.
 - `bot/`: optional market-making clients.
 - `frontend/`: React 19/Tailwind 4 SPA; static assets live in `frontend/public/`.
+- `docs/`: Mintlify documentation source and site configuration.
 - `tests/integration/`: black-box cross-service tests.
 - `benchmarks/`: HTTP, matching, and WebSocket performance scenarios.
 
-Keep unit tests in `backend/tests/` or `engine/tests/`. Public documentation belongs in `frontend/src/content/docs/`; root `docs/` is stale.
+Keep unit tests in `backend/tests/` or `engine/tests/`. Public documentation belongs in `docs/`.
 
 ## Build, Test, and Development Commands
 
@@ -27,6 +28,7 @@ Run `bun install` inside an individual package after changing its dependencies. 
 - `make down`: stop the development stack.
 
 For frontend-only work, use `cd frontend && bun run dev` or `bun run build`.
+For documentation work, run `mint dev`, `mint validate`, and `mint broken-links` from `docs/`.
 
 ## Coding Style & Naming Conventions
 

@@ -11,7 +11,7 @@
 
   <p>
     <a href="https://paperdrill.dev">Platform</a> ·
-    <a href="https://paperdrill.dev/docs">API documentation</a> ·
+    <a href="https://docs.paperdrill.dev">API documentation</a> ·
     <a href="https://api.paperdrill.dev">API</a>
   </p>
 </div>
@@ -34,7 +34,8 @@ PaperDrill is a live paper-trading exchange simulator with a real matching engin
 
 | Service    | Responsibility                                                              |
 | ---------- | --------------------------------------------------------------------------- |
-| `frontend` | React SPA for markets, trading, account management, docs, and leaderboard   |
+| `frontend` | React SPA for markets, trading, account management, and leaderboard         |
+| `docs`     | Mintlify site for product guides and API documentation                      |
 | `backend`  | Express REST/WebSocket API, authentication, validation, and market metadata |
 | `engine`   | In-memory balances, order books, matching, and periodic snapshots           |
 | `worker`   | Persists orders/fills and derives candles and tickers                       |

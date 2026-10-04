@@ -1,0 +1,57 @@
+---
+title: "Order book"
+description: "Read an aggregated snapshot and maintain a live local order book."
+icon: "rows-3"
+---
+
+`GET /markets/:symbol/orderbook` returns an aggregated depth snapshot. Authentication is not required.
+
+```bash
+curl https://api.paperdrill.dev/v1/markets/SOL_USD/orderbook
+```
+
+```json
+{
+	"symbol": "SOL_USD",
+	"bids": [
+		{ "price": "125.40", "qty": "8.50" },
+		{ "price": "125.20", "qty": "4.00" }
+	],
+	"asks": [
+		{ "price": "125.60", "qty": "3.25" },
+		{ "price": "125.80", "qty": "6.00" }
+	],
+	"lastUpdateId": 1842,
+	"timestamp": 1789812000000
+}
+```
+
+Bids are sorted from highest to lowest price. Asks are sorted from lowest to highest. Each level is the total remaining quantity at that price. `timestamp` is Unix milliseconds.
+
+## Maintain a live local book
+
+REST provides a snapshot. The `depth:SYMBOL` WebSocket stream contains only the levels that changed.
+
+<Steps>
+	<Step title="Start buffering updates">Subscribe to `depth:SYMBOL` and buffer every message.</Step>
+	<Step title="Fetch the snapshot">Request `GET /markets/:symbol/orderbook`.</Step>
+	<Step title="Discard old events">
+		Discard buffered messages whose `lastUpdateId` is less than or equal to the snapshot value.
+	</Step>
+	<Step title="Apply live updates">
+		Apply the remaining messages in order, then apply new messages immediately.
+	</Step>
+</Steps>
+
+Set a local level to the received `qty`. Remove the level when `qty` is `"0.00"`.
+
+```json
+{
+	"event": "depth",
+	"symbol": "SOL_USD",
+	"bids": [{ "price": "125.40", "qty": "0.00" }],
+	"asks": [],
+	"lastUpdateId": 1843,
+	"timestamp": 1789812000100
+}
+```

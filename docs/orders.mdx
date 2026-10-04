@@ -1,6 +1,10 @@
-# Orders
+---
+title: "Orders"
+description: "Create, inspect, filter, and cancel PaperDrill orders."
+icon: "list-ordered"
+---
 
-Order requests require a verified account and the relevant API-key scope. `price` and `qty` are positive decimal strings. Read [Markets](/docs/markets) before placing an order so the number of decimal places matches the market.
+Order requests require a verified account and the relevant API-key scope. `price` and `qty` are positive decimal strings. Read [Markets and candles](/markets) before placing an order so the number of decimal places matches the market.
 
 ## Create a limit order
 
@@ -40,7 +44,7 @@ Market orders omit `price` and consume available liquidity.
 }
 ```
 
-If the book has no liquidity, the API returns `422 NO_LIQUIDITY`. A market order may also be partially filled; inspect the response instead of assuming the whole quantity traded.
+If the book has no liquidity, the API returns `422 NO_LIQUIDITY`. A market order may also be partially filled. Inspect the response instead of assuming the whole quantity traded.
 
 ## Order response
 
@@ -72,7 +76,7 @@ If the book has no liquidity, the API returns `422 NO_LIQUIDITY`. A market order
 | `GET /orders/:orderId` | `ORDER_READ` | One order owned by the caller        |
 | `GET /orders`          | `ORDER_READ` | History, newest first                |
 
-Order-history query parameters are all optional:
+Order-history query parameters are optional:
 
 | Parameter | Values                                            |
 | --------- | ------------------------------------------------- |

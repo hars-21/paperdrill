@@ -1,0 +1,50 @@
+---
+title: "Authentication"
+description: "Authenticate API requests with scoped PaperDrill API keys."
+icon: "key-round"
+---
+
+Programmable access to PaperDrill uses API keys. Public market-data endpoints do not require authentication.
+
+API base URL:
+
+```text
+https://api.paperdrill.dev/v1
+```
+
+## Create an API key
+
+Sign in to PaperDrill, open the [API keys dashboard](https://paperdrill.dev/dashboard/api-keys), and create a key with only the permissions your integration needs. Copy the complete key when it appears. It is shown only once.
+
+## Send the key
+
+Pass the complete key in the `x-api-key` header:
+
+```bash
+curl https://api.paperdrill.dev/v1/orders/open \
+  --header "x-api-key: YOUR_API_KEY"
+```
+
+Do not use `Authorization: Bearer` and do not add a prefix to the key.
+
+## Permissions
+
+| Scope          | Allows                                  |
+| -------------- | --------------------------------------- |
+| `ACCOUNT_READ` | Read balances and portfolio performance |
+| `ORDER_READ`   | Read orders and private trade history   |
+| `ORDER_CREATE` | Place limit and market orders           |
+| `ORDER_CANCEL` | Cancel open orders                      |
+
+## Keep keys safe
+
+- Keep keys in server-side environment variables or a secret manager.
+- Never embed a key in browser code, mobile applications, or public repositories.
+- Use a separate key for each integration and grant only the required scopes.
+- Revoke and replace a key immediately if it may have been exposed.
+
+<Warning>
+	PaperDrill shows a complete API key only once. Store it securely when you create it.
+</Warning>
+
+Continue to the [Quickstart](/quickstart) to place your first order, or read [Errors and rate limits](/errors) before implementing retries.

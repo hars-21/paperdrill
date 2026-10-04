@@ -20,7 +20,7 @@ export const primaryNavigation = [
 	{ id: "markets", label: "Markets", href: "/markets" },
 	{ id: "trading", label: "Trading", href: "/trade/BTC_USD" },
 	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard" },
-	{ id: "docs", label: "Docs", href: "/docs" },
+	{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev" },
 ] satisfies NavigationItem[];
 
 export const applicationNavigation = [
@@ -38,7 +38,7 @@ export const dashboardNavigation = [
 export const dashboardUtilityNavigation = [
 	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard" },
 	{ id: "trading", label: "Open trading", href: "/trade/BTC_USD" },
-	{ id: "docs", label: "Documentation", href: "/docs" },
+	{ id: "docs", label: "Documentation", href: "https://docs.paperdrill.dev" },
 ] satisfies NavigationItem[];
 
 export const dashboardPageNames: Record<string, string> = {
