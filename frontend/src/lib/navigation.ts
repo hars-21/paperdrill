@@ -13,14 +13,16 @@ export type NavigationItem = {
 	id: NavigationId;
 	label: string;
 	href: string;
+	activePath?: string;
 	end?: boolean;
+	external?: boolean;
 };
 
 export const primaryNavigation = [
-	{ id: "markets", label: "Markets", href: "/markets" },
-	{ id: "trading", label: "Trading", href: "/trade/BTC_USD" },
-	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard" },
-	{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev" },
+	{ id: "markets", label: "Markets", href: "/markets", end: true },
+	{ id: "trading", label: "Trading", href: "/trade/BTC_USD", activePath: "/trade" },
+	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard", end: true },
+	{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev", external: true },
 ] satisfies NavigationItem[];
 
 export const applicationNavigation = [
@@ -38,7 +40,7 @@ export const dashboardNavigation = [
 export const dashboardUtilityNavigation = [
 	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard" },
 	{ id: "trading", label: "Open trading", href: "/trade/BTC_USD" },
-	{ id: "docs", label: "Documentation", href: "https://docs.paperdrill.dev" },
+	{ id: "docs", label: "Documentation", href: "https://docs.paperdrill.dev", external: true },
 ] satisfies NavigationItem[];
 
 export const dashboardPageNames: Record<string, string> = {

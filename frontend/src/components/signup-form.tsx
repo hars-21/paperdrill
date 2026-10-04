@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { useAnalytics } from "@/lib/analytics";
+import { getSafeReturnTo } from "@/lib/redirect";
 import { toast } from "sonner";
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -15,14 +16,18 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [formError, setFormError] = useState<string | null>(null);
 	const { setUser } = useAuth();
 	const posthog = useAnalytics();
 	const navigate = useNavigate();
+	const location = useLocation();
+	const returnTo = getSafeReturnTo(location.state);
 
 	const handleSubmit = async (event: React.SubmitEvent) => {
 		event.preventDefault();
+		setFormError(null);
 		if (password.length < 8) {
-			toast.error("Password must be at least 8 characters long");
+			setFormError("Password must be at least 8 characters long.");
 			return;
 		}
 
@@ -32,12 +37,12 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 			setUser(user);
 			posthog.capture("user_signed_up", { email_verified: user.emailVerified });
 			toast.success(message);
-			navigate(user.emailVerified ? "/dashboard" : "/verify-email", {
+			navigate(user.emailVerified ? returnTo : "/verify-email", {
 				replace: true,
-				state: user.emailVerified ? undefined : { emailSent: true },
+				state: user.emailVerified ? undefined : { emailSent: true, returnTo },
 			});
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Signup failed");
+			setFormError(error instanceof Error ? error.message : "Signup failed.");
 		} finally {
 			setIsLoading(false);
 		}
@@ -58,9 +63,13 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 								<Input
 									id="name"
 									type="text"
-									placeholder="John Doe"
+									placeholder="Aarav Mehta"
+									name="name"
 									value={name}
-									onChange={(event) => setName(event.target.value)}
+									onChange={(event) => {
+										setName(event.target.value);
+										setFormError(null);
+									}}
 									maxLength={40}
 									autoComplete="name"
 									required
@@ -71,10 +80,15 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 								<Input
 									id="signup-email"
 									type="email"
-									placeholder="johndoe@example.com"
+									placeholder="you@example.com"
+									name="email"
 									value={email}
-									onChange={(event) => setEmail(event.target.value)}
+									onChange={(event) => {
+										setEmail(event.target.value);
+										setFormError(null);
+									}}
 									autoComplete="email"
+									spellCheck={false}
 									required
 								/>
 							</Field>
@@ -84,20 +98,25 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 									id="signup-password"
 									type="password"
 									placeholder="••••••••"
+									name="password"
 									value={password}
-									onChange={(event) => setPassword(event.target.value)}
+									onChange={(event) => {
+										setPassword(event.target.value);
+										setFormError(null);
+									}}
 									autoComplete="new-password"
 									minLength={8}
 									required
 								/>
 								<FieldDescription>Use at least 8 characters.</FieldDescription>
 							</Field>
+							<FieldError>{formError}</FieldError>
 							<Field>
 								<Button type="submit" className="w-full" disabled={isLoading}>
-									{isLoading ? "Creating account..." : "Create account"}
+									{isLoading ? "Creating account…" : "Create account"}
 								</Button>
 								<FieldDescription className="text-center">
-									Already have an account? <Link to="/login">Sign in</Link>
+									Already have an account? <Link to="/login" state={{ returnTo }}>Sign in</Link>
 								</FieldDescription>
 							</Field>
 						</FieldGroup>

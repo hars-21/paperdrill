@@ -1,27 +1,32 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { useAnalytics } from "@/lib/analytics";
+import { getSafeReturnTo } from "@/lib/redirect";
 import { toast } from "sonner";
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [formError, setFormError] = useState<string | null>(null);
 	const { setUser } = useAuth();
 	const posthog = useAnalytics();
 	const navigate = useNavigate();
+	const location = useLocation();
+	const returnTo = getSafeReturnTo(location.state);
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
+		setFormError(null);
 		if (!email.trim() || !password.trim()) {
-			toast.error("Please enter both email and password");
+			setFormError("Enter both your email and password.");
 			return;
 		}
 
@@ -31,9 +36,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 			setUser(user);
 			posthog.capture("user_signed_in", { email_verified: user.emailVerified });
 			toast.success("Signed in successfully");
-			navigate(user.emailVerified ? "/dashboard" : "/verify-email");
+			navigate(user.emailVerified ? returnTo : "/verify-email", {
+				replace: true,
+				state: user.emailVerified ? undefined : { returnTo },
+			});
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Failed to sign in");
+			setFormError(err instanceof Error ? err.message : "Failed to sign in.");
 		} finally {
 			setIsLoading(false);
 		}
@@ -54,10 +62,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 								<Input
 									id="email"
 									type="email"
-									placeholder="johndoe@example.com"
+									placeholder="you@example.com"
+									name="email"
 									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									onChange={(e) => {
+										setEmail(e.target.value);
+										setFormError(null);
+									}}
 									autoComplete="email"
+									spellCheck={false}
+									aria-invalid={Boolean(formError)}
 									required
 								/>
 							</Field>
@@ -67,18 +81,24 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 									id="password"
 									type="password"
 									placeholder="••••••••"
+									name="password"
 									value={password}
-									onChange={(e) => setPassword(e.target.value)}
+									onChange={(e) => {
+										setPassword(e.target.value);
+										setFormError(null);
+									}}
 									autoComplete="current-password"
+									aria-invalid={Boolean(formError)}
 									required
 								/>
 							</Field>
+							<FieldError>{formError}</FieldError>
 							<Field>
 								<Button type="submit" disabled={isLoading}>
 									{isLoading ? "Signing in…" : "Sign in"}
 								</Button>
 								<FieldDescription className="text-center">
-									Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+									Don&apos;t have an account? <Link to="/signup" state={{ returnTo }}>Sign up</Link>
 								</FieldDescription>
 							</Field>
 						</FieldGroup>

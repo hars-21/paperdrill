@@ -18,6 +18,7 @@ import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
 import { DashboardBalancesPage } from "./pages/dashboard/balances";
 import { DashboardDataPage } from "./pages/dashboard/data";
 import { LeaderboardPage } from "./pages/leaderboard";
+import { RouteBehavior } from "./components/route-behavior";
 
 function NotFound() {
 	return (
@@ -33,51 +34,54 @@ function NotFound() {
 
 export function App() {
 	return (
-		<Routes>
-			<Route element={<RootLayout />}>
-				<Route index element={<LandingPage />} />
-				<Route path="terms" element={<TermsPage />} />
-				<Route path="privacy" element={<PrivacyPage />} />
-			</Route>
-
-			<Route element={<AppLayout />}>
-				<Route
-					path="dashboard"
-					element={
-						<Protected>
-							<DashboardLayout />
-						</Protected>
-					}
-				>
-					<Route index element={<DashboardOverviewPage />} />
-					<Route path="api-keys" element={<DashboardApiKeysPage />} />
-					<Route path="balances" element={<DashboardBalancesPage />} />
-					<Route path="data" element={<DashboardDataPage />} />
-					<Route path="profile" element={<ProfilePage />} />
+		<>
+			<RouteBehavior />
+			<Routes>
+				<Route element={<RootLayout />}>
+					<Route index element={<LandingPage />} />
+					<Route path="terms" element={<TermsPage />} />
+					<Route path="privacy" element={<PrivacyPage />} />
 				</Route>
-				<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
-				<Route path="markets" element={<MarketsPage />} />
-				<Route path="leaderboard" element={<LeaderboardPage />} />
-				<Route path="trade/:symbol" element={<TradePage />} />
-				<Route
-					path="login"
-					element={
-						<PublicOnly>
-							<LoginPage />
-						</PublicOnly>
-					}
-				/>
-				<Route
-					path="signup"
-					element={
-						<PublicOnly>
-							<SignupPage />
-						</PublicOnly>
-					}
-				/>
-				<Route path="verify-email" element={<VerifyEmailPage />} />
-				<Route path="*" element={<NotFound />} />
-			</Route>
-		</Routes>
+
+				<Route element={<AppLayout />}>
+					<Route
+						path="dashboard"
+						element={
+							<Protected>
+								<DashboardLayout />
+							</Protected>
+						}
+					>
+						<Route index element={<DashboardOverviewPage />} />
+						<Route path="api-keys" element={<DashboardApiKeysPage />} />
+						<Route path="balances" element={<DashboardBalancesPage />} />
+						<Route path="data" element={<DashboardDataPage />} />
+						<Route path="profile" element={<ProfilePage />} />
+					</Route>
+					<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
+					<Route path="markets" element={<MarketsPage />} />
+					<Route path="leaderboard" element={<LeaderboardPage />} />
+					<Route path="trade/:symbol" element={<TradePage />} />
+					<Route
+						path="login"
+						element={
+							<PublicOnly>
+								<LoginPage />
+							</PublicOnly>
+						}
+					/>
+					<Route
+						path="signup"
+						element={
+							<PublicOnly>
+								<SignupPage />
+							</PublicOnly>
+						}
+					/>
+					<Route path="verify-email" element={<VerifyEmailPage />} />
+					<Route path="*" element={<NotFound />} />
+				</Route>
+			</Routes>
+		</>
 	);
 }

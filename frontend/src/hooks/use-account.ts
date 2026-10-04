@@ -30,6 +30,7 @@ export function useOpenOrders({ enabled = true }: QueryOptions = {}) {
 		openOrders: query.data ?? [],
 		loading: active && query.isPending,
 		error: query.data === undefined ? query.error : null,
+		refresh: query.refetch,
 	};
 }
 
@@ -50,6 +51,7 @@ export function useOrderHistory(
 		orders: query.data ?? [],
 		loading: active && query.isPending,
 		error: query.data === undefined ? query.error : null,
+		refresh: query.refetch,
 	};
 }
 
@@ -67,6 +69,7 @@ export function useTradeHistory(limit = 100, { enabled = true }: QueryOptions = 
 		trades: query.data ?? [],
 		loading: active && query.isPending,
 		error: query.data === undefined ? query.error : null,
+		refresh: query.refetch,
 	};
 }
 

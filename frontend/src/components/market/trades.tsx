@@ -1,5 +1,6 @@
 import { Activity } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
+import { Button } from "../ui/button";
 import type { Trade } from "@/types";
 import { useMarket } from "@/context/MarketContext";
 import { formatPrice, formatQty, formatTime } from "@/utils/format";
@@ -7,10 +8,14 @@ import { formatPrice, formatQty, formatTime } from "@/utils/format";
 export function Trades({
 	symbol,
 	loading,
+	error,
+	onRetry,
 	trades,
 }: {
 	symbol: string;
 	loading?: boolean;
+	error?: string | null;
+	onRetry?: () => void;
 	trades: Trade[];
 }) {
 	const market = useMarket(symbol);
@@ -23,6 +28,20 @@ export function Trades({
 				{Array.from({ length: 10 }).map((_, i) => (
 					<Skeleton key={i} className="h-3 w-full" />
 				))}
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div role="alert" className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center">
+				<p className="text-sm font-medium text-high-emphasis">Trades unavailable</p>
+				<p className="text-xs text-medium-emphasis">{error}</p>
+				{onRetry && (
+					<Button type="button" variant="secondary" size="sm" className="mt-2" onClick={onRetry}>
+						Try again
+					</Button>
+				)}
 			</div>
 		);
 	}

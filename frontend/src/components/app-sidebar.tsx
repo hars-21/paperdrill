@@ -9,7 +9,6 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import type { ComponentProps } from "react";
-import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/brand-logo";
 import { NavMain, type DashboardNavItem } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -24,6 +23,7 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import { dashboardNavigation, dashboardUtilityNavigation } from "@/lib/navigation";
+import { NavigationLink } from "@/components/navigation-link";
 
 type SidebarNavigationId =
 	| (typeof dashboardNavigation)[number]["id"]
@@ -65,10 +65,10 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 							return (
 								<SidebarMenuItem key={item.id}>
 									<SidebarMenuButton asChild tooltip={item.label} className="h-9 rounded-lg px-2.5">
-										<Link to={item.href}>
+										<NavigationLink item={item}>
 											<Icon />
 											<span>{item.label}</span>
-										</Link>
+										</NavigationLink>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
 							);

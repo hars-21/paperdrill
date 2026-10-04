@@ -27,12 +27,14 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { applicationNavigation } from "@/lib/navigation";
+import { applicationNavigation, primaryNavigation } from "@/lib/navigation";
+import { NavigationLink } from "@/components/navigation-link";
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
 	const { user, verified, setUser } = useAuth();
 	const navigate = useNavigate();
+	const navigationItems = user ? applicationNavigation : primaryNavigation;
 
 	const handleLogout = async () => {
 		try {
@@ -52,14 +54,15 @@ export function Navbar() {
 				<BrandLogo href="/markets" />
 
 				<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-10 md:flex lg:gap-7 xl:gap-8 ml-6">
-					{applicationNavigation.map((link) => (
-						<Link
+					{navigationItems.map((link) => (
+						<NavigationLink
 							key={link.id}
-							to={link.href}
-							className="text-medium-emphasis hover:text-high-emphasis transition-colors"
+							item={link}
+							className="relative flex h-14 items-center text-sm text-medium-emphasis transition-colors hover:text-high-emphasis"
+							activeClassName="text-high-emphasis after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:content-['']"
 						>
 							{link.label}
-						</Link>
+						</NavigationLink>
 					))}
 				</nav>
 
@@ -87,14 +90,15 @@ export function Navbar() {
 							</div>
 
 							<nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-								{applicationNavigation.map((link) => (
+								{navigationItems.map((link) => (
 									<SheetClose asChild key={link.id}>
-										<Link
-											to={link.href}
+										<NavigationLink
+											item={link}
 											className="flex items-center h-11 px-3 rounded-lg text-sm text-medium-emphasis hover:text-high-emphasis hover:bg-l2 transition-colors"
+											activeClassName="bg-l2 text-high-emphasis"
 										>
 											{link.label}
-										</Link>
+										</NavigationLink>
 									</SheetClose>
 								))}
 
@@ -148,17 +152,19 @@ export function Navbar() {
 									) : (
 										<>
 											<SheetClose asChild>
-												<Link to="/login">
-													<Button variant="ghost" size="sm" className="w-full h-11">
-														Sign in
-													</Button>
+												<Link
+													to="/login"
+													className="flex h-11 items-center justify-center rounded-md px-3 text-sm font-medium hover:bg-l2"
+												>
+													Sign in
 												</Link>
 											</SheetClose>
 											<SheetClose asChild>
-												<Link to="/signup">
-													<Button size="sm" className="w-full h-11">
-														Sign up
-													</Button>
+												<Link
+													to="/signup"
+													className="flex h-11 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
+												>
+													Sign up
 												</Link>
 											</SheetClose>
 										</>
@@ -270,14 +276,14 @@ export function Navbar() {
 							</DropdownMenu>
 						) : (
 							<>
-								<Link to="/login">
-									<Button variant="ghost" size="sm" className="bg-l3">
+								<Button asChild variant="ghost" size="sm" className="bg-l3">
+									<Link to="/login">
 										Sign in
-									</Button>
-								</Link>
-								<Link to="/signup">
-									<Button size="sm">Sign up</Button>
-								</Link>
+									</Link>
+								</Button>
+								<Button asChild size="sm">
+									<Link to="/signup">Sign up</Link>
+								</Button>
 							</>
 						)}
 					</div>

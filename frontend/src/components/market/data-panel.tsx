@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	ArrowDown10,
 	ArrowUp01,
@@ -12,7 +12,7 @@ import {
 	SlidersHorizontal,
 	X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import type { OrderRecord, UserBalance, UserTrade } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +29,7 @@ import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 import { AssetIcon } from "../icons/asset-icon";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { ConfirmDialog } from "../ui/confirm-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -120,7 +121,7 @@ function SortableHead({
 			<button
 				type="button"
 				onClick={() => onSort(field)}
-				className="ml-auto flex cursor-pointer items-center gap-1 text-inherit transition-colors hover:text-high-emphasis"
+				className="ml-auto flex cursor-pointer items-center gap-1 rounded-sm text-inherit outline-none transition-colors hover:text-high-emphasis focus-visible:ring-2 focus-visible:ring-ring"
 			>
 				{label}
 				<Icon className={cn("size-3.5", !active && "text-low-emphasis")} />
@@ -161,7 +162,10 @@ function TableLoading({ columns }: { columns: number }) {
 
 function EmptyState({ children }: { children: string }) {
 	return (
-		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+		<div
+			role="status"
+			className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center"
+		>
 			<div className="flex size-9 items-center justify-center rounded-full bg-secondary text-medium-emphasis">
 				<Inbox className="size-4" />
 			</div>
@@ -173,14 +177,20 @@ function EmptyState({ children }: { children: string }) {
 	);
 }
 
-function ErrorState({ message }: { message: string }) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
 	return (
-		<div className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center">
+		<div
+			role="alert"
+			className="flex min-h-44 flex-col items-center justify-center gap-2 px-4 text-center"
+		>
 			<div className="flex size-9 items-center justify-center rounded-full bg-red-bg text-red-text">
 				<CircleAlert className="size-4" />
 			</div>
 			<p className="text-sm font-medium text-high-emphasis">Could not load account data</p>
 			<p className="max-w-sm text-xs text-medium-emphasis">{message}</p>
+			<Button type="button" variant="secondary" size="sm" onClick={onRetry}>
+				Try again
+			</Button>
 		</div>
 	);
 }
@@ -200,7 +210,7 @@ function Pagination({
 	return (
 		<div className="flex shrink-0 items-center justify-between border-t border-border/40 px-3 py-2">
 			<span className="text-xs text-medium-emphasis">
-				{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, total)} of {total}
+				{(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, total)} of {total}
 			</span>
 			<div className="flex items-center gap-1">
 				<Button
@@ -234,40 +244,79 @@ function Pagination({
 export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	const { authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
-	const [tab, setTab] = useState<Tab>("open");
-	const [search, setSearch] = useState("");
-	const [currentMarketOnly, setCurrentMarketOnly] = useState(Boolean(symbol));
-	const [marketFilter, setMarketFilter] = useState("all");
-	const [sideFilter, setSideFilter] = useState<SideFilter>("all");
-	const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-	const [sortField, setSortField] = useState<SortField>("time");
-	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-	const [page, setPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [pendingCancelOrder, setPendingCancelOrder] = useState<OrderRecord | null>(null);
+	const activityParam = searchParams.get("activity");
+	const tab: Tab = ["balance", "open", "orders", "trades"].includes(activityParam ?? "")
+		? (activityParam as Tab)
+		: "open";
+	const search = searchParams.get("q") ?? "";
+	const marketParam = searchParams.get("market");
+	const currentMarketOnly = Boolean(symbol) && (marketParam === null || marketParam === "current");
+	const marketFilter = currentMarketOnly ? "all" : (marketParam ?? "all");
+	const sideParam = searchParams.get("side");
+	const sideFilter: SideFilter = ["BUY", "SELL"].includes(sideParam ?? "")
+		? (sideParam as SideFilter)
+		: "all";
+	const typeParam = searchParams.get("type");
+	const typeFilter: TypeFilter = ["LIMIT", "MARKET"].includes(typeParam ?? "")
+		? (typeParam as TypeFilter)
+		: "all";
+	const statusParam = searchParams.get("status");
+	const statusFilter: StatusFilter = ["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"].includes(
+		statusParam ?? "",
+	)
+		? (statusParam as StatusFilter)
+		: "all";
+	const sortParam = searchParams.get("sort");
+	const sortField: SortField = ["price", "quantity"].includes(sortParam ?? "")
+		? (sortParam as SortField)
+		: "time";
+	const sortDirection: SortDirection = searchParams.get("direction") === "asc" ? "asc" : "desc";
+	const pageParam = Number(searchParams.get("page"));
+	const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+
+	const updateView = useCallback(
+		(changes: Record<string, string | null>, resetPage = true, replace = false) => {
+			setSearchParams((current) => {
+				const next = new URLSearchParams(current);
+				for (const [key, value] of Object.entries(changes)) {
+					if (value === null) next.delete(key);
+					else next.set(key, value);
+				}
+				if (resetPage) next.delete("page");
+				return next;
+			}, { replace });
+		},
+		[setSearchParams],
+	);
 	const {
 		balances,
 		loading: balanceLoading,
 		error: balanceError,
+		refresh: refreshBalances,
 	} = useBalance({ enabled: authenticated });
 	const {
 		openOrders,
 		loading: openOrdersLoading,
 		error: openOrdersError,
+		refresh: refreshOpenOrders,
 	} = useOpenOrders({ enabled: authenticated });
 	const {
 		orders,
 		loading: ordersLoading,
 		error: ordersError,
+		refresh: refreshOrders,
 	} = useOrderHistory(ORDER_HISTORY_PARAMS, { enabled: authenticated });
 	const {
 		trades,
 		loading: tradesLoading,
 		error: tradesError,
+		refresh: refreshTrades,
 	} = useTradeHistory(100, { enabled: authenticated });
 	const cancelOrder = useCancelOrder();
 	const cancelling = cancelOrder.isPending ? (cancelOrder.variables ?? null) : null;
 	const fetching = openOrdersLoading || ordersLoading || tradesLoading;
-	const accountDataError = balanceError ?? openOrdersError ?? ordersError ?? tradesError;
 	const activeDataError =
 		tab === "balance"
 			? balanceError
@@ -276,26 +325,6 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				: tab === "orders"
 					? ordersError
 					: tradesError;
-
-	useEffect(() => {
-		if (!accountDataError) return;
-		console.error("Failed to load account data:", accountDataError);
-		toast.error("Failed to load account data");
-	}, [accountDataError]);
-
-	useEffect(() => {
-		setPage(1);
-	}, [
-		tab,
-		search,
-		currentMarketOnly,
-		marketFilter,
-		sideFilter,
-		typeFilter,
-		statusFilter,
-		sortField,
-		sortDirection,
-	]);
 
 	const marketFor = useCallback(
 		(marketSymbol: string) => markets.find((market) => market.symbol === marketSymbol),
@@ -371,26 +400,23 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	};
 
 	const resetFilters = () => {
-		setMarketFilter("all");
-		setSideFilter("all");
-		setTypeFilter("all");
-		setStatusFilter("all");
+		updateView({ market: currentMarketOnly ? "current" : "all", side: null, type: null, status: null });
 	};
 
 	const handleSort = (field: SortField) => {
 		if (field === sortField) {
-			setSortDirection((current) => (current === "desc" ? "asc" : "desc"));
+			updateView({ direction: sortDirection === "desc" ? "asc" : null });
 			return;
 		}
-		setSortField(field);
-		setSortDirection("desc");
+		updateView({ sort: field === "time" ? null : field, direction: null });
 	};
 
-	const handleCancel = async (orderId: string) => {
-		if (!verified) return;
+	const handleCancel = async () => {
+		if (!verified || !pendingCancelOrder) return;
 		try {
-			await cancelOrder.mutateAsync(orderId);
+			await cancelOrder.mutateAsync(pendingCancelOrder.id);
 			toast.success("Order cancelled");
+			setPendingCancelOrder(null);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to cancel order");
 		}
@@ -402,6 +428,19 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 		{ key: "orders", label: "Order History", count: orders.length },
 		{ key: "trades", label: "Trade History", count: trades.length },
 	];
+	const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+		if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+		event.preventDefault();
+		const nextIndex =
+			event.key === "Home"
+				? 0
+				: event.key === "End"
+					? tabs.length - 1
+					: (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+		const nextTab = tabs[nextIndex]?.key ?? "open";
+		updateView({ activity: nextTab === "open" ? null : nextTab });
+		document.getElementById(`account-${nextTab}-tab`)?.focus();
+	};
 	const filtersActive =
 		(!currentMarketOnly && marketFilter !== "all") ||
 		sideFilter !== "all" ||
@@ -409,7 +448,15 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 		(tab === "orders" && statusFilter !== "all");
 	const activeData =
 		tab === "open" ? filteredOpenOrders : tab === "orders" ? filteredOrders : filteredTrades;
-	const visibleData = activeData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+	const lastPage = Math.max(1, Math.ceil(activeData.length / PAGE_SIZE));
+	const safePage = Math.min(page, lastPage);
+	const visibleData = activeData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+	const retryActiveData = () => {
+		if (tab === "balance") void refreshBalances();
+		else if (tab === "open") void refreshOpenOrders();
+		else if (tab === "orders") void refreshOrders();
+		else void refreshTrades();
+	};
 
 	if (!authenticated) {
 		return (
@@ -423,10 +470,14 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button asChild size="sm">
-						<Link to="/login">Sign in</Link>
+						<Link to="/login" state={{ returnTo: symbol ? `/trade/${symbol}` : "/dashboard/data" }}>
+							Sign in
+						</Link>
 					</Button>
 					<Button asChild size="sm" variant="outline">
-						<Link to="/signup">Create account</Link>
+						<Link to="/signup" state={{ returnTo: symbol ? `/trade/${symbol}` : "/dashboard/data" }}>
+							Create account
+						</Link>
 					</Button>
 				</div>
 			</div>
@@ -436,14 +487,24 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	return (
 		<div className="flex h-full min-h-96 flex-col overflow-hidden sm:min-h-120 lg:min-h-144">
 			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
-				<div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto">
-					{tabs.map((item) => (
+				<div
+					className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto"
+					role="tablist"
+					aria-label="Account data"
+				>
+					{tabs.map((item, index) => (
 						<button
 							key={item.key}
+							id={`account-${item.key}-tab`}
 							type="button"
-							onClick={() => setTab(item.key)}
+							role="tab"
+							aria-selected={tab === item.key}
+							aria-controls="account-data-panel"
+							onClick={() => updateView({ activity: item.key === "open" ? null : item.key })}
+							onKeyDown={(event) => handleTabKeyDown(event, index)}
+							tabIndex={tab === item.key ? 0 : -1}
 							className={cn(
-								"flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors",
+								"flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
 								tab === item.key
 									? "bg-muted text-high-emphasis"
 									: "text-medium-emphasis hover:text-high-emphasis",
@@ -465,8 +526,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 									className="border-border bg-card"
 									checked={currentMarketOnly}
 									onCheckedChange={(checked) => {
-										setCurrentMarketOnly(checked === true);
-										if (checked === true) setMarketFilter("all");
+										updateView({ market: checked === true ? "current" : "all" });
 									}}
 								/>
 								Current market
@@ -491,8 +551,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 								<DropdownMenuRadioGroup
 									value={currentMarketOnly ? symbol : marketFilter}
 									onValueChange={(value) => {
-										setMarketFilter(value);
-										setCurrentMarketOnly(false);
+										updateView({ market: value === symbol ? "current" : value });
 									}}
 								>
 									<DropdownMenuRadioItem value="all" className="text-xs">
@@ -512,7 +571,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 								<DropdownMenuLabel className="text-xs text-medium-emphasis">Side</DropdownMenuLabel>
 								<DropdownMenuRadioGroup
 									value={sideFilter}
-									onValueChange={(value) => setSideFilter(value as SideFilter)}
+									onValueChange={(value) => updateView({ side: value === "all" ? null : value })}
 								>
 									{["all", "BUY", "SELL"].map((value) => (
 										<DropdownMenuRadioItem key={value} value={value} className="text-xs">
@@ -528,7 +587,9 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 										</DropdownMenuLabel>
 										<DropdownMenuRadioGroup
 											value={typeFilter}
-											onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+											onValueChange={(value) =>
+												updateView({ type: value === "all" ? null : value })
+											}
 										>
 											{["all", "LIMIT", "MARKET"].map((value) => (
 												<DropdownMenuRadioItem key={value} value={value} className="text-xs">
@@ -546,7 +607,9 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 										</DropdownMenuLabel>
 										<DropdownMenuRadioGroup
 											value={statusFilter}
-											onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+											onValueChange={(value) =>
+												updateView({ status: value === "all" ? null : value })
+											}
 										>
 											{["all", "OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED"].map((value) => (
 												<DropdownMenuRadioItem key={value} value={value} className="text-xs">
@@ -571,15 +634,20 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 							<Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-low-emphasis" />
 							<Input
 								value={search}
-								onChange={(event) => setSearch(event.target.value)}
-								placeholder="Search market"
+								onChange={(event) =>
+									updateView({ q: event.target.value || null }, true, true)
+								}
+								name="account-market-search"
+								aria-label="Search markets"
+								autoComplete="off"
+								placeholder="Search markets…"
 								className="h-8 rounded-md pl-8 pr-7 text-xs"
 							/>
 							{search && (
 								<button
 									type="button"
-									onClick={() => setSearch("")}
-									className="absolute right-2 top-1/2 -translate-y-1/2 text-low-emphasis hover:text-high-emphasis"
+									onClick={() => updateView({ q: null }, true, true)}
+									className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm text-low-emphasis outline-none hover:text-high-emphasis focus-visible:ring-2 focus-visible:ring-ring"
 									aria-label="Clear search"
 								>
 									<X className="size-3.5" />
@@ -590,13 +658,19 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				)}
 			</div>
 
-			<div className="min-h-0 flex-1 overflow-auto">
+			<div
+				id="account-data-panel"
+				role="tabpanel"
+				aria-labelledby={`account-${tab}-tab`}
+				className="min-h-0 flex-1 overflow-auto"
+			>
 				{loading || fetching || (tab === "balance" && balanceLoading) ? (
 					<TableLoading
 						columns={tab === "balance" ? 4 : tab === "trades" ? 7 : tab === "open" ? 10 : 9}
 					/>
 				) : activeDataError ? (
 					<ErrorState
+						onRetry={retryActiveData}
 						message={
 							activeDataError instanceof Error
 								? activeDataError.message
@@ -626,7 +700,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 						open={tab === "open"}
 						cancelling={cancelling}
 						canCancel={verified}
-						onCancel={handleCancel}
+						onCancel={setPendingCancelOrder}
 						sortField={sortField}
 						sortDirection={sortDirection}
 						onSort={handleSort}
@@ -634,7 +708,29 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				)}
 			</div>
 
-			{tab !== "balance" && <Pagination page={page} total={activeData.length} onChange={setPage} />}
+			{tab !== "balance" && (
+				<Pagination
+					page={safePage}
+					total={activeData.length}
+					onChange={(nextPage) => updateView({ page: nextPage === 1 ? null : String(nextPage) }, false)}
+				/>
+			)}
+
+			<ConfirmDialog
+				open={pendingCancelOrder !== null}
+				onOpenChange={(open) => !open && setPendingCancelOrder(null)}
+				title="Cancel this order?"
+				description={
+					pendingCancelOrder
+						? `Cancel the ${titleCase(pendingCancelOrder.side)} ${pendingCancelOrder.symbol.replace("_", "/")} order. Any unfilled quantity will be released.`
+						: "This order will be cancelled."
+				}
+				confirmLabel="Cancel order"
+				cancelLabel="Keep order"
+				pendingLabel="Cancelling…"
+				pending={cancelOrder.isPending}
+				onConfirm={() => void handleCancel()}
+			/>
 		</div>
 	);
 }
@@ -657,7 +753,7 @@ function OrderTable({
 	open: boolean;
 	cancelling: string | null;
 	canCancel: boolean;
-	onCancel: (orderId: string) => void;
+	onCancel: (order: OrderRecord) => void;
 	sortField: SortField;
 	sortDirection: SortDirection;
 	onSort: (field: SortField) => void;
@@ -756,7 +852,7 @@ function OrderTable({
 										variant="ghost"
 										size="xs"
 										disabled={!canCancel || cancelling === order.id}
-										onClick={() => onCancel(order.id)}
+										onClick={() => onCancel(order)}
 										className="text-medium-emphasis hover:bg-red-bg/40 hover:text-red-text"
 									>
 										{cancelling === order.id ? "Cancelling…" : "Cancel"}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Trophy } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FeedbackState, InlineNotice } from "@/components/ui/feedback-state";
 import { Metric, MetricGroup } from "@/components/ui/metric";
@@ -30,7 +30,20 @@ const REFRESH_INTERVAL = 60_000;
 
 export function LeaderboardPage() {
 	const { authenticated } = useAuth();
-	const [page, setPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const pageParam = Number(searchParams.get("page"));
+	const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+	const setPage = useCallback(
+		(nextPage: number) => {
+			setSearchParams((current) => {
+				const next = new URLSearchParams(current);
+				if (nextPage <= 1) next.delete("page");
+				else next.set("page", String(nextPage));
+				return next;
+			});
+		},
+		[setSearchParams],
+	);
 	const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
 	const [mine, setMine] = useState<MyLeaderboardResponse | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -85,6 +98,10 @@ export function LeaderboardPage() {
 	const lastVisible = Math.min(offset + PAGE_SIZE, total);
 	const myEntry = mine?.eligible ? mine.entry : null;
 	const rows = leaderboard?.entries ?? [];
+
+	useEffect(() => {
+		if (leaderboard && page > totalPages) setPage(totalPages);
+	}, [leaderboard, page, setPage, totalPages]);
 
 	return (
 		<Page>
@@ -148,14 +165,14 @@ export function LeaderboardPage() {
 					{leaderboard && total > PAGE_SIZE && (
 						<div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-5">
 							<p className="text-xs tabular-nums text-medium-emphasis">
-								{firstVisible}–{lastVisible} of {total}
+								{firstVisible}-{lastVisible} of {total}
 							</p>
 							<div className="flex items-center gap-1">
 								<Button
 									variant="ghost"
 									size="icon-sm"
 									disabled={page === 1}
-									onClick={() => setPage((current) => Math.max(1, current - 1))}
+								onClick={() => setPage(Math.max(1, page - 1))}
 									aria-label="Previous page"
 								>
 									<ChevronLeft />
@@ -167,7 +184,7 @@ export function LeaderboardPage() {
 									variant="ghost"
 									size="icon-sm"
 									disabled={page === totalPages}
-									onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+								onClick={() => setPage(Math.min(totalPages, page + 1))}
 									aria-label="Next page"
 								>
 									<ChevronRight />

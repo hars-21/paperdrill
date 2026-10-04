@@ -13,16 +13,23 @@ export function ProfilePage() {
 	const { user, verified, setUser } = useAuth();
 	const navigate = useNavigate();
 	const [copied, setCopied] = useState(false);
+	const [loggingOut, setLoggingOut] = useState(false);
 
 	if (!user) return null;
 
 	const copyUserId = async () => {
-		await navigator.clipboard.writeText(user.id);
-		setCopied(true);
-		toast.success("Account ID copied");
+		try {
+			await navigator.clipboard.writeText(user.id);
+			setCopied(true);
+			toast.success("Account ID copied");
+		} catch {
+			toast.error("Could not copy the account ID");
+		}
 	};
 
 	const handleLogout = async () => {
+		if (loggingOut) return;
+		setLoggingOut(true);
 		try {
 			await api.signout();
 		} catch (error) {
@@ -39,8 +46,8 @@ export function ProfilePage() {
 			title="Profile"
 			description="Your basic account details and session controls."
 			action={
-				<Button size="sm" onClick={handleLogout}>
-					<LogOut /> Log out
+				<Button size="sm" onClick={handleLogout} disabled={loggingOut}>
+					<LogOut /> {loggingOut ? "Logging out…" : "Log out"}
 				</Button>
 			}
 		>
@@ -61,6 +68,7 @@ export function ProfilePage() {
 						) : (
 							<Link
 								to="/verify-email"
+								state={{ returnTo: "/dashboard/profile" }}
 								className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
 							>
 								<Mail className="size-4" /> Verify email

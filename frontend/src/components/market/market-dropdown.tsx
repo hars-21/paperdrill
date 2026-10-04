@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Search, ChevronDown } from "lucide-react";
 import { useAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ interface MarketDropdownProps {
 }
 
 export function MarketDropdown({ symbol, base, quote, markets, tickers }: MarketDropdownProps) {
-	const navigate = useNavigate();
 	const posthog = useAnalytics();
 	const [open, setOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -38,7 +37,7 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 			}}
 		>
 			<PopoverTrigger asChild>
-				<button className="flex items-center gap-3 rounded-lg -mx-2 px-2 py-1 text-left cursor-pointer transition-colors hover:bg-muted/40">
+				<button type="button" className="flex items-center gap-3 rounded-lg -mx-2 px-2 py-1 text-left cursor-pointer transition-colors hover:bg-muted/40">
 					<AssetIcon asset={base} className="size-6 shrink-0" />
 
 					<div className="flex flex-col gap-1">
@@ -59,7 +58,10 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 					<Search className="size-4 text-low-emphasis shrink-0" />
 					<input
 						type="text"
-						placeholder="Search markets"
+						name="market-search"
+						aria-label="Search markets"
+						autoComplete="off"
+						placeholder="Search markets…"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="flex-1 bg-transparent text-sm outline-none text-high-emphasis placeholder:text-muted-foreground/40"
@@ -82,12 +84,13 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 							const mChange = formatChange(mTicker?.priceChangePercent);
 
 							return (
-								<button
+								<Link
 									key={m.id}
+									to={`/trade/${m.symbol}`}
+									aria-current={isCurrent ? "page" : undefined}
 									onClick={() => {
 										setOpen(false);
 										posthog.capture("market_selected", { symbol: m.symbol });
-										navigate(`/trade/${m.symbol}`);
 									}}
 									className={cn(
 										"flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors cursor-pointer",
@@ -117,7 +120,7 @@ export function MarketDropdown({ symbol, base, quote, markets, tickers }: Market
 											</span>
 										</div>
 									) : null}
-								</button>
+								</Link>
 							);
 						})
 					)}

@@ -52,6 +52,7 @@ export function useTickers() {
 	const [tickers, setTickers] = useState<Record<string, Ticker>>({});
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [retryKey, setRetryKey] = useState(0);
 
 	useEffect(() => {
 		let active = true;
@@ -92,7 +93,7 @@ export function useTickers() {
 			active = false;
 			unsubs.forEach((u) => u());
 		};
-	}, [markets]);
+	}, [markets, retryKey]);
 
-	return { tickers, loading, error };
+	return { tickers, loading, error, refresh: () => setRetryKey((current) => current + 1) };
 }

@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,13 +18,10 @@ import { Button } from "@/components/ui/button";
 import { AssetIcon } from "@/components/icons/asset-icon";
 import { formatPrice, formatVolume, formatChange } from "@/utils/format";
 
-const TABS = ["Spot"];
-
 export function MarketsPage() {
-	const { markets, loading: marketsLoading } = useMarkets();
-	const { tickers, loading, error } = useTickers();
-	const [activeTab, setActiveTab] = useState("Spot");
-	const navigate = useNavigate();
+	const { markets, loading: marketsLoading, error: marketsError, refresh: refreshMarkets } = useMarkets();
+	const { tickers, loading, error: tickerError, refresh: refreshTickers } = useTickers();
+	const error = marketsError ?? tickerError;
 
 	return (
 		<Page>
@@ -37,27 +33,25 @@ export function MarketsPage() {
 			</PageHeader>
 
 			<PageContent>
-				<Surface className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
-					<div className="flex items-center justify-between gap-3">
-						<div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap">
-							{TABS.map((tab) => (
-								<Button
-									key={tab}
-									onClick={() => setActiveTab(tab)}
-									className={`flex justify-center flex-col cursor-pointer rounded-lg py-1 whitespace-nowrap text-[13px] font-semibold px-3 h-8 transition-colors ${
-										activeTab === tab
-											? "text-high-emphasis bg-muted"
-											: "text-medium-emphasis hover:text-high-emphasis"
-									}`}
-								>
-									{tab}
-								</Button>
-							))}
-						</div>
-					</div>
-
+				<Surface className="flex flex-1 flex-col overflow-hidden p-3 sm:p-4">
 					{error ? (
-						<FeedbackState title="Failed to load markets" description={error} className="min-h-48" />
+						<FeedbackState
+							title="Failed to load markets"
+							description={error}
+							className="min-h-48"
+							action={
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => {
+									void refreshMarkets();
+									refreshTickers();
+								}}
+							>
+								Try again
+							</Button>
+						}
+						/>
 					) : (
 						<div className="overflow-x-auto">
 							<Table>
@@ -103,13 +97,12 @@ export function MarketsPage() {
 												const change = formatChange(ticker?.priceChangePercent);
 
 												return (
-													<TableRow
-														key={m.id}
-														className="group cursor-pointer"
-														onClick={() => navigate(`/trade/${m.symbol}`)}
-													>
+													<TableRow key={m.id} className="group">
 														<TableCell className="whitespace-nowrap">
-															<div className="flex items-center gap-3">
+															<Link
+																to={`/trade/${m.symbol}`}
+																className="flex items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+															>
 																<div className="overflow-hidden rounded-full size-8">
 																	<AssetIcon asset={m.baseAsset} />
 																</div>
@@ -117,7 +110,7 @@ export function MarketsPage() {
 																	<div className="text-high-emphasis text-base">{m.baseAsset}</div>
 																	<div className="hidden text-sm text-low-emphasis sm:block">{m.name}</div>
 																</div>
-															</div>
+															</Link>
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap">
 															{formatPrice(ticker?.lastPrice, m.pricePrecision)}
@@ -132,16 +125,15 @@ export function MarketsPage() {
 														</TableCell>
 														<TableCell className="text-right whitespace-nowrap hidden lg:table-cell">
 															<Button
+																asChild
 																variant="ghost"
 																size="sm"
-																className="opacity-0 group-hover:opacity-100 transition-opacity text-medium-emphasis"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	navigate(`/trade/${m.symbol}`);
-																}}
+																className="text-medium-emphasis"
 															>
-																Trade
-																<ArrowUpRight className="size-3.5" />
+																<Link to={`/trade/${m.symbol}`}>
+																	Trade
+																	<ArrowUpRight className="size-3.5" />
+																</Link>
 															</Button>
 														</TableCell>
 													</TableRow>

@@ -1,13 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { ArrowRight, Database, KeyRound, WalletCards } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
 import { DashboardPage } from "@/components/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Metric, MetricGroup } from "@/components/ui/metric";
+import { InlineNotice } from "@/components/ui/feedback-state";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
 import { useOpenOrders, useTradeHistory } from "@/hooks/use-account";
@@ -18,17 +18,11 @@ import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 export function DashboardOverviewPage() {
 	const { user } = useAuth();
 	const { markets } = useMarkets();
-	const { balances, loading: balanceLoading } = useBalance();
+	const { balances, loading: balanceLoading, error: balanceError } = useBalance();
 	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
 	const { openOrders, loading: openOrdersLoading, error: openOrdersError } = useOpenOrders();
 	const { trades, loading: tradesLoading, error: tradesError } = useTradeHistory(5);
-	const dashboardError = portfolioError ?? openOrdersError ?? tradesError;
-
-	useEffect(() => {
-		if (!dashboardError) return;
-		console.error("Failed to load dashboard:", dashboardError);
-		toast.error("Failed to load dashboard overview");
-	}, [dashboardError]);
+	const dashboardError = balanceError ?? portfolioError ?? openOrdersError ?? tradesError;
 
 	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
 	const pnl = Number(portfolio?.pnl ?? 0);
@@ -52,6 +46,11 @@ export function DashboardOverviewPage() {
 				</Button>
 			}
 		>
+			{dashboardError && (
+				<InlineNotice tone="error" className="mb-6 rounded-lg border border-red-text/20 bg-red-bg/20">
+					Some account data could not be loaded. The available information is still shown.
+				</InlineNotice>
+			)}
 			<MetricGroup className="sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
 					className="border-b sm:border-r xl:border-b-0"

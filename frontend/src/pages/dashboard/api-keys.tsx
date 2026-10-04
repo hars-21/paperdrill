@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
+import { Check, CircleAlert, Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardPage } from "@/components/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FeedbackState } from "@/components/ui/feedback-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,22 +41,25 @@ const scopeLabels: Record<ApiKeyScope, string> = {
 export function DashboardApiKeysPage() {
 	const { verified } = useAuth();
 	const [keys, setKeys] = useState<ApiKeyRecord[] | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
 	const [showForm, setShowForm] = useState(false);
 	const [label, setLabel] = useState("");
 	const [scopes, setScopes] = useState<ApiKeyScope[]>(scopeOptions.map((scope) => scope.value));
 	const [creating, setCreating] = useState(false);
+	const [createError, setCreateError] = useState<string | null>(null);
 	const [deleting, setDeleting] = useState<string | null>(null);
+	const [keyToDelete, setKeyToDelete] = useState<ApiKeyRecord | null>(null);
 	const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
 	const [copied, setCopied] = useState(false);
 
 	const loadKeys = async () => {
+		setLoadError(null);
 		try {
 			const response = await api.getApiKeys();
 			setKeys(response.keys);
 		} catch (error) {
 			console.error("Failed to load API keys:", error);
-			setKeys([]);
-			toast.error("Failed to load API keys");
+			setLoadError(error instanceof Error ? error.message : "Failed to load API keys.");
 		}
 	};
 
@@ -72,6 +77,7 @@ export function DashboardApiKeysPage() {
 		event.preventDefault();
 		if (!verified || !label.trim() || scopes.length === 0) return;
 
+		setCreateError(null);
 		setCreating(true);
 		try {
 			const key = await api.createApiKey(label.trim(), scopes);
@@ -82,24 +88,20 @@ export function DashboardApiKeysPage() {
 			await loadKeys();
 			toast.success("API key created");
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Failed to create API key");
+			setCreateError(error instanceof Error ? error.message : "Failed to create API key.");
 		} finally {
 			setCreating(false);
 		}
 	};
 
-	const handleDelete = async (key: ApiKeyRecord) => {
-		if (!verified) return;
+	const handleDelete = async () => {
+		if (!verified || !keyToDelete) return;
 
-		const confirmed = window.confirm(
-			`Delete the API key “${key.label}”? Applications using it will lose access immediately.`,
-		);
-		if (!confirmed) return;
-
-		setDeleting(key.id);
+		setDeleting(keyToDelete.id);
 		try {
-			await api.revokeApiKey(key.id);
+			await api.revokeApiKey(keyToDelete.id);
 			await loadKeys();
+			setKeyToDelete(null);
 			toast.success("API key deleted");
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to delete API key");
@@ -157,6 +159,8 @@ export function DashboardApiKeysPage() {
 					<CardContent className="flex min-w-0 flex-col gap-2 p-4 sm:flex-row sm:p-5">
 						<Input
 							readOnly
+							aria-label="New API key"
+							name="created-api-key"
 							value={createdKey.key}
 							className="font-mono text-xs"
 							onFocus={(event) => event.currentTarget.select()}
@@ -180,11 +184,15 @@ export function DashboardApiKeysPage() {
 								<Label htmlFor="key-label">Name</Label>
 								<Input
 									id="key-label"
+									name="key-label"
 									value={label}
-									onChange={(event) => setLabel(event.target.value)}
+									onChange={(event) => {
+										setLabel(event.target.value);
+										setCreateError(null);
+									}}
 									maxLength={50}
-									placeholder="Trading bot"
-									autoFocus
+									placeholder="Example: market-maker"
+									autoComplete="off"
 								/>
 							</div>
 							<div>
@@ -210,6 +218,7 @@ export function DashboardApiKeysPage() {
 									))}
 								</div>
 							</div>
+							{createError && <p role="alert" className="text-sm text-red-text">{createError}</p>}
 							<Button type="submit" disabled={creating || !label.trim() || scopes.length === 0}>
 								{creating ? "Creating…" : "Create key"}
 							</Button>
@@ -219,7 +228,15 @@ export function DashboardApiKeysPage() {
 			)}
 
 			<div className="overflow-hidden rounded-xl border border-border/60 bg-l1">
-				{keys == null ? (
+				{loadError ? (
+					<FeedbackState
+						icon={CircleAlert}
+						title="Could not load API keys"
+						description={loadError}
+						className="min-h-56"
+						action={<Button variant="secondary" size="sm" onClick={() => void loadKeys()}>Try again</Button>}
+					/>
+				) : keys == null ? (
 					<div className="space-y-4 p-5">
 						{Array.from({ length: 3 }).map((_, index) => (
 							<Skeleton key={index} className="h-10" />
@@ -277,7 +294,7 @@ export function DashboardApiKeysPage() {
 													variant="ghost"
 													size="icon-sm"
 													disabled={!verified || deleting === key.id}
-													onClick={() => handleDelete(key)}
+											onClick={() => setKeyToDelete(key)}
 													aria-label={`Delete ${key.label}`}
 													title={verified ? undefined : "Verify your email to delete API keys"}
 													className="hover:text-red-text"
@@ -293,6 +310,22 @@ export function DashboardApiKeysPage() {
 					</div>
 				)}
 			</div>
+
+			<ConfirmDialog
+				open={keyToDelete !== null}
+				onOpenChange={(open) => !open && setKeyToDelete(null)}
+				title="Delete this API key?"
+				description={
+					keyToDelete
+						? `Delete “${keyToDelete.label}”. Applications using it will lose access immediately.`
+						: "Applications using this key will lose access immediately."
+				}
+				confirmLabel="Delete key"
+				cancelLabel="Keep key"
+				pendingLabel="Deleting…"
+				pending={deleting !== null}
+				onConfirm={() => void handleDelete()}
+			/>
 		</DashboardPage>
 	);
 }

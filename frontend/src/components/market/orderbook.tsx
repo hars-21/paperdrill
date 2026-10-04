@@ -12,6 +12,8 @@ interface OrderbookProps {
 	bids: Record<string, string>;
 	asks: Record<string, string>;
 	loading?: boolean;
+	error?: string | null;
+	onRetry?: () => void;
 	symbol: string;
 	lastPrice?: string | null;
 }
@@ -22,6 +24,8 @@ export function Orderbook({
 	bids,
 	asks,
 	loading,
+	error,
+	onRetry,
 	symbol,
 	lastPrice,
 }: OrderbookProps) {
@@ -77,6 +81,20 @@ export function Orderbook({
 
 	if (loading) {
 		return <OrderbookSkeleton />;
+	}
+
+	if (error) {
+		return (
+			<div role="alert" className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center">
+				<p className="text-sm font-medium text-high-emphasis">Order book unavailable</p>
+				<p className="text-xs text-medium-emphasis">{error}</p>
+				{onRetry && (
+					<Button type="button" variant="secondary" size="sm" className="mt-2" onClick={onRetry}>
+						Try again
+					</Button>
+				)}
+			</div>
+		);
 	}
 
 	const sortedAsks = Object.entries(asks)
@@ -135,7 +153,7 @@ export function Orderbook({
 					</div>
 					<div className="flex items-center justify-center flex-row gap-2">
 						<p className="text-high-emphasis truncate text-[10px]">
-							Spread: {spread > 0 ? formatPrice(spread, pricePrecision) : "—"}
+							Spread: {spread > 0 ? formatPrice(spread, pricePrecision) : "-"}
 						</p>
 					</div>
 				</div>

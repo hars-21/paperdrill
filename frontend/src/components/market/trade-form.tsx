@@ -40,6 +40,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 	const [price, setPrice] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [percent, setPercent] = useState(0);
+	const [formError, setFormError] = useState<string | null>(null);
 	const initializedPriceSymbol = useRef<string | null>(null);
 	const { authenticated, verified, loading: authLoading } = useAuth();
 	const createOrder = useCreateOrder();
@@ -93,6 +94,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 		setPrice("");
 		setQuantity("");
 		setPercent(0);
+		setFormError(null);
 	}, [symbol]);
 
 	useEffect(() => {
@@ -107,16 +109,19 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 		setSide(nextSide);
 		setQuantity("");
 		setPercent(0);
+		setFormError(null);
 	};
 
 	const setTradeOrderType = (nextType: "LIMIT" | "MARKET") => {
 		setOrderType(nextType);
 		setQuantity("");
 		setPercent(0);
+		setFormError(null);
 	};
 
 	const handleQuantityChange = (value: string) => {
 		setQuantity(value);
+		setFormError(null);
 		const nextQuantity = Number(value);
 		if (!isPositive(nextQuantity) || !isPositive(maxQuantity)) {
 			setPercent(0);
@@ -139,16 +144,17 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 
 	const handlePlaceOrder = async (event: React.SubmitEvent) => {
 		event.preventDefault();
+		setFormError(null);
 		if (!isPositive(Number(quantity))) {
-			toast.error("Enter a valid quantity");
+			setFormError("Enter a valid quantity.");
 			return;
 		}
 		if (orderType === "LIMIT" && !isPositive(Number(price))) {
-			toast.error("Enter a valid price for the limit order");
+			setFormError("Enter a valid price for the limit order.");
 			return;
 		}
 		if (exceedsMaximum) {
-			toast.error(maximumMessage);
+			setFormError(maximumMessage);
 			return;
 		}
 
@@ -163,7 +169,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 
 			const statusMessage =
 				result.status === "FILLED"
-					? `Filled at avg. ${result.averagePrice ?? "—"}`
+					? `Filled at avg. ${result.averagePrice ?? "-"}`
 					: result.status === "PARTIALLY_FILLED"
 						? `Partially filled (${result.filledQty}/${Number(quantity)})`
 						: "Order placed successfully";
@@ -172,7 +178,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 			setQuantity("");
 			setPercent(0);
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Order failed");
+			setFormError(error instanceof Error ? error.message : "Order failed.");
 		}
 	};
 
@@ -198,12 +204,13 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 
 	return (
 		<div className="w-full p-3">
-			<div className="grid grid-cols-2 gap-2">
+			<div className="grid grid-cols-2 gap-2" role="group" aria-label="Order side">
 				<button
 					type="button"
+					aria-pressed={side === "BUY"}
 					onClick={() => setTradeSide("BUY")}
 					className={cn(
-						"h-10 cursor-pointer rounded-lg text-sm font-semibold transition-colors",
+						"h-10 cursor-pointer rounded-lg text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
 						side === "BUY"
 							? "bg-green-bg/50 text-green-text"
 							: "bg-muted/40 text-low-emphasis hover:bg-green-bg/50 hover:text-green-text",
@@ -213,9 +220,10 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 				</button>
 				<button
 					type="button"
+					aria-pressed={side === "SELL"}
 					onClick={() => setTradeSide("SELL")}
 					className={cn(
-						"h-10 cursor-pointer rounded-lg text-sm font-semibold transition-colors",
+						"h-10 cursor-pointer rounded-lg text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
 						side === "SELL"
 							? "bg-red-bg/50 text-red-text"
 							: "bg-muted/40 text-low-emphasis hover:bg-red-bg/50 hover:text-red-text",
@@ -225,14 +233,15 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 				</button>
 			</div>
 
-			<div className="mt-4 flex items-center gap-1">
+			<div className="mt-4 flex items-center gap-1" role="group" aria-label="Order type">
 				{(["LIMIT", "MARKET"] as const).map((type) => (
 					<button
 						key={type}
 						type="button"
+						aria-pressed={orderType === type}
 						onClick={() => setTradeOrderType(type)}
 						className={cn(
-							"flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold transition-colors",
+							"flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
 							orderType === type
 								? "bg-muted text-high-emphasis"
 								: "text-medium-emphasis hover:text-high-emphasis",
@@ -247,13 +256,13 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 				<div className="flex items-center justify-between text-xs">
 					<span className="text-medium-emphasis">Balance</span>
 					<span className="font-medium text-high-emphasis">
-						{authenticated ? `${displayBalance} ${balanceAsset}` : "—"}
+						{authenticated ? `${displayBalance} ${balanceAsset}` : "-"}
 					</span>
 				</div>
 
 				<div className="flex flex-col gap-1.5">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-medium-emphasis">Price</label>
+						<label htmlFor="order-price" className="text-xs text-medium-emphasis">Price</label>
 						<div className="flex items-center gap-2">
 							<button
 								type="button"
@@ -277,8 +286,13 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 						</div>
 					</div>
 					<DecimalInput
+						id="order-price"
+						name="price"
 						value={orderType === "MARKET" ? "Market price" : price}
-						onChange={setPrice}
+						onChange={(value) => {
+							setPrice(value);
+							setFormError(null);
+						}}
 						precision={pricePrecision}
 						min={priceStep}
 						step={priceStep}
@@ -290,7 +304,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 
 				<div className="flex flex-col gap-1.5">
 					<div className="flex items-center justify-between gap-3">
-						<label className="text-xs text-medium-emphasis">Quantity</label>
+						<label htmlFor="order-quantity" className="text-xs text-medium-emphasis">Quantity</label>
 						{showMaximum && (
 							<button
 								type="button"
@@ -302,6 +316,8 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 						)}
 					</div>
 					<DecimalInput
+						id="order-quantity"
+						name="quantity"
 						value={quantity}
 						onChange={handleQuantityChange}
 						precision={qtyPrecision}
@@ -309,7 +325,8 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 						step={qtyStep}
 						placeholder="0"
 						asset={base}
-						aria-invalid={exceedsMaximum}
+						aria-invalid={exceedsMaximum || Boolean(formError)}
+						aria-describedby={exceedsMaximum || formError ? "order-error" : undefined}
 					/>
 				</div>
 
@@ -322,8 +339,10 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 					</span>
 				</div>
 
-				{exceedsMaximum && (
-					<p className="text-xs leading-relaxed text-red-text">{maximumMessage}</p>
+				{(exceedsMaximum || formError) && (
+					<p id="order-error" role="alert" className="text-xs leading-relaxed text-red-text">
+						{exceedsMaximum ? maximumMessage : formError}
+					</p>
 				)}
 
 				{canTrade ? (
@@ -338,15 +357,15 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 					</Button>
 				) : authenticated ? (
 					<Button asChild variant="inverted" size="lg" className="mt-2">
-						<Link to="/verify-email">Verify email to trade</Link>
+						<Link to="/verify-email" state={{ returnTo: `/trade/${symbol}` }}>Verify email to trade</Link>
 					</Button>
 				) : (
 					<div className="flex flex-col gap-3 mt-2">
 						<Button asChild variant="inverted" size="lg">
-							<Link to="/signup">Sign up to trade</Link>
+							<Link to="/signup" state={{ returnTo: `/trade/${symbol}` }}>Sign up to trade</Link>
 						</Button>
 						<Button asChild variant="secondary" size="lg">
-							<Link to="/login">Sign in to trade</Link>
+							<Link to="/login" state={{ returnTo: `/trade/${symbol}` }}>Sign in to trade</Link>
 						</Button>
 					</div>
 				)}

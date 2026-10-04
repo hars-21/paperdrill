@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { useMemo } from "react";
 import { DashboardPage } from "@/components/dashboard-page";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Metric, MetricGroup } from "@/components/ui/metric";
+import { InlineNotice } from "@/components/ui/feedback-state";
 import {
 	Table,
 	TableBody,
@@ -22,12 +22,8 @@ type BalanceRow = PortfolioPosition & { precision: number };
 
 export function DashboardBalancesPage() {
 	const { markets } = useMarkets();
-	const { balances, loading: balanceLoading } = useBalance();
+	const { balances, loading: balanceLoading, error: balanceError } = useBalance();
 	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
-
-	useEffect(() => {
-		if (portfolioError) toast.error("Portfolio valuation is temporarily unavailable");
-	}, [portfolioError]);
 
 	const loading = balanceLoading || portfolioLoading;
 
@@ -78,6 +74,11 @@ export function DashboardBalancesPage() {
 			title="Portfolio & balances"
 			description="Portfolio value uses the latest trade price on PaperDrill. Available funds can be traded immediately, while locked funds are reserved by open orders."
 		>
+			{(balanceError || portfolioError) && (
+				<InlineNotice tone="error" className="mb-6 rounded-lg border border-red-text/20 bg-red-bg/20">
+					Portfolio valuation is temporarily unavailable. Any balances already loaded are still shown.
+				</InlineNotice>
+			)}
 			<MetricGroup className="sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
 					className="border-b sm:border-r xl:border-b-0"
@@ -198,15 +199,15 @@ export function DashboardBalancesPage() {
 												{formatQty(row.locked, row.precision)}
 											</TableCell>
 											<TableCell className="text-right">
-												{row.markPrice ? formatPrice(row.markPrice) : "—"}
+								{row.markPrice ? formatPrice(row.markPrice) : "-"}
 											</TableCell>
 											<TableCell className="text-right font-medium">
 												{row.value
 													? `${formatPrice(row.value)} ${portfolio?.quoteAsset ?? "USD"}`
-													: "—"}
+									: "-"}
 											</TableCell>
 											<TableCell className="px-5 text-right">
-												{allocation == null ? "—" : `${allocation.toFixed(2)}%`}
+								{allocation == null ? "-" : `${allocation.toFixed(2)}%`}
 											</TableCell>
 										</TableRow>
 									);

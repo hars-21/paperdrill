@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { BrandLogo } from "@/components/brand-logo";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { primaryNavigation } from "@/lib/navigation";
+import { NavigationLink } from "@/components/navigation-link";
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
@@ -16,13 +17,14 @@ export function Navbar() {
 
 				<nav className="items-center justify-center flex-row hidden gap-6 md:flex flex-1">
 					{primaryNavigation.map((link) => (
-						<Link
+						<NavigationLink
 							key={link.id}
-							to={link.href}
 							className="text-sm text-medium-emphasis hover:text-high-emphasis transition-colors"
+							activeClassName="text-high-emphasis"
+							item={link}
 						>
 							{link.label}
-						</Link>
+						</NavigationLink>
 					))}
 				</nav>
 
@@ -31,14 +33,12 @@ export function Navbar() {
 						{theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
 					</Button>
 
-					<Link to="/login" className="hidden md:inline-flex">
-						<Button variant="ghost" size="sm" className="bg-l3">
-							Sign in
-						</Button>
-					</Link>
-					<Link to="/signup" className="hidden md:inline-flex">
-						<Button size="sm">Get started</Button>
-					</Link>
+					<Button asChild variant="ghost" size="sm" className="hidden bg-l3 md:inline-flex">
+						<Link to="/login">Sign in</Link>
+					</Button>
+					<Button asChild size="sm" className="hidden md:inline-flex">
+						<Link to="/signup">Get started</Link>
+					</Button>
 
 					<Sheet>
 						<SheetTrigger asChild>
@@ -69,27 +69,24 @@ export function Navbar() {
 							<nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
 								{primaryNavigation.map((link) => (
 									<SheetClose asChild key={link.id}>
-										<Link
-											to={link.href}
+										<NavigationLink
+											item={link}
 											className="flex items-center h-11 px-3 rounded-lg text-sm text-medium-emphasis hover:text-high-emphasis hover:bg-muted transition-colors"
+											activeClassName="bg-muted text-high-emphasis"
 										>
 											{link.label}
-										</Link>
+										</NavigationLink>
 									</SheetClose>
 								))}
 
 								<SheetClose asChild>
-									<Link to="/login" className="mt-2">
-										<Button variant="ghost" size="sm" className="w-full h-11 bg-l3">
-											Sign in
-										</Button>
+									<Link to="/login" className="mt-2 flex h-11 items-center justify-center rounded-md bg-l3 px-3 text-sm font-medium">
+										Sign in
 									</Link>
 								</SheetClose>
 								<SheetClose asChild>
-									<Link to="/signup" className="mt-2">
-										<Button size="sm" className="w-full h-11">
-											Get started
-										</Button>
+									<Link to="/signup" className="mt-2 flex h-11 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground">
+										Get started
 									</Link>
 								</SheetClose>
 							</nav>

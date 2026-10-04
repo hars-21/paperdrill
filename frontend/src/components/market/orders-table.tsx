@@ -176,7 +176,7 @@ export function OrdersTable() {
 				<div className="relative flex-1 min-w-45">
 					<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-low-emphasis" />
 					<Input
-						placeholder="Search symbol, side, status..."
+						placeholder="Search symbol, side, status…"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						className="pl-8 h-8 text-xs bg-background/50 border-border/40"
@@ -312,7 +312,7 @@ export function OrdersTable() {
 											{order.type.toLowerCase()}
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-right text-xs tabular-nums text-high-emphasis">
-											{order.price ?? "—"}
+											{order.price ?? "-"}
 										</TableCell>
 										<TableCell className="px-4 py-2.5 text-right text-xs tabular-nums text-high-emphasis">
 											{order.qty}
