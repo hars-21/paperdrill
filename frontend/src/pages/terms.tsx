@@ -1,4 +1,4 @@
-import { Page, PageContent, PageHeader } from "@/components/ui/page";
+import { Page, PageContent, PageHeader, PageHeading } from "@/components/ui/page";
 import { terms } from "@/content/terms";
 import { ContentBlocks } from "@/components/content-blocks";
 
@@ -6,12 +6,7 @@ export function TermsPage() {
 	return (
 		<Page>
 			<PageHeader>
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Terms of Service</h1>
-					<p className="text-xs text-medium-emphasis mt-1">
-						Last updated: {terms.lastUpdated}
-					</p>
-				</div>
+				<PageHeading title="Terms of Service" description={`Last updated: ${terms.lastUpdated}`} />
 			</PageHeader>
 
 			<PageContent className="max-w-3xl">

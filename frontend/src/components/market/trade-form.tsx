@@ -197,7 +197,7 @@ export function TradeForm({ symbol, loading, lastPrice, bestBid, bestAsk }: Trad
 		canTrade && isPositive(maxQuantity) && (side === "SELL" || orderType === "LIMIT");
 
 	return (
-		<div className="w-full select-none p-3">
+		<div className="w-full p-3">
 			<div className="grid grid-cols-2 gap-2">
 				<button
 					type="button"

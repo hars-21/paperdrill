@@ -28,7 +28,7 @@ export function Trades({
 	}
 
 	return (
-		<div className="flex h-full flex-col select-none">
+		<div className="flex h-full flex-col">
 			<div className="flex flex-row min-w-0 gap-1 px-3 py-2">
 				<div className="flex justify-between flex-row w-2/3 min-w-0 gap-1">
 					<p className="text-high-emphasis truncate text-xs">Price ({quote})</p>

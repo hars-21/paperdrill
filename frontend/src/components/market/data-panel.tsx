@@ -434,7 +434,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	}
 
 	return (
-		<div className="flex h-full min-h-96 select-none flex-col overflow-hidden sm:min-h-120 lg:min-h-144">
+		<div className="flex h-full min-h-96 flex-col overflow-hidden sm:min-h-120 lg:min-h-144">
 			<div className="flex shrink-0 flex-col items-stretch gap-2 border-b border-border/40 px-3 py-2 sm:flex-row sm:items-center">
 				<div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto">
 					{tabs.map((item) => (

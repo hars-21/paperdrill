@@ -9,6 +9,8 @@ import { ThemeProvider } from "./lib/theme-provider";
 import { queryClient } from "./lib/query-client";
 import { Toaster } from "./components/ui/sonner";
 import { PostHogProvider } from "@posthog/react";
+import { AuthProvider } from "./context/AuthContext";
+import { MarketProvider } from "./context/MarketContext";
 
 const options = {
 	api_host: process.env.BUN_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
@@ -23,8 +25,12 @@ const content = (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider>
 				<BrowserRouter>
-					<App />
-					<Toaster />
+					<AuthProvider>
+						<MarketProvider>
+							<App />
+							<Toaster />
+						</MarketProvider>
+					</AuthProvider>
 				</BrowserRouter>
 			</ThemeProvider>
 		</QueryClientProvider>

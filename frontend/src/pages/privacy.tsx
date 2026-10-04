@@ -1,15 +1,12 @@
 import { ContentBlocks } from "@/components/content-blocks";
-import { Page, PageContent, PageHeader } from "@/components/ui/page";
+import { Page, PageContent, PageHeader, PageHeading } from "@/components/ui/page";
 import { privacy } from "@/content/privacy";
 
 export function PrivacyPage() {
 	return (
 		<Page>
 			<PageHeader>
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Privacy Policy</h1>
-					<p className="text-xs text-medium-emphasis mt-1">Last updated: {privacy.lastUpdated}</p>
-				</div>
+				<PageHeading title="Privacy Policy" description={`Last updated: ${privacy.lastUpdated}`} />
 			</PageHeader>
 
 			<PageContent className="max-w-3xl">

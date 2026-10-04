@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { DashboardPage } from "@/components/dashboard-page";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Metric, MetricGroup } from "@/components/ui/metric";
 import {
 	Table,
 	TableBody,
@@ -14,7 +15,6 @@ import {
 import { useMarkets } from "@/context/MarketContext";
 import { useBalance } from "@/hooks/use-balance";
 import { usePortfolio } from "@/hooks/use-portfolio";
-import { cn } from "@/lib/utils";
 import type { PortfolioPosition } from "@/types";
 import { formatPrice, formatQty } from "@/utils/format";
 
@@ -78,7 +78,7 @@ export function DashboardBalancesPage() {
 			title="Portfolio & balances"
 			description="Portfolio value uses the latest trade price on PaperDrill. Available funds can be traded immediately, while locked funds are reserved by open orders."
 		>
-			<div className="grid overflow-hidden rounded-xl border border-border/60 bg-l1 sm:grid-cols-2 xl:grid-cols-4">
+			<MetricGroup className="sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
 					className="border-b sm:border-r xl:border-b-0"
 					label="Portfolio value"
@@ -124,7 +124,7 @@ export function DashboardBalancesPage() {
 								: "Unavailable"
 					}
 				/>
-			</div>
+			</MetricGroup>
 
 			<div className="mt-6 overflow-hidden rounded-xl border border-border/60 bg-l1">
 				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-5 py-4">
@@ -217,30 +217,5 @@ export function DashboardBalancesPage() {
 				)}
 			</div>
 		</DashboardPage>
-	);
-}
-
-function Metric({
-	label,
-	value,
-	className,
-	valueClassName,
-}: {
-	label: string;
-	value: string | null;
-	className?: string;
-	valueClassName?: string;
-}) {
-	return (
-		<div className={cn("border-border/40 px-5 py-4", className)}>
-			<p className="text-sm text-medium-emphasis">{label}</p>
-			{value == null ? (
-				<Skeleton className="mt-2 h-7 w-24" />
-			) : (
-				<p className={cn("mt-1 text-xl font-semibold text-high-emphasis", valueClassName)}>
-					{value}
-				</p>
-			)}
-		</div>
 	);
 }

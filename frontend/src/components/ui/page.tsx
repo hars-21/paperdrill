@@ -5,6 +5,12 @@ interface PageProps extends React.HTMLAttributes<HTMLDivElement> {
 	fixed?: boolean;
 }
 
+interface PageHeadingProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+	title: React.ReactNode;
+	description?: React.ReactNode;
+	action?: React.ReactNode;
+}
+
 function Page({ className, fixed = false, ...props }: PageProps) {
 	return (
 		<div
@@ -21,7 +27,7 @@ function Page({ className, fixed = false, ...props }: PageProps) {
 
 function PageHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
-		<div data-slot="page-header" className="shrink-0 select-none border-b border-border/40">
+		<div data-slot="page-header" className="shrink-0 border-b border-border/40">
 			<div
 				className={cn(
 					"mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 sm:py-6",
@@ -38,7 +44,7 @@ function PageContent({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 		<div
 			data-slot="page-content"
 			className={cn(
-				"mx-auto mb-12 min-h-0 w-full max-w-6xl flex-1 space-y-6 px-4 py-6 select-none sm:px-6 sm:py-8",
+				"mx-auto mb-12 min-h-0 w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6 sm:py-8",
 				className,
 			)}
 			{...props}
@@ -46,5 +52,23 @@ function PageContent({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 	);
 }
 
-export { Page, PageHeader, PageContent };
+function PageHeading({ title, description, action, className, ...props }: PageHeadingProps) {
+	return (
+		<div
+			data-slot="page-heading"
+			className={cn("flex w-full flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}
+			{...props}
+		>
+			<div className="min-w-0">
+				<h1 className="text-2xl font-semibold tracking-tight text-high-emphasis">{title}</h1>
+				{description && (
+					<p className="mt-1 max-w-2xl text-sm text-medium-emphasis">{description}</p>
+				)}
+			</div>
+			{action && <div className="shrink-0 self-start">{action}</div>}
+		</div>
+	);
+}
+
+export { Page, PageHeader, PageContent, PageHeading };
 export type { PageProps };

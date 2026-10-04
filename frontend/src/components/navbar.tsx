@@ -27,14 +27,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "./ui/sheet";
-
-const NAV_LINKS = [
-	{ label: "Markets", to: "/markets" },
-	{ label: "Trading", to: "/trade/BTC_USD" },
-	{ label: "Leaderboard", to: "/leaderboard" },
-	{ label: "Docs", to: "/docs" },
-	{ label: "Dashboard", to: "/dashboard" },
-];
+import { applicationNavigation } from "@/lib/navigation";
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
@@ -59,10 +52,10 @@ export function Navbar() {
 				<BrandLogo href="/markets" />
 
 				<nav className="items-center justify-center flex-row hidden gap-5 sm:mx-10 md:flex lg:gap-7 xl:gap-8 ml-6">
-					{NAV_LINKS.map((link) => (
+					{applicationNavigation.map((link) => (
 						<Link
-							key={link.to}
-							to={link.to}
+							key={link.id}
+							to={link.href}
 							className="text-medium-emphasis hover:text-high-emphasis transition-colors"
 						>
 							{link.label}
@@ -94,10 +87,10 @@ export function Navbar() {
 							</div>
 
 							<nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-								{NAV_LINKS.map((link) => (
-									<SheetClose asChild key={link.to}>
+								{applicationNavigation.map((link) => (
+									<SheetClose asChild key={link.id}>
 										<Link
-											to={link.to}
+											to={link.href}
 											className="flex items-center h-11 px-3 rounded-lg text-sm text-medium-emphasis hover:text-high-emphasis hover:bg-l2 transition-colors"
 										>
 											{link.label}

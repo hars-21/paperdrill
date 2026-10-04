@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/table";
 import { useTickers } from "@/hooks/use-tickers";
 import { useMarkets } from "@/context/MarketContext";
-import { Page, PageContent, PageHeader } from "@/components/ui/page";
+import { Page, PageContent, PageHeader, PageHeading } from "@/components/ui/page";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import { Surface } from "@/components/ui/surface";
 import { Button } from "@/components/ui/button";
 import { AssetIcon } from "@/components/icons/asset-icon";
 import { formatPrice, formatVolume, formatChange } from "@/utils/format";
@@ -28,16 +30,14 @@ export function MarketsPage() {
 	return (
 		<Page>
 			<PageHeader>
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Spot Markets</h1>
-					<p className="text-xs text-medium-emphasis mt-1">
-						Zero-fee sandbox paper trading playground on digital assets
-					</p>
-				</div>
+				<PageHeading
+					title="Spot Markets"
+					description="Zero-fee sandbox paper trading playground on digital assets"
+				/>
 			</PageHeader>
 
 			<PageContent>
-				<div className="flex flex-1 flex-col gap-3 rounded-xl border border-border/40 bg-card p-3 sm:p-4">
+				<Surface className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
 					<div className="flex items-center justify-between gap-3">
 						<div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap">
 							{TABS.map((tab) => (
@@ -57,10 +57,7 @@ export function MarketsPage() {
 					</div>
 
 					{error ? (
-						<div className="py-8 text-center">
-							<p className="text-sm text-destructive font-medium">Failed to load markets</p>
-							<p className="text-xs text-medium-emphasis mt-1">{error}</p>
-						</div>
+						<FeedbackState title="Failed to load markets" description={error} className="min-h-48" />
 					) : (
 						<div className="overflow-x-auto">
 							<Table>
@@ -154,7 +151,7 @@ export function MarketsPage() {
 							</Table>
 						</div>
 					)}
-				</div>
+				</Surface>
 			</PageContent>
 		</Page>
 	);

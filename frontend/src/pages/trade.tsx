@@ -29,6 +29,7 @@ export function TradePage() {
 		<div className="flex items-center gap-1">
 			<button
 				type="button"
+				aria-pressed={leftTab === "book"}
 				onClick={() => setLeftTab("book")}
 				className={`flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors ${
 					leftTab === "book"
@@ -40,6 +41,7 @@ export function TradePage() {
 			</button>
 			<button
 				type="button"
+				aria-pressed={leftTab === "trades"}
 				onClick={() => setLeftTab("trades")}
 				className={`flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors ${
 					leftTab === "trades"
@@ -53,73 +55,36 @@ export function TradePage() {
 	);
 
 	return (
-		<Page fixed className="px-2 pb-2 sm:px-4">
-			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto scrollbar-gutter:stable lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_clamp(30rem,60dvh,36rem)_auto]">
-				<div className="order-1 lg:col-start-1 lg:row-start-1">
+		<Page fixed className="safe-area-bottom px-2 sm:px-4">
+			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto scrollbar-gutter-stable lg:grid-cols-[minmax(16rem,19rem)_minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_clamp(30rem,60dvh,36rem)_auto]">
+				<div className="order-1 lg:col-span-2 lg:col-start-1 lg:row-start-1">
 					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
-				<div className="order-3 flex min-w-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:min-h-0 lg:flex-row">
-					<div className="hidden w-1/3 min-w-65 max-w-75 flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm lg:flex">
-						<div className="shrink-0 p-3">{bookTradesTabs}</div>
-						<div className="min-h-0 flex-1">
-							{leftTab === "book" ? (
-								<Orderbook
-									bids={orderbook.bids}
-									asks={orderbook.asks}
-									loading={orderbookLoading}
-									symbol={symbol}
-									lastPrice={ticker?.lastPrice}
-								/>
-							) : (
-								<Trades symbol={symbol} loading={tradesLoading} trades={trades} />
-							)}
-						</div>
-					</div>
-
-					<div className="order-2 flex h-80 w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:h-96 lg:hidden">
-						<div className="shrink-0 p-3">{bookTradesTabs}</div>
-						<div className="min-h-0 flex-1">
-							{leftTab === "book" ? (
-								<Orderbook
-									compact
-									bids={orderbook.bids}
-									asks={orderbook.asks}
-									loading={orderbookLoading}
-									symbol={symbol}
-									lastPrice={ticker?.lastPrice}
-								/>
-							) : (
-								<Trades symbol={symbol} loading={tradesLoading} trades={trades.slice(0, 25)} />
-							)}
-						</div>
-					</div>
-
-					<div className="relative order-1 min-h-80 flex-1 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:min-h-96 lg:order-0 lg:min-h-0">
-						{tickerLoading && !ticker ? (
-							<div className="flex h-full flex-col justify-between p-6">
-								<div className="flex items-center justify-between">
-									<Skeleton className="h-4 w-32" />
-									<Skeleton className="h-4 w-12" />
-								</div>
-								<div className="flex flex-1 flex-col justify-end gap-2.5 py-6">
-									<Skeleton className="h-3 w-full" />
-									<Skeleton className="h-5 w-5/6" />
-									<Skeleton className="h-3.5 w-full" />
-								</div>
-								<div className="flex justify-between">
-									<Skeleton className="h-3 w-8" />
-									<Skeleton className="h-3 w-8" />
-									<Skeleton className="h-3 w-8" />
-								</div>
+				<div className="relative order-2 min-h-80 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:min-h-96 lg:col-start-2 lg:row-start-2 lg:min-h-0">
+					{tickerLoading && !ticker ? (
+						<div className="flex h-full flex-col justify-between p-6">
+							<div className="flex items-center justify-between">
+								<Skeleton className="h-4 w-32" />
+								<Skeleton className="h-4 w-12" />
 							</div>
-						) : (
-							<Chart symbol={symbol} orderbook={orderbook} ticker={ticker} />
-						)}
-					</div>
+							<div className="flex flex-1 flex-col justify-end gap-2.5 py-6">
+								<Skeleton className="h-3 w-full" />
+								<Skeleton className="h-5 w-5/6" />
+								<Skeleton className="h-3.5 w-full" />
+							</div>
+							<div className="flex justify-between">
+								<Skeleton className="h-3 w-8" />
+								<Skeleton className="h-3 w-8" />
+								<Skeleton className="h-3 w-8" />
+							</div>
+						</div>
+					) : (
+						<Chart symbol={symbol} orderbook={orderbook} ticker={ticker} />
+					)}
 				</div>
 
-				<div className="order-2 flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+				<div className="order-3 flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-3 lg:row-start-1 lg:row-span-3">
 					<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
 						<TradeForm
 							symbol={symbol}
@@ -134,8 +99,25 @@ export function TradePage() {
 					</div>
 				</div>
 
+				<div className="order-4 flex h-80 min-w-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:h-96 lg:col-start-1 lg:row-start-2 lg:h-auto lg:min-h-0">
+					<div className="shrink-0 p-3">{bookTradesTabs}</div>
+					<div className="min-h-0 flex-1">
+						{leftTab === "book" ? (
+							<Orderbook
+								bids={orderbook.bids}
+								asks={orderbook.asks}
+								loading={orderbookLoading}
+								symbol={symbol}
+								lastPrice={ticker?.lastPrice}
+							/>
+						) : (
+							<Trades symbol={symbol} loading={tradesLoading} trades={trades} />
+						)}
+					</div>
+				</div>
+
 				<div
-					className={`order-4 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
+					className={`order-5 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm lg:col-span-2 lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
 				>
 					<DataPanel loading={authLoading} symbol={symbol} />
 				</div>

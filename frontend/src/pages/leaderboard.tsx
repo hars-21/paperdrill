@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Page, PageContent, PageHeader } from "@/components/ui/page";
+import { FeedbackState, InlineNotice } from "@/components/ui/feedback-state";
+import { Metric, MetricGroup } from "@/components/ui/metric";
+import { Page, PageContent, PageHeader, PageHeading } from "@/components/ui/page";
+import { Surface } from "@/components/ui/surface";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
@@ -86,12 +89,10 @@ export function LeaderboardPage() {
 	return (
 		<Page>
 			<PageHeader>
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight text-high-emphasis">Leaderboard</h1>
-					<p className="mt-1 text-sm text-medium-emphasis">
-						Global standings ranked by all-time portfolio return.
-					</p>
-				</div>
+				<PageHeading
+					title="Leaderboard"
+					description="Global standings ranked by all-time portfolio return."
+				/>
 			</PageHeader>
 
 			<PageContent className="max-w-5xl">
@@ -101,7 +102,7 @@ export function LeaderboardPage() {
 					<EligibilityMessage reason={mine.reason} />
 				) : null}
 
-				<div className="overflow-hidden rounded-xl border border-border/60 bg-l1">
+				<Surface>
 					<div className="flex min-h-13 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border/40 px-4 py-3 sm:px-5">
 						<div className="flex items-baseline gap-2">
 							<h2 className="text-sm font-semibold text-high-emphasis">Standings</h2>
@@ -119,15 +120,15 @@ export function LeaderboardPage() {
 					</div>
 
 					{leaderboard?.stale && (
-						<div className="border-b border-border/40 bg-l2 px-4 py-2.5 text-xs text-medium-emphasis sm:px-5">
+						<InlineNotice>
 							Updates are delayed. Showing the latest completed standings.
-						</div>
+						</InlineNotice>
 					)}
 
 					{error && leaderboard && (
-						<div className="border-b border-border/40 px-4 py-2.5 text-xs text-red-text sm:px-5">
+						<InlineNotice tone="error">
 							The latest standings could not be loaded. Existing results are still shown.
-						</div>
+						</InlineNotice>
 					)}
 
 					{loading ? (
@@ -174,7 +175,7 @@ export function LeaderboardPage() {
 							</div>
 						</div>
 					)}
-				</div>
+				</Surface>
 			</PageContent>
 		</Page>
 	);
@@ -232,23 +233,12 @@ function PersonalStanding({ entry, quoteAsset }: { entry: LeaderboardEntry; quot
 	const change = formatChange(entry.pnlPercent);
 
 	return (
-		<section aria-label="Your standing" className="overflow-hidden rounded-xl border border-border/60 bg-l1">
-			<div className="grid grid-cols-2 sm:grid-cols-4">
-				<StandingMetric label="Your rank" value={`#${entry.rank}`} />
-				<StandingMetric label="Return" value={change.text} className={valueTone(entry.pnlPercent)} />
-				<StandingMetric label="PnL" value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)} ${quoteAsset}`} className={valueTone(entry.pnl)} />
-				<StandingMetric label="Portfolio" value={`${formatPrice(entry.equity)} ${quoteAsset}`} />
-			</div>
-		</section>
-	);
-}
-
-function StandingMetric({ label, value, className }: { label: string; value: string; className?: string }) {
-	return (
-		<div className="border-b border-border/40 px-4 py-4 odd:border-r last:border-b-0 sm:border-r sm:border-b-0 sm:px-5 sm:last:border-r-0">
-			<p className="text-xs text-medium-emphasis">{label}</p>
-			<p className={cn("mt-1 truncate text-base font-semibold tabular-nums text-high-emphasis", className)}>{value}</p>
-		</div>
+		<MetricGroup aria-label="Your standing" className="grid-cols-2 sm:grid-cols-4">
+			<Metric className="border-b border-r sm:border-b-0" label="Your rank" value={`#${entry.rank}`} />
+			<Metric className="border-b sm:border-r sm:border-b-0" label="Return" value={change.text} valueClassName={valueTone(entry.pnlPercent)} />
+			<Metric className="border-r sm:border-r" label="PnL" value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)} ${quoteAsset}`} valueClassName={valueTone(entry.pnl)} />
+			<Metric label="Portfolio" value={`${formatPrice(entry.equity)} ${quoteAsset}`} />
+		</MetricGroup>
 	);
 }
 
@@ -273,23 +263,25 @@ function EligibilityMessage({ reason }: { reason: "EMAIL_NOT_VERIFIED" | "NO_TRA
 
 function UnavailableState({ error, onRetry }: { error: string | null; onRetry: () => void }) {
 	return (
-		<div className="flex min-h-80 flex-col items-center justify-center px-6 text-center">
-			<Trophy className="size-7 text-low-emphasis" />
-			<p className="mt-3 font-medium text-high-emphasis">Leaderboard unavailable</p>
-			<p className="mt-1 max-w-md text-sm text-medium-emphasis">{error ?? "The first standings are still being calculated."}</p>
-			<Button className="mt-4" variant="secondary" size="sm" onClick={onRetry}>Try again</Button>
-		</div>
+		<FeedbackState
+			className="min-h-80"
+			icon={Trophy}
+			title="Leaderboard unavailable"
+			description={error ?? "The first standings are still being calculated."}
+			action={<Button variant="secondary" size="sm" onClick={onRetry}>Try again</Button>}
+		/>
 	);
 }
 
 function EmptyState() {
 	return (
-		<div className="flex min-h-80 flex-col items-center justify-center px-6 text-center">
-			<Trophy className="size-7 text-low-emphasis" />
-			<p className="mt-3 font-medium text-high-emphasis">No ranked traders yet</p>
-			<p className="mt-1 text-sm text-medium-emphasis">Verify your account and complete a trade to enter the standings.</p>
-			<Button asChild className="mt-4" variant="secondary" size="sm"><Link to="/trade/BTC_USD">Start trading</Link></Button>
-		</div>
+		<FeedbackState
+			className="min-h-80"
+			icon={Trophy}
+			title="No ranked traders yet"
+			description="Verify your account and complete a trade to enter the standings."
+			action={<Button asChild variant="secondary" size="sm"><Link to="/trade/BTC_USD">Start trading</Link></Button>}
+		/>
 	);
 }
 

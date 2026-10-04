@@ -6,6 +6,7 @@ import {
 	LayoutDashboard,
 	Trophy,
 	WalletCards,
+	type LucideIcon,
 } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Link } from "react-router-dom";
@@ -22,13 +23,28 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar";
+import { dashboardNavigation, dashboardUtilityNavigation } from "@/lib/navigation";
 
-const navigation: DashboardNavItem[] = [
-	{ title: "Overview", url: "/dashboard", icon: LayoutDashboard, end: true },
-	{ title: "API keys", url: "/dashboard/api-keys", icon: KeyRound },
-	{ title: "Balances", url: "/dashboard/balances", icon: WalletCards },
-	{ title: "Account data", url: "/dashboard/data", icon: Database },
-];
+type SidebarNavigationId =
+	| (typeof dashboardNavigation)[number]["id"]
+	| (typeof dashboardUtilityNavigation)[number]["id"];
+
+const icons: Record<SidebarNavigationId, LucideIcon> = {
+	overview: LayoutDashboard,
+	"api-keys": KeyRound,
+	balances: WalletCards,
+	"account-data": Database,
+	leaderboard: Trophy,
+	trading: ArrowUpRight,
+	docs: BookOpen,
+};
+
+const navigation: DashboardNavItem[] = dashboardNavigation.map((item) => ({
+	title: item.label,
+	url: item.href,
+	icon: icons[item.id],
+	end: item.end,
+}));
 
 export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 	return (
@@ -44,30 +60,19 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
 				<NavMain items={navigation} />
 				<div className="mt-auto px-2 pb-2">
 					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip="Leaderboard" className="h-9 rounded-lg px-2.5">
-								<Link to="/leaderboard">
-									<Trophy />
-									<span>Leaderboard</span>
-								</Link>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip="Open trading" className="h-9 rounded-lg px-2.5">
-								<Link to="/trade/BTC_USD">
-									<ArrowUpRight />
-									<span>Open trading</span>
-								</Link>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip="Documentation" className="h-9 rounded-lg px-2.5">
-								<Link to="/docs">
-									<BookOpen />
-									<span>Documentation</span>
-								</Link>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
+						{dashboardUtilityNavigation.map((item) => {
+							const Icon = icons[item.id];
+							return (
+								<SidebarMenuItem key={item.id}>
+									<SidebarMenuButton asChild tooltip={item.label} className="h-9 rounded-lg px-2.5">
+										<Link to={item.href}>
+											<Icon />
+											<span>{item.label}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							);
+						})}
 					</SidebarMenu>
 				</div>
 			</SidebarContent>

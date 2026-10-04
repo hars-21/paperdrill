@@ -13,23 +13,18 @@ interface OrderbookProps {
 	asks: Record<string, string>;
 	loading?: boolean;
 	symbol: string;
-	compact?: boolean;
 	lastPrice?: string | null;
 }
 
-const DESKTOP_ROWS = 18;
-const MOBILE_ROWS = 10;
+const DISPLAY_ROWS = 18;
 
 export function Orderbook({
 	bids,
 	asks,
 	loading,
 	symbol,
-	compact = false,
 	lastPrice,
 }: OrderbookProps) {
-	const DISPLAY_ROWS = compact ? MOBILE_ROWS : DESKTOP_ROWS;
-
 	const market = useMarket(symbol);
 	const base = market?.baseAsset ?? symbol.split("_")[0];
 	const quote = market?.quoteAsset ?? symbol.split("_")[1];
@@ -122,18 +117,18 @@ export function Orderbook({
 	const askDepthPct = 100 - bidDepthPct;
 
 	return (
-		<div className="flex h-full flex-col select-none">
+		<div className="flex h-full flex-col">
 			<div className="flex flex-col h-full grow">
 				<div className="flex items-center justify-between flex-row px-2">
 					<div className="flex items-center flex-row gap-2">
 						<div className="flex items-center justify-center flex-row gap-2">
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("bids")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("bids")} aria-label="Show bids only">
 								<BidsIcon />
 							</Button>
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("asks")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("asks")} aria-label="Show asks only">
 								<AsksIcon />
 							</Button>
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("both")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("both")} aria-label="Show bids and asks">
 								<BidsAsksIcon />
 							</Button>
 						</div>
@@ -225,6 +220,7 @@ export function Orderbook({
 							</div>
 
 							<button
+								type="button"
 								onClick={recenterOrderbook}
 								className={`text-[10px] text-chart-5 cursor-pointer hover:text-chart-5/90 transition-colors ${isCentered ? "opacity-0" : ""}`}
 							>

@@ -7,6 +7,7 @@ import { DashboardPage } from "@/components/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Metric, MetricGroup } from "@/components/ui/metric";
 import { useAuth } from "@/context/AuthContext";
 import { useMarkets } from "@/context/MarketContext";
 import { useOpenOrders, useTradeHistory } from "@/hooks/use-account";
@@ -51,7 +52,7 @@ export function DashboardOverviewPage() {
 				</Button>
 			}
 		>
-			<div className="grid overflow-hidden rounded-xl border border-border/60 bg-l1 sm:grid-cols-2 xl:grid-cols-4">
+			<MetricGroup className="sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
 					className="border-b sm:border-r xl:border-b-0"
 					label="Portfolio value"
@@ -88,7 +89,7 @@ export function DashboardOverviewPage() {
 					valueClassName={pnlClassName}
 				/>
 				<Metric label="Open orders" value={openOrdersLoading ? null : String(openOrders.length)} />
-			</div>
+			</MetricGroup>
 
 			<div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
 				<Card className="gap-0 border-border/60 py-0 shadow-none">
@@ -195,31 +196,6 @@ export function DashboardOverviewPage() {
 				/>
 			</div>
 		</DashboardPage>
-	);
-}
-
-function Metric({
-	label,
-	value,
-	className,
-	valueClassName,
-}: {
-	label: string;
-	value: string | null;
-	className?: string;
-	valueClassName?: string;
-}) {
-	return (
-		<div className={`border-border/40 px-5 py-4 ${className ?? ""}`}>
-			<p className="text-sm text-medium-emphasis">{label}</p>
-			{value == null ? (
-				<Skeleton className="mt-2 h-7 w-20" />
-			) : (
-				<p className={`mt-1 text-xl font-semibold text-high-emphasis ${valueClassName ?? ""}`}>
-					{value}
-				</p>
-			)}
-		</div>
 	);
 }
 
