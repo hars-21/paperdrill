@@ -1,10 +1,9 @@
 ---
-title: "PaperDrill documentation"
-description: "Trade with simulated funds through the web interface or build against the REST and WebSocket APIs."
-icon: "book-open"
+title: "Introduction"
+description: "Learn to trade with simulated funds or build against the PaperDrill REST and WebSocket APIs."
 ---
 
-PaperDrill is a simulated spot-trading platform backed by a live matching engine and order book. You can trade through the web interface, connect a bot through the API, and compare portfolio performance on the leaderboard.
+PaperDrill is a simulated spot-trading platform backed by a live matching engine and order book. You can trade in the web interface, automate orders through the REST API, and consume live market data over WebSocket.
 
 <Warning>
 	PaperDrill uses simulated balances. No real funds, deposits, withdrawals, or financial returns are
@@ -12,21 +11,28 @@ PaperDrill is a simulated spot-trading platform backed by a live matching engine
 </Warning>
 
 <CardGroup cols={2}>
-	<Card title="Place your first API order" icon="rocket" href="/quickstart">
-		Create an API key, inspect a market, place a limit order, and cancel it safely.
+	<Card title="Place your first order" icon="rocket" href="/quickstart">
+		Create an API key, inspect a market, submit a limit order, and cancel it safely.
+	</Card>
+	<Card title="Build a simple bot" icon="bot" href="/build-a-bot">
+		Run a one-shot TypeScript bot that reads the book, places an order, and cleans it up.
 	</Card>
 	<Card title="Authentication" icon="key-round" href="/authentication">
-		Authenticate requests with scoped API keys and keep credentials secure.
+		Choose API-key scopes and store credentials securely.
 	</Card>
-	<Card title="Trading API" icon="chart-candlestick" href="/orders">
-		Create, inspect, filter, and cancel limit or market orders.
-	</Card>
-	<Card title="Live market data" icon="radio" href="/websocket">
-		Subscribe to trades, depth updates, tickers, and candles over WebSocket.
+	<Card title="API reference" icon="braces" href="/api-reference/overview">
+		Review API conventions, then explore requests in the interactive reference.
 	</Card>
 </CardGroup>
 
-## API endpoints
+## Choose a path
+
+- To make your first authenticated request, follow the [Quickstart](/quickstart).
+- To build an integration, read [Authentication](/authentication), [API overview](/api-reference/overview), and the generated API reference.
+- To consume live data, start with [WebSocket streams](/websocket) and [Order book](/orderbook).
+- To trade manually, open the [PaperDrill platform](https://paperdrill.dev/markets).
+
+## Endpoints
 
 | Interface        | URL                                      |
 | ---------------- | ---------------------------------------- |
@@ -34,10 +40,14 @@ PaperDrill is a simulated spot-trading platform backed by a live matching engine
 | WebSocket        | `wss://api.paperdrill.dev`               |
 | Trading platform | [paperdrill.dev](https://paperdrill.dev) |
 
-Public market-data endpoints do not require authentication. Trading and account endpoints require a verified PaperDrill account and an API key with the appropriate scope.
+Public market-data endpoints do not require authentication. Order and account reads require an API key with the appropriate scope. Creating or cancelling an order also requires a verified PaperDrill account.
 
-## Where to begin
+## Core conventions
 
-- If you want to trade through code, follow the [quickstart](/quickstart).
-- If you need market data, start with [markets and candles](/markets) or the [WebSocket streams](/websocket).
-- If you are integrating the full API, review the [endpoint reference](/api-reference) and [error format](/errors).
+- Use symbols in underscore form, such as `SOL_USD`.
+- Send prices and quantities as decimal strings, not JSON numbers.
+- Read each market's precision before constructing an order.
+- Treat every order response as authoritative because an order can fill immediately.
+- Reconnect and resubscribe after a WebSocket interruption.
+
+See [API overview](/api-reference/overview) for precision, timestamp, pagination, and retry conventions.

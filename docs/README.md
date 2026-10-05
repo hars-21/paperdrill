@@ -23,4 +23,6 @@ mint broken-links
 mint a11y
 ```
 
+`openapi.yaml` is the public contract for developer-facing REST endpoints. Keep request fields, response schemas, authentication requirements, scopes, and examples aligned with `backend/src`.
+
 Mintlify deploys from the `/docs` monorepo path. Production should use `docs.paperdrill.dev`.

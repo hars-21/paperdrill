@@ -1,0 +1,911 @@
+openapi: 3.1.0
+info:
+  title: PaperDrill REST API
+  version: 1.0.0
+  description: |
+    Trade with simulated funds and read PaperDrill market data.
+
+    Prices, quantities, balances, and other decimal values are encoded as strings so clients do not lose precision.
+servers:
+  - url: https://api.paperdrill.dev/v1
+    description: Production
+tags:
+  - name: Market data
+    description: Public markets, tickers, candles, trades, and order-book snapshots.
+  - name: Trading
+    description: Create, inspect, and cancel orders with a scoped API key.
+  - name: Account
+    description: Read balances, portfolio performance, and private trade history.
+paths:
+  /markets:
+    get:
+      operationId: listMarkets
+      summary: List markets
+      description: Returns every tradable market and its price and quantity precision.
+      tags: [Market data]
+      security: []
+      responses:
+        "200":
+          description: Markets returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Market"
+              example:
+                data:
+                  - id: market_123
+                    name: Solana
+                    symbol: SOL_USD
+                    baseAsset: SOL
+                    quoteAsset: USD
+                    pricePrecision: 2
+                    qtyPrecision: 2
+        default:
+          $ref: "#/components/responses/RequestError"
+  /markets/tickers:
+    get:
+      operationId: listTickers
+      summary: List tickers
+      description: Returns the latest 24-hour ticker for every market.
+      tags: [Market data]
+      security: []
+      responses:
+        "200":
+          description: Tickers returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticker"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /markets/{symbol}/ticker:
+    get:
+      operationId: getTicker
+      summary: Get a ticker
+      description: Returns the latest 24-hour ticker for one market.
+      tags: [Market data]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Symbol"
+      responses:
+        "200":
+          description: Ticker returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticker"
+        "404":
+          $ref: "#/components/responses/MarketNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /markets/{symbol}/orderbook:
+    get:
+      operationId: getOrderBook
+      summary: Get an order-book snapshot
+      description: Returns an aggregated order-book snapshot for one market.
+      tags: [Market data]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Symbol"
+      responses:
+        "200":
+          description: Order-book snapshot returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderBook"
+        "404":
+          $ref: "#/components/responses/MarketNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /markets/{symbol}/trades:
+    get:
+      operationId: listPublicTrades
+      summary: List public trades
+      description: Returns recent public fills for one market, newest first.
+      tags: [Market data]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Symbol"
+        - name: limit
+          in: query
+          description: Maximum number of trades to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+      responses:
+        "200":
+          description: Trades returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicTrade"
+        "404":
+          $ref: "#/components/responses/MarketNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /markets/{symbol}/candles:
+    get:
+      operationId: listCandles
+      summary: List candles
+      description: Returns historical OHLCV candles in chronological order.
+      tags: [Market data]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Symbol"
+        - name: interval
+          in: query
+          description: Candle interval.
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 30m, 1H, 4H, 1D]
+            default: 15m
+      responses:
+        "200":
+          description: Candles returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Candle"
+        "404":
+          $ref: "#/components/responses/MarketNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List order history
+      description: |
+        Returns the caller's orders, newest first.
+
+        Requires the `ORDER_READ` scope.
+      tags: [Trading]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          description: Return orders for this market only.
+          schema:
+            type: string
+          example: SOL_USD
+        - name: status
+          in: query
+          description: Return orders with this status only.
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: limit
+          in: query
+          description: Maximum number of orders to return.
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: page
+          in: query
+          description: One-based results page.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        "200":
+          description: Orders returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        default:
+          $ref: "#/components/responses/RequestError"
+    post:
+      operationId: createOrder
+      summary: Create an order
+      description: |
+        Creates a limit or market order. The account's email must be verified.
+
+        Requires the `ORDER_CREATE` scope.
+      tags: [Trading]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/LimitOrderRequest"
+                - $ref: "#/components/schemas/MarketOrderRequest"
+              discriminator:
+                propertyName: type
+            examples:
+              limit:
+                summary: Limit buy
+                value:
+                  symbol: SOL_USD
+                  side: BUY
+                  type: LIMIT
+                  price: "125.50"
+                  qty: "2.00"
+              market:
+                summary: Market buy
+                value:
+                  symbol: SOL_USD
+                  side: BUY
+                  type: MARKET
+                  qty: "1.00"
+      responses:
+        "201":
+          description: Order accepted by the matching engine.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/MarketNotFound"
+        "422":
+          $ref: "#/components/responses/OrderRejected"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /orders/open:
+    get:
+      operationId: listOpenOrders
+      summary: List open orders
+      description: |
+        Returns every open and partially filled order owned by the caller.
+
+        Requires the `ORDER_READ` scope.
+      tags: [Trading]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Open orders returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get an order
+      description: |
+        Returns one order owned by the caller.
+
+        Requires the `ORDER_READ` scope.
+      tags: [Trading]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/OrderNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+    delete:
+      operationId: cancelOrder
+      summary: Cancel an order
+      description: |
+        Cancels the unfilled portion of an open order. The account's email must be verified.
+
+        Requires the `ORDER_CANCEL` scope.
+      tags: [Trading]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order cancelled successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CancelledOrder"
+                  - type: object
+                    required: [message]
+                    properties:
+                      message:
+                        type: string
+              examples:
+                cancelled:
+                  value:
+                    id: order_123
+                    symbol: SOL_USD
+                    status: CANCELLED
+                    side: BUY
+                    qty: "2.00"
+                    filledQty: "0.50"
+                    releasedFunds: "188.25"
+        "404":
+          $ref: "#/components/responses/OrderNotFound"
+        "409":
+          $ref: "#/components/responses/OrderNotCancellable"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /trades:
+    get:
+      operationId: listPrivateTrades
+      summary: List private trades
+      description: |
+        Returns fills involving the caller, newest first.
+
+        Requires the `ORDER_READ` scope.
+      tags: [Account]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of trades to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        "200":
+          description: Private trades returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrivateTrade"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /balances:
+    get:
+      operationId: listBalances
+      summary: List balances
+      description: |
+        Returns available and locked balances, optionally filtered to one asset.
+
+        Requires the `ACCOUNT_READ` scope.
+      tags: [Account]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: asset
+          in: query
+          description: Return this asset only.
+          schema:
+            type: string
+          example: USD
+      responses:
+        "200":
+          description: Balances returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balances"
+              example:
+                USD:
+                  available: "9748.50"
+                  locked: "251.50"
+                SOL:
+                  available: "2.00"
+                  locked: "0.00"
+        "404":
+          $ref: "#/components/responses/AssetNotFound"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /portfolio:
+    get:
+      operationId: getPortfolio
+      summary: Get portfolio performance
+      description: |
+        Returns valued positions and performance relative to the account's PnL baseline.
+
+        Requires the `ACCOUNT_READ` scope.
+      tags: [Account]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Portfolio returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+        "503":
+          $ref: "#/components/responses/PortfolioUnavailable"
+        default:
+          $ref: "#/components/responses/RequestError"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: A scoped API key created in the PaperDrill dashboard.
+  parameters:
+    Symbol:
+      name: symbol
+      in: path
+      required: true
+      description: Market symbol in underscore form.
+      schema:
+        type: string
+      example: SOL_USD
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Order identifier.
+      schema:
+        type: string
+      example: order_123
+  schemas:
+    DecimalString:
+      type: string
+      pattern: '^\d+(\.\d+)?$'
+      description: A non-negative decimal encoded as a string.
+      example: "125.50"
+    SignedDecimalString:
+      type: string
+      pattern: '^[+-]?\d+(\.\d+)?$'
+      description: A signed decimal encoded as a string.
+      example: "+3.40"
+    NullableDecimalString:
+      oneOf:
+        - $ref: "#/components/schemas/DecimalString"
+        - type: "null"
+    NullableSignedDecimalString:
+      oneOf:
+        - $ref: "#/components/schemas/SignedDecimalString"
+        - type: "null"
+    Side:
+      type: string
+      enum: [BUY, SELL]
+    OrderType:
+      type: string
+      enum: [LIMIT, MARKET]
+    OrderStatus:
+      type: string
+      enum: [OPEN, PARTIALLY_FILLED, FILLED, CANCELLED]
+    Market:
+      type: object
+      required: [id, name, symbol, baseAsset, quoteAsset, pricePrecision, qtyPrecision]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+          example: SOL_USD
+        baseAsset:
+          type: string
+          example: SOL
+        quoteAsset:
+          type: string
+          example: USD
+        pricePrecision:
+          type: integer
+          minimum: 0
+        qtyPrecision:
+          type: integer
+          minimum: 0
+    Ticker:
+      type: object
+      required:
+        - event
+        - symbol
+        - lastPrice
+        - openPrice
+        - high
+        - low
+        - volume
+        - quoteVolume
+        - priceChange
+        - priceChangePercent
+        - timestamp
+      properties:
+        event:
+          type: string
+          const: ticker
+        symbol:
+          type: string
+          example: SOL_USD
+        lastPrice:
+          $ref: "#/components/schemas/NullableDecimalString"
+        openPrice:
+          $ref: "#/components/schemas/NullableDecimalString"
+        high:
+          $ref: "#/components/schemas/NullableDecimalString"
+        low:
+          $ref: "#/components/schemas/NullableDecimalString"
+        volume:
+          $ref: "#/components/schemas/NullableDecimalString"
+        quoteVolume:
+          $ref: "#/components/schemas/NullableDecimalString"
+        priceChange:
+          $ref: "#/components/schemas/NullableSignedDecimalString"
+        priceChangePercent:
+          type: [number, "null"]
+        timestamp:
+          type: string
+          format: date-time
+      example:
+        event: ticker
+        symbol: SOL_USD
+        lastPrice: "125.50"
+        openPrice: "122.10"
+        high: "128.00"
+        low: "120.25"
+        volume: "340.50"
+        quoteVolume: "42540.75"
+        priceChange: "+3.40"
+        priceChangePercent: 2.78
+        timestamp: "2026-09-19T12:00:00.000Z"
+    DepthLevel:
+      type: object
+      required: [price, qty]
+      properties:
+        price:
+          $ref: "#/components/schemas/DecimalString"
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+    OrderBook:
+      type: object
+      required: [symbol, bids, asks, lastUpdateId, timestamp]
+      properties:
+        symbol:
+          type: string
+        bids:
+          type: array
+          description: Price levels sorted from highest to lowest.
+          items:
+            $ref: "#/components/schemas/DepthLevel"
+        asks:
+          type: array
+          description: Price levels sorted from lowest to highest.
+          items:
+            $ref: "#/components/schemas/DepthLevel"
+        lastUpdateId:
+          type: integer
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix milliseconds.
+    PublicTrade:
+      type: object
+      required:
+        - id
+        - symbol
+        - price
+        - qty
+        - buyOrderId
+        - sellOrderId
+        - buyerId
+        - sellerId
+        - isBuyerMaker
+        - createdAt
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        price:
+          $ref: "#/components/schemas/DecimalString"
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+        buyOrderId:
+          type: string
+        sellOrderId:
+          type: string
+        buyerId:
+          type: string
+        sellerId:
+          type: string
+        isBuyerMaker:
+          type: boolean
+        createdAt:
+          type: integer
+          format: int64
+          description: Unix milliseconds.
+    Candle:
+      type: object
+      required: [time, symbol, open, high, low, close, volume]
+      properties:
+        time:
+          type: integer
+          format: int64
+          description: Candle start time in Unix milliseconds.
+        symbol:
+          type: string
+        open:
+          $ref: "#/components/schemas/DecimalString"
+        high:
+          $ref: "#/components/schemas/DecimalString"
+        low:
+          $ref: "#/components/schemas/DecimalString"
+        close:
+          $ref: "#/components/schemas/DecimalString"
+        volume:
+          $ref: "#/components/schemas/DecimalString"
+    LimitOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [symbol, side, type, price, qty]
+      properties:
+        symbol:
+          type: string
+          example: SOL_USD
+        side:
+          $ref: "#/components/schemas/Side"
+        type:
+          type: string
+          const: LIMIT
+        price:
+          $ref: "#/components/schemas/DecimalString"
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+    MarketOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [symbol, side, type, qty]
+      properties:
+        symbol:
+          type: string
+          example: SOL_USD
+        side:
+          $ref: "#/components/schemas/Side"
+        type:
+          type: string
+          const: MARKET
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+    Order:
+      type: object
+      required: [id, userId, symbol, side, type, status, qty, filledQty, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        symbol:
+          type: string
+        side:
+          $ref: "#/components/schemas/Side"
+        type:
+          $ref: "#/components/schemas/OrderType"
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        price:
+          $ref: "#/components/schemas/DecimalString"
+          description: Present for limit orders.
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+        filledQty:
+          $ref: "#/components/schemas/DecimalString"
+        averagePrice:
+          $ref: "#/components/schemas/DecimalString"
+          description: Present after at least one fill.
+        createdAt:
+          type: string
+          format: date-time
+      example:
+        id: order_123
+        userId: user_123
+        symbol: SOL_USD
+        side: BUY
+        type: LIMIT
+        status: PARTIALLY_FILLED
+        price: "125.50"
+        qty: "2.00"
+        filledQty: "0.50"
+        averagePrice: "125.25"
+        createdAt: "2026-09-19T10:00:00.000Z"
+    CancelledOrder:
+      type: object
+      required: [id, symbol, status, side, qty, filledQty, releasedFunds]
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        status:
+          type: string
+          const: CANCELLED
+        side:
+          $ref: "#/components/schemas/Side"
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+        filledQty:
+          $ref: "#/components/schemas/DecimalString"
+        releasedFunds:
+          $ref: "#/components/schemas/DecimalString"
+    PrivateTrade:
+      type: object
+      required: [id, symbol, price, qty, side, isMaker, orderId, createdAt]
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        price:
+          $ref: "#/components/schemas/DecimalString"
+        qty:
+          $ref: "#/components/schemas/DecimalString"
+        side:
+          $ref: "#/components/schemas/Side"
+        isMaker:
+          type: boolean
+        orderId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Balance:
+      type: object
+      required: [available, locked]
+      properties:
+        available:
+          $ref: "#/components/schemas/DecimalString"
+        locked:
+          $ref: "#/components/schemas/DecimalString"
+    Balances:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/Balance"
+    PortfolioPosition:
+      type: object
+      required: [asset, available, locked, total, markPrice, value]
+      properties:
+        asset:
+          type: string
+        available:
+          $ref: "#/components/schemas/DecimalString"
+        locked:
+          $ref: "#/components/schemas/DecimalString"
+        total:
+          $ref: "#/components/schemas/DecimalString"
+        markPrice:
+          $ref: "#/components/schemas/DecimalString"
+        value:
+          $ref: "#/components/schemas/DecimalString"
+    Portfolio:
+      type: object
+      required:
+        - quoteAsset
+        - equity
+        - baselineEquity
+        - pnl
+        - pnlPercent
+        - baselineAt
+        - asOf
+        - partial
+        - positions
+      properties:
+        quoteAsset:
+          type: string
+        equity:
+          $ref: "#/components/schemas/DecimalString"
+        baselineEquity:
+          $ref: "#/components/schemas/DecimalString"
+        pnl:
+          $ref: "#/components/schemas/SignedDecimalString"
+        pnlPercent:
+          $ref: "#/components/schemas/SignedDecimalString"
+        baselineAt:
+          type: string
+          format: date-time
+        asOf:
+          type: string
+          format: date-time
+        partial:
+          type: boolean
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioPosition"
+    ApiErrorDetail:
+      type: object
+      required: [message]
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+    ApiError:
+      type: object
+      required: [error, requestId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                $ref: "#/components/schemas/ApiErrorDetail"
+        requestId:
+          type: string
+          format: uuid
+      example:
+        error:
+          code: VALIDATION_ERROR
+          message: Request validation failed
+          details:
+            - field: qty
+              message: invalid decimal format
+        requestId: f4c0baf4-b8d2-4c9a-a17b-c8656c4a7b0e
+  responses:
+    RequestError:
+      description: The request failed. See Errors and rate limits for recovery guidance.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    MarketNotFound:
+      description: The market does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    OrderNotFound:
+      description: The order does not exist or is not owned by the caller.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    AssetNotFound:
+      description: The requested asset does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    OrderNotCancellable:
+      description: The order can no longer be cancelled.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    OrderRejected:
+      description: The order was rejected because of balance, liquidity, or matching constraints.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    PortfolioUnavailable:
+      description: Portfolio valuation or its baseline is temporarily unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"

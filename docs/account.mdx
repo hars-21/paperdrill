@@ -1,18 +1,17 @@
 ---
-title: "Account and portfolio"
-description: "Read balances, portfolio performance, and private trade history."
-icon: "wallet-cards"
+title: "Track balances and portfolio"
+description: "Read available funds, locked balances, portfolio performance, and private fills."
 ---
 
-These endpoints use API-key authentication. Decimal balances and values are returned as strings so clients do not lose precision.
+Account endpoints use API-key authentication. Balances and portfolio values are decimal strings so clients do not lose precision.
 
-## Read balances
+## Understand balances
 
-`GET /balances` requires `ACCOUNT_READ`. Add `?asset=USD` to return one asset only.
+`GET /balances` requires `ACCOUNT_READ`. Add `?asset=USD` when you need only one asset.
 
 ```bash
 curl https://api.paperdrill.dev/v1/balances \
-  --header "x-api-key: YOUR_API_KEY"
+  --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
 ```json
@@ -22,15 +21,20 @@ curl https://api.paperdrill.dev/v1/balances \
 }
 ```
 
-`available` can be used immediately. `locked` is reserved by open orders.
+- `available` can be used for a new order.
+- `locked` is reserved by open orders.
+- Cancelling an order releases its unfilled reservation.
+- Fills move value between assets and can change both fields.
 
-## Read portfolio performance
+Always refresh balances after order activity instead of calculating the authoritative balance only on the client.
 
-`GET /portfolio` requires `ACCOUNT_READ`. It values each position in the platform quote asset and compares it with the account's PnL baseline.
+## Track portfolio performance
+
+`GET /portfolio` requires `ACCOUNT_READ`. It values positions in the platform quote asset and compares current equity with the account's PnL baseline.
 
 ```bash
 curl https://api.paperdrill.dev/v1/portfolio \
-  --header "x-api-key: YOUR_API_KEY"
+  --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
 | Field                | Meaning                                          |
@@ -38,30 +42,20 @@ curl https://api.paperdrill.dev/v1/portfolio \
 | `equity`             | Current portfolio value                          |
 | `baselineEquity`     | Value used as the PnL starting point             |
 | `pnl` / `pnlPercent` | Change from the baseline                         |
-| `asOf`               | Oldest price timestamp used for valuation        |
+| `baselineAt`         | Time at which the baseline was recorded          |
+| `asOf`               | Oldest market-price timestamp used for valuation |
 | `partial`            | `true` when a position could not be fully priced |
 | `positions`          | Per-asset balances, mark price, and value        |
 
-## Read private trade history
+Treat `partial: true` as an incomplete valuation. Do not present it as the value of the entire portfolio without a warning.
 
-`GET /trades?limit=100` requires `ORDER_READ`. `limit` is optional and accepts values from 1 to 500.
+## Reconcile with private trades
+
+Use `GET /trades` with the `ORDER_READ` scope to retrieve your fills newest first. Each record identifies your side, maker status, and related order.
 
 ```bash
-curl "https://api.paperdrill.dev/v1/trades?limit=2" \
-  --header "x-api-key: YOUR_API_KEY"
+curl "https://api.paperdrill.dev/v1/trades?limit=100" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
-```json
-[
-	{
-		"id": "fill_123",
-		"symbol": "SOL_USD",
-		"price": "125.50",
-		"qty": "1.25",
-		"side": "BUY",
-		"isMaker": false,
-		"orderId": "order_123",
-		"createdAt": "2026-09-19T10:00:00.000Z"
-	}
-]
-```
+Use order history for intent and status, private trades for executions, and balances for the current authoritative funds.

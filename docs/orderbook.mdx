@@ -1,10 +1,11 @@
 ---
-title: "Order book"
-description: "Read an aggregated snapshot and maintain a live local order book."
-icon: "rows-3"
+title: "Maintain a local order book"
+description: "Read an aggregated snapshot and apply live depth updates safely."
 ---
 
-`GET /markets/:symbol/orderbook` returns an aggregated depth snapshot. Authentication is not required.
+Use the REST snapshot when you need the current book once. Combine it with the `depth:SYMBOL` WebSocket stream when your application must maintain a live local copy.
+
+## Read a snapshot
 
 ```bash
 curl https://api.paperdrill.dev/v1/markets/SOL_USD/orderbook
@@ -26,24 +27,30 @@ curl https://api.paperdrill.dev/v1/markets/SOL_USD/orderbook
 }
 ```
 
-Bids are sorted from highest to lowest price. Asks are sorted from lowest to highest. Each level is the total remaining quantity at that price. `timestamp` is Unix milliseconds.
+Bids are sorted from highest to lowest price. Asks are sorted from lowest to highest. Each level contains the total remaining quantity at that price; individual orders are not exposed.
 
-## Maintain a live local book
+## Combine the snapshot and stream
 
-REST provides a snapshot. The `depth:SYMBOL` WebSocket stream contains only the levels that changed.
+The depth stream contains only levels that changed, so it cannot initialize a complete book by itself.
 
 <Steps>
-	<Step title="Start buffering updates">Subscribe to `depth:SYMBOL` and buffer every message.</Step>
-	<Step title="Fetch the snapshot">Request `GET /markets/:symbol/orderbook`.</Step>
-	<Step title="Discard old events">
-		Discard buffered messages whose `lastUpdateId` is less than or equal to the snapshot value.
+	<Step title="Subscribe and buffer">
+		Connect to [WebSocket streams](/websocket), subscribe to `depth:SYMBOL`, and buffer every
+		message without applying it yet.
 	</Step>
-	<Step title="Apply live updates">
-		Apply the remaining messages in order, then apply new messages immediately.
+	<Step title="Fetch a snapshot">
+		Request `GET /markets/:symbol/orderbook` while buffering continues.
+	</Step>
+	<Step title="Discard covered updates">
+		Discard buffered messages whose `lastUpdateId` is less than or equal to the snapshot's
+		`lastUpdateId`.
+	</Step>
+	<Step title="Apply the remainder">
+		Apply the remaining buffered messages in arrival order, then apply new messages as they arrive.
 	</Step>
 </Steps>
 
-Set a local level to the received `qty`. Remove the level when `qty` is `"0.00"`.
+A depth update replaces the quantity at a price level; it is not a delta to add. Remove the level when the received quantity represents zero.
 
 ```json
 {
@@ -55,3 +62,9 @@ Set a local level to the received `qty`. Remove the level when `qty` is `"0.00"`
 	"timestamp": 1789812000100
 }
 ```
+
+Store prices as strings or scaled integers rather than JavaScript numbers. A simple implementation can use one map for bids and another for asks, keyed by the exact price string.
+
+## Recover after a disconnect
+
+Do not continue from the old local book after reconnecting. Resubscribe, start buffering again, fetch a fresh snapshot, and repeat the synchronization procedure.

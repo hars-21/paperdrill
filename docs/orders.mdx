@@ -1,114 +1,83 @@
 ---
-title: "Orders"
-description: "Create, inspect, filter, and cancel PaperDrill orders."
-icon: "list-ordered"
+title: "Place and manage orders"
+description: "Choose an order type, handle fills, inspect status, and cancel remaining quantity."
 ---
 
-Order requests require a verified account and the relevant API-key scope. `price` and `qty` are positive decimal strings. Read [Markets and candles](/markets) before placing an order so the number of decimal places matches the market.
+PaperDrill supports limit and market orders. Before placing either type, read the market metadata and current book rather than hardcoding a symbol, price, or precision.
 
-## Create a limit order
+Creating an order requires `ORDER_CREATE` and a verified account. Reading orders requires `ORDER_READ`; cancellation requires `ORDER_CANCEL` and a verified account.
 
-`POST /orders` requires `ORDER_CREATE`.
+## Choose an order type
 
-```bash
-curl --request POST https://api.paperdrill.dev/v1/orders \
-  --header "Content-Type: application/json" \
-  --header "x-api-key: YOUR_API_KEY" \
-  --data '{
-    "symbol": "SOL_USD",
-    "side": "BUY",
-    "type": "LIMIT",
-    "price": "125.50",
-    "qty": "2.00"
-  }'
-```
+| Type     | Use it when                                                                | Price field |
+| -------- | -------------------------------------------------------------------------- | ----------- |
+| `LIMIT`  | You want to set the highest buy price or lowest sell price you will accept | Required    |
+| `MARKET` | You want to trade immediately against available liquidity                  | Omitted     |
 
-| Field    | Values                                      | Required |
-| -------- | ------------------------------------------- | -------- |
-| `symbol` | A symbol returned by `GET /markets`         | Yes      |
-| `side`   | `BUY` or `SELL`                             | Yes      |
-| `type`   | `LIMIT`                                     | Yes      |
-| `price`  | Positive decimal string at market precision | Yes      |
-| `qty`    | Positive decimal string at market precision | Yes      |
+A limit order can execute immediately when it crosses the book. A market order can be partially filled when the book does not contain enough quantity.
 
-## Create a market order
+## Construct valid values
 
-Market orders omit `price` and consume available liquidity.
+Fetch `GET /markets` and locate the selected symbol. If `pricePrecision` and `qtyPrecision` are both `2`, values such as `"125.50"` and `"2.00"` are valid.
+
+Send decimals as JSON strings:
 
 ```json
 {
-	"symbol": "SOL_USD",
-	"side": "BUY",
-	"type": "MARKET",
-	"qty": "1.00"
-}
-```
-
-If the book has no liquidity, the API returns `422 NO_LIQUIDITY`. A market order may also be partially filled. Inspect the response instead of assuming the whole quantity traded.
-
-## Order response
-
-`POST /orders` and `GET /orders/:orderId` return this shape:
-
-```json
-{
-	"id": "order_123",
-	"userId": "user_123",
 	"symbol": "SOL_USD",
 	"side": "BUY",
 	"type": "LIMIT",
-	"status": "PARTIALLY_FILLED",
 	"price": "125.50",
-	"qty": "2.00",
-	"filledQty": "0.50",
-	"averagePrice": "125.25",
-	"createdAt": "2026-09-19T10:00:00.000Z"
+	"qty": "2.00"
 }
 ```
 
-`status` is one of `OPEN`, `PARTIALLY_FILLED`, `FILLED`, or `CANCELLED`. `averagePrice` is omitted until a fill exists.
+For a market order, set `type` to `MARKET` and omit `price`.
 
-## Read orders
+## Use the returned status
 
-| Endpoint               | Scope        | Notes                                |
-| ---------------------- | ------------ | ------------------------------------ |
-| `GET /orders/open`     | `ORDER_READ` | All open and partially filled orders |
-| `GET /orders/:orderId` | `ORDER_READ` | One order owned by the caller        |
-| `GET /orders`          | `ORDER_READ` | History, newest first                |
+Do not assume a newly created order is open. The matching engine returns its current state:
 
-Order-history query parameters are optional:
+```text
+OPEN → PARTIALLY_FILLED → FILLED
+  └───────────────┬────→ CANCELLED
+                  └────→ CANCELLED
+```
 
-| Parameter | Values                                            |
-| --------- | ------------------------------------------------- |
-| `symbol`  | Market symbol                                     |
-| `status`  | `OPEN`, `PARTIALLY_FILLED`, `FILLED`, `CANCELLED` |
-| `limit`   | Positive integer; defaults to 10                  |
-| `page`    | Positive integer; defaults to 1                   |
+| Status             | Meaning                                              |
+| ------------------ | ---------------------------------------------------- |
+| `OPEN`             | No quantity has filled and the remainder is resting  |
+| `PARTIALLY_FILLED` | Some quantity filled and the remainder is still open |
+| `FILLED`           | The complete quantity filled                         |
+| `CANCELLED`        | The remaining quantity was removed from the book     |
+
+Use `filledQty` to determine how much executed. `averagePrice` appears after the first fill.
+
+## Inspect an order
+
+Read a specific order when you already have its ID:
 
 ```bash
-curl "https://api.paperdrill.dev/v1/orders?symbol=SOL_USD&status=FILLED&limit=10&page=1" \
-  --header "x-api-key: YOUR_API_KEY"
+curl https://api.paperdrill.dev/v1/orders/ORDER_ID \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
-## Cancel an order
+Use `GET /orders/open` for every open or partially filled order. Use `GET /orders` for paginated history and optional `symbol` or `status` filters.
 
-`DELETE /orders/:orderId` requires `ORDER_CANCEL`.
+## Cancel the remainder
+
+Cancellation affects only unfilled quantity. It does not reverse completed fills.
 
 ```bash
-curl --request DELETE https://api.paperdrill.dev/v1/orders/order_123 \
-  --header "x-api-key: YOUR_API_KEY"
+curl --request DELETE https://api.paperdrill.dev/v1/orders/ORDER_ID \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
-```json
-{
-	"id": "order_123",
-	"symbol": "SOL_USD",
-	"status": "CANCELLED",
-	"side": "BUY",
-	"qty": "2.00",
-	"filledQty": "0.50",
-	"releasedFunds": "188.25"
-}
-```
+A filled or already cancelled order returns `409 ORDER_NOT_CANCELLABLE`. If a cancel request fails because of a network interruption, read the order before deciding what to do next.
 
-A filled order cannot be cancelled and returns `409 ORDER_NOT_CANCELLABLE`.
+<Warning>
+	Do not blindly retry order creation after a timeout. PaperDrill does not currently accept an
+	idempotency key, so a retry can create another order. Inspect order history first.
+</Warning>
+
+Use the generated **API reference** for complete request and response schemas. Continue to [Build a simple bot](/build-a-bot) for an end-to-end implementation.

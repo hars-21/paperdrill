@@ -5,14 +5,14 @@
 	"description": "Guides and API reference for PaperDrill's simulated trading platform.",
 	"colors": {
 		"primary": "#E11D48",
-		"light": "#FB7185",
-		"dark": "#BE123C"
+		"light": "#E11D48",
+		"dark": "#E11D48"
 	},
 	"appearance": {
 		"default": "system"
 	},
 	"fonts": {
-		"family": "Inter"
+		"family": "IBM Plex Sans"
 	},
 	"icons": {
 		"library": "lucide"
@@ -24,12 +24,21 @@
 		}
 	},
 	"styling": {
-		"eyebrows": "breadcrumbs",
+		"eyebrows": "section",
 		"codeblocks": {
 			"theme": {
 				"light": "github-light",
 				"dark": "github-dark"
 			}
+		}
+	},
+	"api": {
+		"playground": {
+			"display": "interactive"
+		},
+		"examples": {
+			"languages": ["curl", "javascript", "python"],
+			"defaults": "required"
 		}
 	},
 	"favicon": {
@@ -42,42 +51,63 @@
 		"href": "https://paperdrill.dev"
 	},
 	"navigation": {
-		"pages": [
+		"tabs": [
 			{
-				"group": "Get started",
-				"pages": ["index", "quickstart", "authentication"]
+				"tab": "Documentation",
+				"groups": [
+					{
+						"group": "Get started",
+						"pages": ["index", "quickstart", "authentication"]
+					},
+					{
+						"group": "Guides",
+						"pages": ["orders", "markets", "trades", "orderbook", "websocket", "account"]
+					},
+					{
+						"group": "Examples",
+						"pages": ["build-a-bot"]
+					}
+				]
 			},
 			{
-				"group": "Trading",
-				"pages": ["orders"]
-			},
-			{
-				"group": "Market data",
-				"pages": ["markets", "trades", "orderbook", "websocket"]
-			},
-			{
-				"group": "Account",
-				"pages": ["account"]
-			},
-			{
-				"group": "Reference",
-				"pages": ["errors", "api-reference"]
-			}
-		],
-		"global": {
-			"anchors": [
-				{
-					"anchor": "Platform",
-					"href": "https://paperdrill.dev",
-					"icon": "chart-candlestick"
+				"tab": "API reference",
+				"openapi": {
+					"source": "openapi.yaml",
+					"directory": "api-reference"
 				},
-				{
-					"anchor": "Leaderboard",
-					"href": "https://paperdrill.dev/leaderboard",
-					"icon": "trophy"
-				}
-			]
-		}
+				"groups": [
+					{
+						"group": "Overview",
+						"pages": ["api-reference/overview", "api-reference/errors-and-limits"]
+					},
+					{
+						"group": "Markets",
+						"pages": [
+							"GET /markets",
+							"GET /markets/tickers",
+							"GET /markets/{symbol}/ticker",
+							"GET /markets/{symbol}/orderbook",
+							"GET /markets/{symbol}/trades",
+							"GET /markets/{symbol}/candles"
+						]
+					},
+					{
+						"group": "Orders",
+						"pages": [
+							"GET /orders",
+							"POST /orders",
+							"GET /orders/open",
+							"GET /orders/{orderId}",
+							"DELETE /orders/{orderId}"
+						]
+					},
+					{
+						"group": "Account",
+						"pages": ["GET /trades", "GET /balances", "GET /portfolio"]
+					}
+				]
+			}
+		]
 	},
 	"navbar": {
 		"links": [
@@ -93,7 +123,7 @@
 		}
 	},
 	"contextual": {
-		"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+		"options": ["copy", "view"]
 	},
 	"footer": {
 		"socials": {

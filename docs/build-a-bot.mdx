@@ -1,0 +1,166 @@
+---
+title: "Build a simple trading bot"
+description: "Create a one-shot TypeScript bot that reads the book, places a limit order, monitors it, and cancels the remainder."
+---
+
+This guide builds a deliberately small bot that places one simulated limit order and cleans up any unfilled quantity. It demonstrates the API lifecycle without hiding order state or precision handling behind an SDK.
+
+<Warning>
+	The example can create a real order on your PaperDrill account, but it only uses simulated funds.
+	Review the selected symbol, side, price, and quantity before running it.
+</Warning>
+
+## Prerequisites
+
+- [Bun](https://bun.sh) installed locally
+- A verified PaperDrill account with a simulated balance
+- An API key with `ORDER_READ`, `ORDER_CREATE`, and `ORDER_CANCEL`
+
+Set the key and, optionally, the market:
+
+```bash
+export PAPERDRILL_API_KEY="pdk_your_key_here"
+export PAPERDRILL_SYMBOL="SOL_USD"
+```
+
+## Create the bot
+
+Save this file as `bot.ts`:
+
+```ts
+const apiUrl = "https://api.paperdrill.dev/v1";
+const apiKey = process.env.PAPERDRILL_API_KEY;
+const symbol = process.env.PAPERDRILL_SYMBOL ?? "SOL_USD";
+
+if (!apiKey) {
+	throw new Error("Set PAPERDRILL_API_KEY before running the bot");
+}
+
+type Market = {
+	symbol: string;
+	pricePrecision: number;
+	qtyPrecision: number;
+};
+
+type Order = {
+	id: string;
+	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
+	filledQty: string;
+};
+
+type OrderBook = {
+	bids: { price: string; qty: string }[];
+	asks: { price: string; qty: string }[];
+};
+
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+	const response = await fetch(`${apiUrl}${path}`, {
+		...init,
+		headers: {
+			"Content-Type": "application/json",
+			"x-api-key": apiKey,
+			...init.headers,
+		},
+	});
+
+	if (!response.ok) {
+		const body = await response.text();
+		const requestId = response.headers.get("x-request-id");
+		throw new Error(`${response.status} ${body} (request ${requestId ?? "unknown"})`);
+	}
+
+	return response.json() as Promise<T>;
+}
+
+function toScaled(value: string, precision: number): bigint {
+	const [whole, fraction = ""] = value.split(".");
+	if (fraction.length > precision) throw new Error(`${value} exceeds market precision`);
+	return BigInt(`${whole}${fraction.padEnd(precision, "0")}`);
+}
+
+function fromScaled(value: bigint, precision: number): string {
+	if (precision === 0) return value.toString();
+	const padded = value.toString().padStart(precision + 1, "0");
+	return `${padded.slice(0, -precision)}.${padded.slice(-precision)}`;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let activeOrderId: string | undefined;
+
+async function cancelActiveOrder() {
+	if (!activeOrderId) return;
+	try {
+		await api(`/orders/${activeOrderId}`, { method: "DELETE" });
+		console.log(`Cancelled ${activeOrderId}`);
+	} catch (error) {
+		console.error(`Could not cancel ${activeOrderId}:`, error);
+	} finally {
+		activeOrderId = undefined;
+	}
+}
+
+process.once("SIGINT", () => {
+	void cancelActiveOrder().finally(() => process.exit(130));
+});
+
+const { data: markets } = await api<{ data: Market[] }>("/markets");
+const market = markets.find((candidate) => candidate.symbol === symbol);
+if (!market) throw new Error(`Unknown market: ${symbol}`);
+
+const book = await api<OrderBook>(`/markets/${symbol}/orderbook`);
+const bestBid = book.bids[0]?.price;
+if (!bestBid) throw new Error(`No bids are available for ${symbol}`);
+
+const bestBidScaled = toScaled(bestBid, market.pricePrecision);
+if (bestBidScaled <= 1n) throw new Error("Best bid is too small to improve safely");
+
+const price = fromScaled(bestBidScaled - 1n, market.pricePrecision);
+const qty = fromScaled(1n, market.qtyPrecision);
+
+const order = await api<Order>("/orders", {
+	method: "POST",
+	body: JSON.stringify({ symbol, side: "BUY", type: "LIMIT", price, qty }),
+});
+
+console.log(`Created ${order.id} at ${price} for ${qty}; status=${order.status}`);
+if (order.status === "OPEN" || order.status === "PARTIALLY_FILLED") {
+	activeOrderId = order.id;
+}
+
+for (let attempt = 0; activeOrderId && attempt < 5; attempt++) {
+	await sleep(2_000);
+	const current = await api<Order>(`/orders/${activeOrderId}`);
+	console.log(`status=${current.status} filled=${current.filledQty}`);
+
+	if (current.status === "FILLED" || current.status === "CANCELLED") {
+		activeOrderId = undefined;
+	}
+}
+
+await cancelActiveOrder();
+```
+
+The bot uses scaled integers to move one price tick below the current best bid and submits the smallest quantity allowed by the market's precision. That makes an immediate fill less likely, but another order can still match it at any time.
+
+## Run it
+
+```bash
+bun run bot.ts
+```
+
+The script prints the created order, polls it for roughly ten seconds, and cancels any remaining open quantity. Pressing `Ctrl+C` also attempts cancellation before exit.
+
+## Make it production-ready
+
+Before turning this example into a long-running strategy:
+
+- Use the [WebSocket streams](/websocket) instead of polling market data.
+- Fetch a fresh [order-book snapshot](/orderbook) after every reconnect.
+- Reconcile open orders and balances when the process starts.
+- Add exponential backoff and jitter for `429`, `503`, and `504` responses.
+- Never blindly retry `POST /orders` after an ambiguous timeout.
+- Persist order IDs and decisions so a restart cannot duplicate activity.
+- Add explicit risk limits for order quantity, total exposure, and outstanding orders.
+
+See [Place and manage orders](/orders) for the order lifecycle and [Errors and rate limits](/api-reference/errors-and-limits) for retry behavior.
