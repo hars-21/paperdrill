@@ -44,7 +44,7 @@ function PageContent({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 		<div
 			data-slot="page-content"
 			className={cn(
-				"mx-auto mb-12 min-h-0 w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6 sm:py-8",
+				"mx-auto w-full max-w-6xl shrink-0 space-y-6 px-4 pt-6 pb-4 sm:px-6 sm:pt-8",
 				className,
 			)}
 			{...props}
@@ -56,7 +56,10 @@ function PageHeading({ title, description, action, className, ...props }: PageHe
 	return (
 		<div
 			data-slot="page-heading"
-			className={cn("flex w-full flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}
+			className={cn(
+				"flex w-full flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
+				className,
+			)}
 			{...props}
 		>
 			<div className="min-w-0">

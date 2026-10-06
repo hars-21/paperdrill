@@ -179,7 +179,7 @@ export function MarketsPage() {
 
 	return (
 		<Page>
-			<PageContent className="mb-0 max-w-384 space-y-5 pb-8 sm:pb-10">
+			<PageContent className="max-w-384 space-y-5">
 				<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 					<div>
 						<h1 id="live-markets-heading" className="text-xl font-semibold tracking-tight text-high-emphasis">

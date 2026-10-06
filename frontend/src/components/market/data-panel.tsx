@@ -61,6 +61,7 @@ type SortDirection = "asc" | "desc";
 type DataPanelProps = {
 	loading?: boolean;
 	symbol?: string;
+	showBalances?: boolean;
 };
 
 type BalanceDetail = {
@@ -77,6 +78,8 @@ type BalanceDetail = {
 
 const PAGE_SIZE = 10;
 const ORDER_HISTORY_PARAMS = { limit: 100 } as const;
+const ALL_TABS: Tab[] = ["balance", "open", "orders", "trades"];
+const ACTIVITY_TABS: Tab[] = ["open", "orders", "trades"];
 const FILTER_OPTION_CLASS_NAME =
 	"min-h-9 cursor-pointer rounded-lg border border-transparent px-2.5 py-2 pl-2.5 text-xs data-[state=checked]:border-border/70 data-[state=checked]:bg-l2 data-[state=checked]:text-high-emphasis [&>span:first-child]:hidden";
 
@@ -318,7 +321,7 @@ function ActivityFilters({
 					<SlidersHorizontal className="size-3.5" />
 					<span className="truncate">{scopeLabel}</span>
 					{filterCount > 0 ? (
-						<span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+						<span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-high-emphasis text-[10px] font-semibold text-background">
 							{filterCount}
 						</span>
 					) : null}
@@ -359,7 +362,7 @@ function ActivityFilters({
 								className={FILTER_OPTION_CLASS_NAME}
 							>
 								<span className="flex-1">All markets</span>
-								{marketValue === "all" ? <Check className="size-3.5 text-primary" /> : null}
+								{marketValue === "all" ? <Check className="size-3.5 text-high-emphasis" /> : null}
 							</DropdownMenuRadioItem>
 							{markets.map((market) => (
 								<DropdownMenuRadioItem
@@ -373,7 +376,7 @@ function ActivityFilters({
 										{market.baseAsset}/{market.quoteAsset}
 									</span>
 									{marketValue === market.symbol ? (
-										<Check className="size-3.5 text-primary" />
+									<Check className="size-3.5 text-high-emphasis" />
 									) : null}
 								</DropdownMenuRadioItem>
 							))}
@@ -455,14 +458,15 @@ function FilterGroup({ label, children }: { label: string; children: React.React
 	);
 }
 
-export function DataPanel({ loading = false, symbol }: DataPanelProps) {
+export function DataPanel({ loading = false, symbol, showBalances = true }: DataPanelProps) {
 	const { authenticated, verified } = useAuth();
 	const { markets } = useMarkets();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [pendingCancelOrder, setPendingCancelOrder] = useState<OrderRecord | null>(null);
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 	const activityParam = searchParams.get("activity");
-	const tab: Tab = ["balance", "open", "orders", "trades"].includes(activityParam ?? "")
+	const availableTabs = showBalances ? ALL_TABS : ACTIVITY_TABS;
+	const tab: Tab = availableTabs.includes(activityParam as Tab)
 		? (activityParam as Tab)
 		: "open";
 	const search = searchParams.get("q") ?? "";
@@ -513,8 +517,8 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 		loading: balanceLoading,
 		error: balanceError,
 		refresh: refreshBalances,
-	} = useBalance({ enabled: authenticated });
-	const { portfolio } = usePortfolio({ enabled: authenticated });
+	} = useBalance({ enabled: authenticated && showBalances });
+	const { portfolio } = usePortfolio({ enabled: authenticated && showBalances });
 	const {
 		openOrders,
 		loading: openOrdersLoading,
@@ -674,7 +678,7 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 	};
 
 	const tabs: { key: Tab; label: string; count?: number }[] = [
-		{ key: "balance", label: "Balances" },
+		...(showBalances ? [{ key: "balance" as const, label: "Balances" }] : []),
 		{ key: "open", label: "Open orders", count: openOrders.length },
 		{ key: "orders", label: "Order history", count: orders.length },
 		{ key: "trades", label: "Trade history", count: trades.length },
@@ -773,7 +777,9 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				<div className="flex items-center justify-between border-b border-border/40 px-4 py-3.5 sm:px-5">
 					<div>
 						<p className="text-sm font-semibold text-high-emphasis">Account activity</p>
-						<p className="mt-0.5 text-xs text-medium-emphasis">Balances, orders and trades</p>
+						<p className="mt-0.5 text-xs text-medium-emphasis">
+							{showBalances ? "Balances, orders and trades" : "Orders and completed trades"}
+						</p>
 					</div>
 				</div>
 				<div className="flex flex-1 items-center px-5 py-8 sm:px-8">
@@ -786,8 +792,9 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 								Sign in to see your workspace
 							</p>
 							<p className="mt-1 max-w-sm text-xs leading-5 text-medium-emphasis">
-								Your balances, open orders and complete trading history stay attached to your
-								account.
+								{showBalances
+									? "Your balances, open orders and complete trading history stay attached to your account."
+									: "Your open orders and complete trading history stay attached to your account."}
 							</p>
 							<div className="mt-4 flex flex-wrap items-center gap-2">
 								<Button asChild size="sm">
@@ -985,6 +992,161 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 
 type MarketLookup = ReturnType<typeof useMarkets>["markets"][number] | undefined;
 
+function MobileOrderList({
+	orders,
+	marketFor,
+	open,
+	cancelling,
+	canCancel,
+	onCancel,
+}: {
+	orders: OrderRecord[];
+	marketFor: (symbol: string) => MarketLookup;
+	open: boolean;
+	cancelling: string | null;
+	canCancel: boolean;
+	onCancel: (order: OrderRecord) => void;
+}) {
+	return (
+		<div className="divide-y divide-border/30 lg:hidden">
+			{orders.map((order) => {
+				const market = marketFor(order.symbol);
+				const baseAsset = market?.baseAsset ?? order.symbol.split("_")[0] ?? order.symbol;
+				return (
+					<article key={order.id} className="px-4 py-4 sm:px-5">
+						<div className="flex items-start justify-between gap-4">
+							<div className="flex min-w-0 items-center gap-3">
+								<AssetIcon asset={baseAsset} className="size-9 shrink-0" />
+								<div className="min-w-0">
+									<p className="font-semibold text-high-emphasis">
+										{order.symbol.replace("_", "/")}
+									</p>
+									<p className="mt-0.5 text-xs text-medium-emphasis">
+										{titleCase(order.type)} order
+									</p>
+								</div>
+							</div>
+							<div className="text-right">
+								<p className={cn("text-xs font-semibold", sideClass(order.side))}>
+									{titleCase(order.side)}
+								</p>
+								<p className={cn("mt-1 text-xs", orderStatusClass(order.status))}>
+									{titleCase(order.status)}
+								</p>
+							</div>
+						</div>
+
+						<div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/30 pt-3">
+							<div>
+								<p className="text-[11px] text-medium-emphasis">Price</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{order.type === "MARKET"
+										? "Market"
+										: formatPrice(order.price, market?.pricePrecision)}
+								</p>
+							</div>
+							<div>
+								<p className="text-[11px] text-medium-emphasis">Quantity</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{formatQty(order.qty, market?.qtyPrecision)}
+								</p>
+							</div>
+							<div className="text-right">
+								<p className="text-[11px] text-medium-emphasis">
+									{open ? "Filled" : "Average"}
+								</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{open
+										? `${formatQty(order.filledQty, market?.qtyPrecision)} / ${formatQty(order.qty, market?.qtyPrecision)}`
+										: formatPrice(order.averagePrice, market?.pricePrecision)}
+								</p>
+							</div>
+						</div>
+
+						<div className="mt-3 flex items-center justify-between gap-3">
+							<p className="text-xs text-low-emphasis">{formatDateTime(order.createdAt)}</p>
+							{open ? (
+								<Button
+									type="button"
+									variant="ghost"
+									size="xs"
+									disabled={!canCancel || cancelling === order.id}
+									onClick={() => onCancel(order)}
+									className="text-medium-emphasis hover:bg-transparent hover:text-red-text"
+								>
+									{cancelling === order.id ? "Cancelling…" : "Cancel order"}
+								</Button>
+							) : null}
+						</div>
+					</article>
+				);
+			})}
+		</div>
+	);
+}
+
+function MobileTradeList({
+	trades,
+	marketFor,
+}: {
+	trades: UserTrade[];
+	marketFor: (symbol: string) => MarketLookup;
+}) {
+	return (
+		<div className="divide-y divide-border/30 lg:hidden">
+			{trades.map((trade) => {
+				const market = marketFor(trade.symbol);
+				const baseAsset = market?.baseAsset ?? trade.symbol.split("_")[0] ?? trade.symbol;
+				return (
+					<article key={trade.id} className="px-4 py-4 sm:px-5">
+						<div className="flex items-start justify-between gap-4">
+							<div className="flex min-w-0 items-center gap-3">
+								<AssetIcon asset={baseAsset} className="size-9 shrink-0" />
+								<div>
+									<p className="font-semibold text-high-emphasis">
+										{trade.symbol.replace("_", "/")}
+									</p>
+									<p className="mt-0.5 text-xs text-medium-emphasis">
+										{trade.isMaker ? "Maker" : "Taker"} execution
+									</p>
+								</div>
+							</div>
+							<p className={cn("text-xs font-semibold", sideClass(trade.side))}>
+								{titleCase(trade.side)}
+							</p>
+						</div>
+
+						<div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/30 pt-3">
+							<div>
+								<p className="text-[11px] text-medium-emphasis">Price</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{formatPrice(trade.price, market?.pricePrecision)}
+								</p>
+							</div>
+							<div>
+								<p className="text-[11px] text-medium-emphasis">Quantity</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{formatQty(trade.qty, market?.qtyPrecision)}
+								</p>
+							</div>
+							<div className="text-right">
+								<p className="text-[11px] text-medium-emphasis">Value</p>
+								<p className="mt-1 truncate text-xs font-medium text-high-emphasis tabular-nums">
+									{formatPrice(
+										Number(trade.price) * Number(trade.qty),
+										market?.pricePrecision,
+									)}
+								</p>
+							</div>
+						</div>
+						<p className="mt-3 text-xs text-low-emphasis">{formatDateTime(trade.createdAt)}</p>
+					</article>
+				);
+			})}
+		</div>
+	);
+}
+
 function OrderTable({
 	orders,
 	marketFor,
@@ -1007,7 +1169,16 @@ function OrderTable({
 	onSort: (field: SortField) => void;
 }) {
 	return (
-		<Table className="table-fixed min-w-260">
+		<>
+			<MobileOrderList
+				orders={orders}
+				marketFor={marketFor}
+				open={open}
+				cancelling={cancelling}
+				canCancel={canCancel}
+				onCancel={onCancel}
+			/>
+			<Table className="hidden table-fixed min-w-260 lg:table">
 			<colgroup>
 				<col className="w-36" />
 				<col className="w-20" />
@@ -1111,7 +1282,8 @@ function OrderTable({
 					);
 				})}
 			</TableBody>
-		</Table>
+			</Table>
+		</>
 	);
 }
 
@@ -1129,7 +1301,9 @@ function TradeHistoryTable({
 	onSort: (field: SortField) => void;
 }) {
 	return (
-		<Table className="table-fixed min-w-208">
+		<>
+			<MobileTradeList trades={trades} marketFor={marketFor} />
+			<Table className="hidden table-fixed min-w-208 lg:table">
 			<colgroup>
 				<col className="w-36" />
 				<col className="w-18" />
@@ -1197,7 +1371,8 @@ function TradeHistoryTable({
 					);
 				})}
 			</TableBody>
-		</Table>
+			</Table>
+		</>
 	);
 }
 

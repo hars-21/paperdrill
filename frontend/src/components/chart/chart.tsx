@@ -36,6 +36,26 @@ const MOBILE_TABS: { value: ChartTab; label: string }[] = [
 	{ value: "info", label: "Info" },
 ];
 
+const clockFormatter = new Intl.DateTimeFormat(undefined, {
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hour12: false,
+});
+
+const timeZoneFormatter = new Intl.DateTimeFormat(undefined, {
+	timeZoneName: "short",
+});
+
+function formatTimeZone(date: Date) {
+	const timeZoneName = timeZoneFormatter
+		.formatToParts(date)
+		.find((part) => part.type === "timeZoneName")?.value;
+	if (timeZoneName) return timeZoneName;
+
+	return Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("_", " ");
+}
+
 function Clock() {
 	const [now, setNow] = useState(() => new Date());
 
@@ -46,15 +66,8 @@ function Clock() {
 
 	return (
 		<div className="hidden items-center gap-1 whitespace-nowrap text-sm text-medium-emphasis sm:flex">
-			<span>
-				{now.toLocaleTimeString([], {
-					hour: "2-digit",
-					minute: "2-digit",
-					second: "2-digit",
-					hour12: false,
-				})}
-			</span>
-			<span>({now.toLocaleTimeString([], { timeZoneName: "shortOffset" }).split(" ")[2]})</span>
+			<time dateTime={now.toISOString()}>{clockFormatter.format(now)}</time>
+			<span>({formatTimeZone(now)})</span>
 		</div>
 	);
 }

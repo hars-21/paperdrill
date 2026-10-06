@@ -1,58 +1,140 @@
-import { useEffect, useState } from "react";
-import { Check, CircleAlert, Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { AccountPage } from "@/components/account-page";
+import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { FeedbackState } from "@/components/ui/feedback-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Page, PageContent } from "@/components/ui/page";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { API_KEY_SCOPE_LABELS } from "@/lib/api-key-scopes";
+import { cn } from "@/lib/utils";
 import type { ApiKeyRecord, ApiKeyScope, CreatedApiKey } from "@/types";
 import { formatDateTime } from "@/utils/format";
 
-const scopeOptions: { value: ApiKeyScope; label: string; description: string }[] = [
-	{ value: "ACCOUNT_READ", label: "Read balances", description: "View account balances." },
-	{ value: "ORDER_READ", label: "Read orders", description: "View orders and trade history." },
-	{ value: "ORDER_CREATE", label: "Create orders", description: "Place market and limit orders." },
-	{ value: "ORDER_CANCEL", label: "Cancel orders", description: "Cancel existing open orders." },
-];
-
-const scopeLabels: Record<ApiKeyScope, string> = {
-	ACCOUNT_READ: "Balances",
-	ORDER_READ: "Read orders",
-	ORDER_CREATE: "Create orders",
-	ORDER_CANCEL: "Cancel orders",
+type ApiKeyRowProps = {
+	record: ApiKeyRecord;
+	verified: boolean;
+	revoking: boolean;
+	onRevoke: (key: ApiKeyRecord) => void;
 };
+
+function ApiKeyRow({ record, verified, revoking, onRevoke }: ApiKeyRowProps) {
+	const active = record.revokedAt === null;
+
+	return (
+		<div
+			className={cn(
+				"grid gap-5 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(12rem,1.1fr)_minmax(16rem,1.4fr)_minmax(10rem,.8fr)_auto] lg:items-center",
+				!active && "bg-l2/20 text-medium-emphasis",
+			)}
+		>
+			<div className="min-w-0">
+				<p className={cn("truncate text-sm font-semibold", active && "text-high-emphasis")}>
+					{record.label}
+				</p>
+				<p className="mt-1 text-xs text-low-emphasis">Created {formatDateTime(record.createdAt)}</p>
+			</div>
+
+			<div>
+				<p className="mb-1 text-[11px] text-low-emphasis lg:sr-only">Permissions</p>
+				<p className="max-w-xl text-xs leading-5 text-medium-emphasis">
+					{record.scopes.map((scope) => API_KEY_SCOPE_LABELS[scope]).join(", ")}
+				</p>
+			</div>
+
+			<div>
+				<p className="text-[11px] text-low-emphasis lg:sr-only">Last used</p>
+				<p
+					className={cn(
+						"mt-1 text-xs lg:mt-0",
+						active ? "text-high-emphasis" : "text-medium-emphasis",
+					)}
+				>
+					{record.lastUsedAt ? formatDateTime(record.lastUsedAt) : "Never used"}
+				</p>
+			</div>
+
+			<div className="flex items-center justify-between gap-4 lg:justify-end">
+				<span
+					className={cn("text-xs font-medium", active ? "text-green-text" : "text-medium-emphasis")}
+				>
+					{active ? "Active" : "Revoked"}
+				</span>
+				{active ? (
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						disabled={!verified || revoking}
+						onClick={() => onRevoke(record)}
+						aria-label={`Revoke ${record.label}`}
+						title={verified ? undefined : "Verify your email to revoke API keys"}
+						className="px-2.5 text-medium-emphasis hover:bg-transparent hover:text-red-text"
+					>
+						{revoking ? "Revoking…" : "Revoke"}
+					</Button>
+				) : null}
+			</div>
+		</div>
+	);
+}
+
+function KeysLoading() {
+	return (
+		<div className="divide-y divide-border/30">
+			{Array.from({ length: 3 }).map((_, index) => (
+				<div
+					key={index}
+					className="grid gap-5 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(12rem,1.1fr)_minmax(16rem,1.4fr)_minmax(10rem,.8fr)_auto] lg:items-center"
+				>
+					<div className="space-y-2">
+						<Skeleton className="h-3.5 w-32" />
+						<Skeleton className="h-3 w-44" />
+					</div>
+					<Skeleton className="h-3 w-full max-w-72" />
+					<Skeleton className="h-3 w-28" />
+					<Skeleton className="h-7 w-16 lg:justify-self-end" />
+				</div>
+			))}
+		</div>
+	);
+}
+
+function KeyListState({
+	title,
+	description,
+	action,
+	error = false,
+}: {
+	title: string;
+	description: string;
+	action?: React.ReactNode;
+	error?: boolean;
+}) {
+	return (
+		<div className="flex min-h-56 items-center justify-center px-6 py-10 text-center">
+			<div className="max-w-md">
+				<p className={cn("text-sm font-semibold", error ? "text-red-text" : "text-high-emphasis")}>
+					{title}
+				</p>
+				<p className="mt-1.5 text-sm leading-6 text-medium-emphasis">{description}</p>
+				{action ? <div className="mt-4">{action}</div> : null}
+			</div>
+		</div>
+	);
+}
 
 export function ApiKeysPage() {
 	const { verified } = useAuth();
 	const [keys, setKeys] = useState<ApiKeyRecord[] | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
-	const [showForm, setShowForm] = useState(false);
-	const [label, setLabel] = useState("");
-	const [scopes, setScopes] = useState<ApiKeyScope[]>(scopeOptions.map((scope) => scope.value));
-	const [creating, setCreating] = useState(false);
-	const [createError, setCreateError] = useState<string | null>(null);
-	const [deleting, setDeleting] = useState<string | null>(null);
-	const [keyToDelete, setKeyToDelete] = useState<ApiKeyRecord | null>(null);
-	const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
-	const [copied, setCopied] = useState(false);
+	const [createDialogOpen, setCreateDialogOpen] = useState(false);
+	const [revoking, setRevoking] = useState<string | null>(null);
+	const [keyToRevoke, setKeyToRevoke] = useState<ApiKeyRecord | null>(null);
 
-	const loadKeys = async () => {
+	const loadKeys = useCallback(async () => {
 		setLoadError(null);
 		try {
 			const response = await api.getApiKeys();
@@ -61,273 +143,152 @@ export function ApiKeysPage() {
 			console.error("Failed to load API keys:", error);
 			setLoadError(error instanceof Error ? error.message : "Failed to load API keys.");
 		}
-	};
-
-	useEffect(() => {
-		loadKeys();
 	}, []);
 
-	const toggleScope = (scope: ApiKeyScope, checked: boolean) => {
-		setScopes((current) =>
-			checked ? [...current, scope] : current.filter((item) => item !== scope),
-		);
+	useEffect(() => {
+		void loadKeys();
+	}, [loadKeys]);
+
+	const handleCreate = async (label: string, scopes: ApiKeyScope[]): Promise<CreatedApiKey> => {
+		if (!verified) throw new Error("Verify your email before creating an API key.");
+		const key = await api.createApiKey(label, scopes);
+		await loadKeys();
+		toast.success("API key created");
+		return key;
 	};
 
-	const handleCreate = async (event: React.FormEvent) => {
-		event.preventDefault();
-		if (!verified || !label.trim() || scopes.length === 0) return;
+	const handleRevoke = async () => {
+		if (!verified || !keyToRevoke) return;
 
-		setCreateError(null);
-		setCreating(true);
+		setRevoking(keyToRevoke.id);
 		try {
-			const key = await api.createApiKey(label.trim(), scopes);
-			setCreatedKey(key);
-			setLabel("");
-			setShowForm(false);
-			setCopied(false);
+			await api.revokeApiKey(keyToRevoke.id);
 			await loadKeys();
-			toast.success("API key created");
+			setKeyToRevoke(null);
+			toast.success("API key revoked");
 		} catch (error) {
-			setCreateError(error instanceof Error ? error.message : "Failed to create API key.");
+			toast.error(error instanceof Error ? error.message : "Failed to revoke API key");
 		} finally {
-			setCreating(false);
+			setRevoking(null);
 		}
 	};
 
-	const handleDelete = async () => {
-		if (!verified || !keyToDelete) return;
-
-		setDeleting(keyToDelete.id);
-		try {
-			await api.revokeApiKey(keyToDelete.id);
-			await loadKeys();
-			setKeyToDelete(null);
-			toast.success("API key deleted");
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Failed to delete API key");
-		} finally {
-			setDeleting(null);
-		}
-	};
-
-	const copyKey = async () => {
-		if (!createdKey) return;
-		try {
-			await navigator.clipboard.writeText(createdKey.key);
-			setCopied(true);
-			toast.success("API key copied");
-		} catch {
-			toast.error("Could not copy the API key");
-		}
-	};
+	const createAction = verified ? (
+		<Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+			Create API key
+		</Button>
+	) : (
+		<Button asChild size="sm">
+			<Link to="/verify-email" state={{ returnTo: "/settings/api-keys" }}>
+				Verify email to create keys
+			</Link>
+		</Button>
+	);
 
 	return (
-		<AccountPage
-			title="API keys"
-			description="Create scoped credentials for bots and other programmatic clients."
-			action={
-				verified ? (
-					<Button size="sm" onClick={() => setShowForm((current) => !current)}>
-						{showForm ? <X /> : <Plus />}
-						{showForm ? "Cancel" : "Create API key"}
-					</Button>
-				) : (
-					<Button asChild size="sm">
-						<Link to="/verify-email" state={{ returnTo: "/settings/api-keys" }}>
-							Verify email to create keys
-						</Link>
-					</Button>
-				)
-			}
-		>
-			{createdKey && (
-				<Card className="mb-6 gap-0 border-primary/40 bg-primary/4 py-0 shadow-none">
-					<CardHeader className="grid-cols-[minmax(0,1fr)_auto] border-b border-primary/20 px-4 py-4 sm:px-5">
-						<div>
-							<CardTitle className="text-base">Copy your new API key</CardTitle>
-							<p className="mt-1 text-sm text-medium-emphasis">
-								This key is shown only once. Store it somewhere secure.
-							</p>
-						</div>
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							onClick={() => setCreatedKey(null)}
-							aria-label="Dismiss"
-						>
-							<X />
-						</Button>
-					</CardHeader>
-					<CardContent className="flex min-w-0 flex-col gap-2 p-4 sm:flex-row sm:p-5">
-						<Input
-							readOnly
-							aria-label="New API key"
-							name="created-api-key"
-							value={createdKey.key}
-							className="font-mono text-xs"
-							onFocus={(event) => event.currentTarget.select()}
-						/>
-						<Button variant="secondary" onClick={copyKey}>
-							{copied ? <Check /> : <Copy />}
-							{copied ? "Copied" : "Copy"}
-						</Button>
-					</CardContent>
-				</Card>
-			)}
-
-			{showForm && verified && (
-				<Card className="mb-6 gap-0 border-border/60 py-0 shadow-none">
-					<CardHeader className="border-b border-border/40 px-5 py-4">
-						<CardTitle className="text-base">Create API key</CardTitle>
-					</CardHeader>
-					<CardContent className="p-5">
-						<form onSubmit={handleCreate} className="space-y-5">
-							<div className="max-w-md space-y-2">
-								<Label htmlFor="key-label">Name</Label>
-								<Input
-									id="key-label"
-									name="key-label"
-									value={label}
-									onChange={(event) => {
-										setLabel(event.target.value);
-										setCreateError(null);
-									}}
-									maxLength={50}
-									placeholder="Example: market-maker"
-									autoComplete="off"
-								/>
-							</div>
-							<div>
-								<p className="text-sm font-medium">Permissions</p>
-								<div className="mt-3 grid gap-3 sm:grid-cols-2">
-									{scopeOptions.map((scope) => (
-										<label
-											key={scope.value}
-											className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 p-3 hover:bg-l2"
-										>
-											<Checkbox
-												checked={scopes.includes(scope.value)}
-												onCheckedChange={(checked) => toggleScope(scope.value, checked === true)}
-												className="mt-0.5 border-border bg-l1"
-											/>
-											<span>
-												<span className="block text-sm font-medium">{scope.label}</span>
-												<span className="mt-0.5 block text-xs text-medium-emphasis">
-													{scope.description}
-												</span>
-											</span>
-										</label>
-									))}
-								</div>
-							</div>
-							{createError && <p role="alert" className="text-sm text-red-text">{createError}</p>}
-							<Button type="submit" disabled={creating || !label.trim() || scopes.length === 0}>
-								{creating ? "Creating…" : "Create key"}
-							</Button>
-						</form>
-					</CardContent>
-				</Card>
-			)}
-
-			<div className="overflow-hidden rounded-xl border border-border/60 bg-l1">
-				{loadError ? (
-					<FeedbackState
-						icon={CircleAlert}
-						title="Could not load API keys"
-						description={loadError}
-						className="min-h-56"
-						action={<Button variant="secondary" size="sm" onClick={() => void loadKeys()}>Try again</Button>}
-					/>
-				) : keys == null ? (
-					<div className="space-y-4 p-5">
-						{Array.from({ length: 3 }).map((_, index) => (
-							<Skeleton key={index} className="h-10" />
-						))}
-					</div>
-				) : keys.length === 0 ? (
-					<div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
-						<KeyRound className="size-6 text-low-emphasis" />
-						<p className="mt-3 text-sm font-medium">No API keys</p>
-						<p className="mt-1 text-sm text-medium-emphasis">
-							Create a key when you are ready to connect a bot.
+		<Page>
+			<PageContent className="max-w-6xl space-y-5">
+				<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+					<div>
+						<h1 className="text-xl font-semibold tracking-tight text-high-emphasis">API keys</h1>
+						<p className="mt-1 max-w-2xl text-sm text-medium-emphasis">
+							Create scoped credentials for bots and server-side trading clients.
 						</p>
 					</div>
-				) : (
-					<div className="overflow-x-auto">
-						<Table className="min-w-200">
-							<TableHeader>
-								<TableRow className="bg-l2/60 hover:bg-l2/60">
-									<TableHead className="px-5">Name</TableHead>
-									<TableHead>Permissions</TableHead>
-									<TableHead>Last used</TableHead>
-									<TableHead>Created</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead className="w-16 px-5">
-										<span className="sr-only">Actions</span>
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{keys.map((key) => (
-									<TableRow
-										key={key.id}
-										className={key.revokedAt ? "text-medium-emphasis" : undefined}
-									>
-										<TableCell className="px-5 py-4 font-medium text-high-emphasis">
-											{key.label}
-										</TableCell>
-										<TableCell className="max-w-80 text-xs">
-											{key.scopes.map((scope) => scopeLabels[scope]).join(", ")}
-										</TableCell>
-										<TableCell className="whitespace-nowrap text-xs">
-											{key.lastUsedAt ? formatDateTime(key.lastUsedAt) : "Never"}
-										</TableCell>
-										<TableCell className="whitespace-nowrap text-xs">
-											{formatDateTime(key.createdAt)}
-										</TableCell>
-										<TableCell>
-											<span className={key.revokedAt ? "text-medium-emphasis" : "text-green-text"}>
-												{key.revokedAt ? "Revoked" : "Active"}
-											</span>
-										</TableCell>
-										<TableCell className="px-5 text-right">
-											{!key.revokedAt && (
-												<Button
-													variant="ghost"
-													size="icon-sm"
-													disabled={!verified || deleting === key.id}
-											onClick={() => setKeyToDelete(key)}
-													aria-label={`Delete ${key.label}`}
-													title={verified ? undefined : "Verify your email to delete API keys"}
-													className="hover:text-red-text"
-												>
-													<Trash2 />
-												</Button>
-											)}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</div>
-				)}
-			</div>
+					{createAction}
+				</header>
 
-			<ConfirmDialog
-				open={keyToDelete !== null}
-				onOpenChange={(open) => !open && setKeyToDelete(null)}
-				title="Delete this API key?"
-				description={
-					keyToDelete
-						? `Delete “${keyToDelete.label}”. Applications using it will lose access immediately.`
-						: "Applications using this key will lose access immediately."
-				}
-				confirmLabel="Delete key"
-				cancelLabel="Keep key"
-				pendingLabel="Deleting…"
-				pending={deleting !== null}
-				onConfirm={() => void handleDelete()}
-			/>
-		</AccountPage>
+				<section
+					className="overflow-hidden rounded-xl border border-border/60 bg-l1 shadow-sm"
+					aria-labelledby="api-credentials-title"
+				>
+					<div className="flex items-center justify-between gap-4 border-b border-border/40 px-4 py-4 sm:px-5">
+						<div>
+							<h2 id="api-credentials-title" className="text-sm font-semibold text-high-emphasis">
+								Credentials
+							</h2>
+							<p className="mt-1 text-xs text-medium-emphasis">
+								Use a separate key for each integration.
+							</p>
+						</div>
+					</div>
+
+					{!loadError && keys && keys.length > 0 ? (
+						<div className="hidden grid-cols-[minmax(12rem,1.1fr)_minmax(16rem,1.4fr)_minmax(10rem,.8fr)_auto] gap-5 border-b border-border/40 bg-l2/35 px-5 py-2.5 text-[11px] text-low-emphasis lg:grid">
+							<span>Name</span>
+							<span>Permissions</span>
+							<span>Last used</span>
+							<span className="text-right">Status</span>
+						</div>
+					) : null}
+
+					{loadError ? (
+						<KeyListState
+							title="Could not load API keys"
+							description={loadError}
+							error
+							action={
+								<Button variant="outline" size="sm" onClick={() => void loadKeys()}>
+									Try again
+								</Button>
+							}
+						/>
+					) : keys === null ? (
+						<KeysLoading />
+					) : keys.length === 0 ? (
+						<KeyListState
+							title="No API keys"
+							description="Create a key when your bot or server-side client is ready to connect."
+						/>
+					) : (
+						<div className="divide-y divide-border/30">
+							{keys.map((key) => (
+								<ApiKeyRow
+									key={key.id}
+									record={key}
+									verified={verified}
+									revoking={revoking === key.id}
+									onRevoke={setKeyToRevoke}
+								/>
+							))}
+						</div>
+					)}
+
+					<div className="flex flex-col gap-1.5 border-t border-border/40 px-4 py-3.5 text-xs text-medium-emphasis sm:flex-row sm:items-center sm:justify-between sm:px-5">
+						<p>Full keys are shown once. Store them outside client-side code.</p>
+						<a
+							href="https://docs.paperdrill.dev/authentication"
+							target="_blank"
+							rel="noreferrer"
+							className="font-medium text-high-emphasis underline-offset-4 hover:underline"
+						>
+							Authentication guide
+						</a>
+					</div>
+				</section>
+
+				<CreateApiKeyDialog
+					open={createDialogOpen}
+					onOpenChange={setCreateDialogOpen}
+					onCreate={handleCreate}
+				/>
+
+				<ConfirmDialog
+					open={keyToRevoke !== null}
+					onOpenChange={(open) => !open && setKeyToRevoke(null)}
+					title="Revoke this API key?"
+					description={
+						keyToRevoke
+							? `Revoke "${keyToRevoke.label}". Applications using it will lose access immediately.`
+							: "Applications using this key will lose access immediately."
+					}
+					confirmLabel="Revoke key"
+					cancelLabel="Keep key"
+					pendingLabel="Revoking…"
+					pending={revoking !== null}
+					onConfirm={() => void handleRevoke()}
+				/>
+			</PageContent>
+		</Page>
 	);
 }
