@@ -16,12 +16,21 @@ import { useMarkets } from "@/context/MarketContext";
 import { useOrderbook } from "@/hooks/use-orderbook";
 import { useTickers } from "@/hooks/use-tickers";
 import { useTrades } from "@/hooks/use-trades";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+
+const PANEL_CLASS_NAME = "overflow-hidden rounded-xl border border-border/60 bg-l1 shadow-sm";
 
 export function TradePage() {
 	const { symbol = "BTC_USD" } = useParams();
 	const { loading: authLoading, authenticated, verified } = useAuth();
 	const { markets, loading: marketsLoading, error: marketsError, refresh } = useMarkets();
-	const { tickers, loading: tickerLoading, error: tickerError, refresh: refreshTickers } = useTickers();
+	const {
+		tickers,
+		loading: tickerLoading,
+		error: tickerError,
+		refresh: refreshTickers,
+	} = useTickers();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const leftTab = searchParams.get("panel") === "trades" ? "trades" : "book";
 	const {
@@ -32,7 +41,13 @@ export function TradePage() {
 		bestBid,
 		bestAsk,
 	} = useOrderbook(symbol);
-	const { trades, loading: tradesLoading, error: tradesError, refresh: refreshTrades } = useTrades(symbol);
+	const {
+		trades,
+		loading: tradesLoading,
+		error: tradesError,
+		refresh: refreshTrades,
+	} = useTrades(symbol);
+	const isMobile = useIsMobile();
 	const ticker = tickers[symbol] ?? null;
 	const marketExists = markets.some((market) => market.symbol === symbol);
 
@@ -132,14 +147,40 @@ export function TradePage() {
 		);
 	}
 
+	const orderbookPanel = (
+		<Orderbook
+			bids={orderbook.bids}
+			asks={orderbook.asks}
+			loading={orderbookLoading}
+			error={orderbookError}
+			onRetry={refreshOrderbook}
+			symbol={symbol}
+			lastPrice={ticker?.lastPrice}
+		/>
+	);
+	const tradesPanel = (
+		<Trades
+			symbol={symbol}
+			loading={tradesLoading}
+			error={tradesError}
+			onRetry={refreshTrades}
+			trades={trades}
+		/>
+	);
+
 	return (
-		<Page fixed className="safe-area-bottom px-2 sm:px-4">
-			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto scrollbar-gutter-stable lg:grid-cols-[minmax(16rem,19rem)_minmax(0,1fr)_minmax(17.5rem,21.5rem)] lg:grid-rows-[auto_clamp(30rem,60dvh,36rem)_auto]">
-				<div className="order-1 lg:col-span-2 lg:col-start-1 lg:row-start-1">
+		<Page fixed className="safe-area-bottom px-3 py-3 sm:px-4 sm:py-4 lg:px-5">
+			<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto scrollbar-gutter-stable lg:grid-cols-[minmax(0,1fr)_minmax(19rem,23rem)] xl:grid-cols-[minmax(16rem,19rem)_minmax(0,1fr)_minmax(17.5rem,21.5rem)] xl:grid-rows-[auto_clamp(30rem,60dvh,36rem)_auto]">
+				<div className="order-1 lg:col-span-2 lg:col-start-1 lg:row-start-1 xl:col-span-2">
 					<MarketHeader symbol={symbol} markets={markets} tickers={tickers} />
 				</div>
 
-				<div className="relative order-2 min-h-80 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:min-h-96 lg:col-start-2 lg:row-start-2 lg:min-h-0">
+				<div
+					className={cn(
+						PANEL_CLASS_NAME,
+						"relative order-2 h-128 min-h-0 sm:h-144 lg:col-start-1 lg:row-start-2 xl:col-start-2 xl:h-auto",
+					)}
+				>
 					{tickerLoading && !ticker ? (
 						<div className="flex h-full flex-col justify-between p-6">
 							<div className="flex items-center justify-between">
@@ -163,15 +204,25 @@ export function TradePage() {
 							title="Chart unavailable"
 							description={tickerError}
 							className="h-full min-h-0"
-							action={<Button variant="secondary" size="sm" onClick={refreshTickers}>Try again</Button>}
+							action={
+								<Button variant="secondary" size="sm" onClick={refreshTickers}>
+									Try again
+								</Button>
+							}
 						/>
 					) : (
-						<Chart symbol={symbol} orderbook={orderbook} ticker={ticker} />
+						<Chart
+							symbol={symbol}
+							orderbook={orderbook}
+							ticker={ticker}
+							mobileOrderbook={isMobile ? orderbookPanel : undefined}
+							mobileTrades={isMobile ? tradesPanel : undefined}
+						/>
 					)}
 				</div>
 
-				<div className="order-3 flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-3 lg:row-start-1 lg:row-span-3">
-					<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
+				<div className="order-3 flex h-fit min-w-0 flex-col gap-3 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-2 xl:col-start-3 xl:row-start-1 xl:row-span-3">
+					<div className={PANEL_CLASS_NAME}>
 						<TradeForm
 							symbol={symbol}
 							loading={tickerLoading && !ticker}
@@ -180,43 +231,36 @@ export function TradePage() {
 							bestAsk={bestAsk}
 						/>
 					</div>
-					<div className="hidden lg:block">
+					<div className="hidden xl:block">
 						<MarketWatchlist symbol={symbol} markets={markets} tickers={tickers} />
 					</div>
 				</div>
 
-				<div className="order-4 flex h-80 min-w-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:h-96 lg:col-start-1 lg:row-start-2 lg:h-auto lg:min-h-0">
-					<div className="shrink-0 p-3">{bookTradesTabs}</div>
+				{!isMobile && (
 					<div
-						id="market-data-panel"
-						role="tabpanel"
-						aria-labelledby={leftTab === "book" ? "book-tab" : "trades-tab"}
-						className="min-h-0 flex-1"
-					>
-						{leftTab === "book" ? (
-							<Orderbook
-								bids={orderbook.bids}
-								asks={orderbook.asks}
-								loading={orderbookLoading}
-								error={orderbookError}
-								onRetry={refreshOrderbook}
-								symbol={symbol}
-								lastPrice={ticker?.lastPrice}
-							/>
-						) : (
-							<Trades
-								symbol={symbol}
-								loading={tradesLoading}
-								error={tradesError}
-								onRetry={refreshTrades}
-								trades={trades}
-							/>
+						className={cn(
+							PANEL_CLASS_NAME,
+							"order-4 hidden h-96 min-w-0 flex-col md:flex lg:col-span-2 lg:col-start-1 lg:row-start-3 xl:col-span-1 xl:row-start-2 xl:h-auto xl:min-h-0",
 						)}
+					>
+						<div className="shrink-0 border-b border-border/40 p-3">{bookTradesTabs}</div>
+						<div
+							id="market-data-panel"
+							role="tabpanel"
+							aria-labelledby={leftTab === "book" ? "book-tab" : "trades-tab"}
+							className="min-h-0 flex-1"
+						>
+							{leftTab === "book" ? orderbookPanel : tradesPanel}
+						</div>
 					</div>
-				</div>
+				)}
 
 				<div
-					className={`order-5 overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm lg:col-span-2 lg:col-start-1 lg:row-start-3 ${authenticated && verified ? "lg:min-h-144" : "lg:min-h-75"}`}
+					className={cn(
+						PANEL_CLASS_NAME,
+						"order-5 lg:col-span-2 lg:col-start-1 lg:row-start-4 xl:row-start-3",
+						authenticated && verified ? "lg:min-h-144" : "lg:min-h-75",
+					)}
 				>
 					<DataPanel loading={authLoading} symbol={symbol} />
 				</div>

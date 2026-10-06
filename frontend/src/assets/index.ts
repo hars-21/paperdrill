@@ -10,11 +10,6 @@ import ethLogo from "./crypto/eth.svg";
 import solLogo from "./crypto/sol.svg";
 import usdLogo from "./crypto/usd.svg";
 
-import balanceScreenshot from "./screenshots/balance.png";
-import marketDataScreenshot from "./screenshots/market-data.png";
-import tradingScreenshot from "./screenshots/trading.png";
-import chartScreenshot from "./screenshots/chart.png";
-
 export type Theme = "light" | "dark";
 
 export const brand = {
@@ -37,13 +32,6 @@ export const crypto = {
 	ETH: ethLogo,
 	SOL: solLogo,
 	USD: usdLogo,
-} as const;
-
-export const screenshots = {
-	balance: balanceScreenshot,
-	chart: chartScreenshot,
-	marketData: marketDataScreenshot,
-	trading: tradingScreenshot,
 } as const;
 
 export function brandLogo(theme: Theme): string {

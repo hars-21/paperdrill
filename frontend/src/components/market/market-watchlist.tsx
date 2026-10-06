@@ -16,7 +16,7 @@ export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistPro
 	}
 
 	return (
-		<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
+		<div className="overflow-hidden rounded-xl border border-border/60 bg-l1 shadow-sm">
 			<div className="border-b border-border/40 px-3 py-2.5 text-sm font-semibold text-high-emphasis">
 				Markets
 			</div>

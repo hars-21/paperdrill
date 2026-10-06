@@ -109,13 +109,14 @@ export function PriceChart({
 		let chart: IChartApi | null = null;
 		const frame = requestAnimationFrame(() => {
 			const colors = getChartColors();
+			const compact = container.clientWidth < 640;
 			chart = createChart(container, {
 				autoSize: true,
 				layout: {
 					background: { type: ColorType.Solid, color: "transparent" },
 					textColor: colors.text,
 					fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-					fontSize: 11,
+					fontSize: compact ? 10 : 11,
 				},
 				grid: {
 					vertLines: { color: colors.grid, style: LineStyle.Solid },
@@ -142,9 +143,9 @@ export function PriceChart({
 					borderColor: colors.grid,
 					timeVisible: true,
 					secondsVisible: false,
-					rightOffset: 6,
-					barSpacing: 8,
-					minBarSpacing: 2,
+					rightOffset: compact ? 2 : 6,
+					barSpacing: compact ? 5 : 8,
+					minBarSpacing: compact ? 1 : 2,
 					tickMarkFormatter: formatTick,
 				},
 				localization: { timeFormatter: formatChartTime },
