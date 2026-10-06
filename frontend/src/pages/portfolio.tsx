@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { DashboardPage } from "@/components/dashboard-page";
+import { AccountPage } from "@/components/account-page";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Metric, MetricGroup } from "@/components/ui/metric";
@@ -20,7 +20,7 @@ import { formatPrice, formatQty } from "@/utils/format";
 
 type BalanceRow = PortfolioPosition & { precision: number };
 
-export function DashboardBalancesPage() {
+export function PortfolioPage() {
 	const { markets } = useMarkets();
 	const { balances, loading: balanceLoading, error: balanceError } = useBalance();
 	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
@@ -70,7 +70,7 @@ export function DashboardBalancesPage() {
 	);
 
 	return (
-		<DashboardPage
+		<AccountPage
 			title="Portfolio & balances"
 			description="Portfolio value uses the latest trade price on PaperDrill. Available funds can be traded immediately, while locked funds are reserved by open orders."
 		>
@@ -217,6 +217,6 @@ export function DashboardBalancesPage() {
 					</div>
 				)}
 			</div>
-		</DashboardPage>
+		</AccountPage>
 	);
 }

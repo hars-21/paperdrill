@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, CircleAlert, Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { DashboardPage } from "@/components/dashboard-page";
+import { AccountPage } from "@/components/account-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,7 +38,7 @@ const scopeLabels: Record<ApiKeyScope, string> = {
 	ORDER_CANCEL: "Cancel orders",
 };
 
-export function DashboardApiKeysPage() {
+export function ApiKeysPage() {
 	const { verified } = useAuth();
 	const [keys, setKeys] = useState<ApiKeyRecord[] | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
@@ -122,7 +122,7 @@ export function DashboardApiKeysPage() {
 	};
 
 	return (
-		<DashboardPage
+		<AccountPage
 			title="API keys"
 			description="Create scoped credentials for bots and other programmatic clients."
 			action={
@@ -133,7 +133,9 @@ export function DashboardApiKeysPage() {
 					</Button>
 				) : (
 					<Button asChild size="sm">
-						<Link to="/verify-email">Verify email to create keys</Link>
+						<Link to="/verify-email" state={{ returnTo: "/settings/api-keys" }}>
+							Verify email to create keys
+						</Link>
 					</Button>
 				)
 			}
@@ -326,6 +328,6 @@ export function DashboardApiKeysPage() {
 				pending={deleting !== null}
 				onConfirm={() => void handleDelete()}
 			/>
-		</DashboardPage>
+		</AccountPage>
 	);
 }

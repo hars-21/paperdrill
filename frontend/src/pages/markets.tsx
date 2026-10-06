@@ -28,7 +28,7 @@ export function MarketsPage() {
 			<PageHeader>
 				<PageHeading
 					title="Spot Markets"
-					description="Zero-fee sandbox paper trading playground on digital assets"
+					description="Trade digital assets with credits through a live, zero-fee order book."
 				/>
 			</PageHeader>
 

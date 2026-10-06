@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { PageHeading } from "@/components/ui/page";
 
-export function DashboardPage({
+export function AccountPage({
 	title,
 	description,
 	action,

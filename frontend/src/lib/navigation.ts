@@ -1,13 +1,13 @@
 export type NavigationId =
+	| "home"
+	| "portfolio"
+	| "activity"
+	| "profile"
 	| "markets"
 	| "trading"
 	| "leaderboard"
 	| "docs"
-	| "dashboard"
-	| "overview"
-	| "api-keys"
-	| "balances"
-	| "account-data";
+	| "api-keys";
 
 export type NavigationItem = {
 	id: NavigationId;
@@ -19,31 +19,16 @@ export type NavigationItem = {
 };
 
 export const primaryNavigation = [
+	{ id: "trading", label: "Trade", href: "/trade/BTC_USD", activePath: "/trade" },
 	{ id: "markets", label: "Markets", href: "/markets", end: true },
-	{ id: "trading", label: "Trading", href: "/trade/BTC_USD", activePath: "/trade" },
 	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard", end: true },
 	{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev", external: true },
 ] satisfies NavigationItem[];
 
-export const applicationNavigation = [
-	...primaryNavigation,
-	{ id: "dashboard", label: "Dashboard", href: "/dashboard" },
+export const accountNavigation = [
+	{ id: "home", label: "Home", href: "/home", end: true },
+	{ id: "portfolio", label: "Portfolio", href: "/portfolio", end: true },
+	{ id: "activity", label: "Orders & trades", href: "/activity", end: true },
+	{ id: "api-keys", label: "API keys", href: "/settings/api-keys", end: true },
+	{ id: "profile", label: "Profile", href: "/settings/profile", end: true },
 ] satisfies NavigationItem[];
-
-export const dashboardNavigation = [
-	{ id: "overview", label: "Overview", href: "/dashboard", end: true },
-	{ id: "api-keys", label: "API keys", href: "/dashboard/api-keys" },
-	{ id: "balances", label: "Balances", href: "/dashboard/balances" },
-	{ id: "account-data", label: "Account data", href: "/dashboard/data" },
-] satisfies NavigationItem[];
-
-export const dashboardUtilityNavigation = [
-	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard" },
-	{ id: "trading", label: "Open trading", href: "/trade/BTC_USD" },
-	{ id: "docs", label: "Documentation", href: "https://docs.paperdrill.dev", external: true },
-] satisfies NavigationItem[];
-
-export const dashboardPageNames: Record<string, string> = {
-	...Object.fromEntries(dashboardNavigation.map((item) => [item.href, item.label])),
-	"/dashboard/profile": "Profile",
-};

@@ -1,19 +1,20 @@
 export const SITE = {
 	name: "PaperDrill",
-	tagline: "The Exchange Built for Developers",
+	tagline: "Competitive Trading Platform",
 	url: "https://paperdrill.dev",
 	description:
-		"PaperDrill is a live paper-trading exchange with a real matching engine and order book. Trade on the UI or connect a bot via API — no KYC and no real funds at risk.",
+		"PaperDrill is a competitive trading platform where traders use credits, trade through a live matching engine, connect bots via API, and climb the leaderboard.",
 	shortDescription:
-		"Real matching engine. Real order book. Trade on the UI or connect a bot. No real funds at risk.",
+		"Trade with credits through a live matching engine, connect bots, and climb the leaderboard.",
 	keywords: [
-		"paper trading",
-		"crypto exchange simulator",
+		"competitive trading",
+		"virtual trading",
+		"credit trading",
+		"trading leaderboard",
 		"matching engine",
 		"order book",
-		"developer exchange",
-		"algorithmic trading sandbox",
-		"BTC paper trading",
+		"algorithmic trading",
+		"BTC virtual trading",
 		"API trading",
 		"WebSocket trading",
 		"PaperDrill",
@@ -64,52 +65,61 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 	"/leaderboard": {
 		title: `Leaderboard | ${SITE.name}`,
 		description:
-			"View PaperDrill's global leaderboard, ranked by all-time portfolio return across live simulated markets.",
+			"View PaperDrill's global leaderboard, ranked by all-time portfolio return across live credit markets.",
 		path: "/leaderboard",
 	},
 	"/login": {
 		title: `Sign In | ${SITE.name}`,
-		description: "Sign in to your PaperDrill account to trade and manage simulated balances.",
+		description: "Sign in to your PaperDrill account to trade and manage your credit balance.",
 		path: "/login",
 		noIndex: true,
 	},
 	"/signup": {
 		title: `Sign Up | ${SITE.name}`,
-		description: "Create a free PaperDrill account and start paper trading with simulated funds.",
+		description: "Create a free PaperDrill account and start trading with credits.",
 		path: "/signup",
 	},
-	"/profile": {
+	"/home": {
+		title: `Home | ${SITE.name}`,
+		description: "Review your PaperDrill portfolio and recent trading activity.",
+		path: "/home",
+		noIndex: true,
+	},
+	"/portfolio": {
+		title: `Portfolio | ${SITE.name}`,
+		description: "Review your credit balance, asset positions, and portfolio performance.",
+		path: "/portfolio",
+		noIndex: true,
+	},
+	"/activity": {
+		title: `Orders & Trades | ${SITE.name}`,
+		description: "Review your open orders, order history, and completed trades.",
+		path: "/activity",
+		noIndex: true,
+	},
+	"/settings/profile": {
 		title: `Profile | ${SITE.name}`,
-		description: "View your PaperDrill account, balances, and trading history.",
-		path: "/profile",
+		description: "Manage your PaperDrill account details and session.",
+		path: "/settings/profile",
+		noIndex: true,
+	},
+	"/settings/api-keys": {
+		title: `API Keys | ${SITE.name}`,
+		description: "Manage scoped API credentials for your trading bots and clients.",
+		path: "/settings/api-keys",
 		noIndex: true,
 	},
 };
 
 export function resolvePageSeo(pathname: string): PageSeo {
 	if (ROUTE_SEO[pathname]) return ROUTE_SEO[pathname];
-	if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
-		const page =
-			pathname.split("/").at(-1)?.replace("api-keys", "API Keys").replace("data", "Account Data") ??
-			"Dashboard";
-		const title =
-			pathname === "/dashboard"
-				? "Dashboard"
-				: page.replace(/^./, (letter) => letter.toUpperCase());
-		return {
-			title: `${title} | ${SITE.name}`,
-			description: "Manage your PaperDrill account, balances, API keys and trading activity.",
-			path: pathname,
-			noIndex: true,
-		};
-	}
 
 	const tradeMatch = pathname.match(/^\/trade\/([A-Z_]+)$/);
 	if (tradeMatch) {
 		const symbol = tradeMatch[1]?.replace("_", "/") ?? "BTC/USD";
 		return {
 			title: `Trade ${symbol} | ${SITE.name}`,
-			description: `Live ${symbol} paper trading on PaperDrill — real matching engine, order book depth, and WebSocket market data.`,
+			description: `Trade ${symbol} with credits through PaperDrill's live matching engine, order book depth, and WebSocket market data.`,
 			path: pathname,
 		};
 	}

@@ -3,8 +3,11 @@ import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
 import { Safari } from "../ui/safari";
 import { screenshots } from "@/assets";
+import { useAuth } from "@/context/AuthContext";
 
 export function Hero() {
+	const { user, loading } = useAuth();
+
 	return (
 		<section className="bg-background px-6 py-16 pt-28 lg:py-20 lg:pt-40">
 			<div className="mx-auto text-center max-w-4xl">
@@ -20,16 +23,18 @@ export function Hero() {
 				</p>
 
 				<div className="flex flex-wrap items-center justify-center gap-3">
-					<Link to="/signup">
-						<Button size="lg" className="gap-1.5">
-							Get Started <ArrowRight className="size-4" />
+					{loading ? (
+						<Button size="lg" disabled>Loading…</Button>
+					) : (
+						<Button asChild size="lg" className="gap-1.5">
+							<Link to={user ? "/home" : "/signup"}>
+								{user ? "Go to home" : "Start trading"} <ArrowRight className="size-4" />
+							</Link>
 						</Button>
-					</Link>
-					<Link to="/trade/BTC_USD">
-						<Button size="lg" variant="secondary">
-							Open Playground
-						</Button>
-					</Link>
+					)}
+					<Button asChild size="lg" variant="secondary">
+						<Link to="/trade/BTC_USD">Trade now</Link>
+					</Button>
 				</div>
 
 				<div className="mt-12">

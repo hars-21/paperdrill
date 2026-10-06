@@ -12,11 +12,10 @@ import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
 import { RootLayout } from "./components/root-layout";
 import { Protected, PublicOnly } from "./components/route-guards";
-import { DashboardLayout } from "./components/dashboard-layout";
-import { DashboardOverviewPage } from "./pages/dashboard/overview";
-import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
-import { DashboardBalancesPage } from "./pages/dashboard/balances";
-import { DashboardDataPage } from "./pages/dashboard/data";
+import { HomePage } from "./pages/home";
+import { ApiKeysPage } from "./pages/api-keys";
+import { PortfolioPage } from "./pages/portfolio";
+import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
 import { RouteBehavior } from "./components/route-behavior";
 
@@ -45,20 +44,47 @@ export function App() {
 
 				<Route element={<AppLayout />}>
 					<Route
-						path="dashboard"
+						path="home"
 						element={
 							<Protected>
-								<DashboardLayout />
+								<HomePage />
 							</Protected>
 						}
-					>
-						<Route index element={<DashboardOverviewPage />} />
-						<Route path="api-keys" element={<DashboardApiKeysPage />} />
-						<Route path="balances" element={<DashboardBalancesPage />} />
-						<Route path="data" element={<DashboardDataPage />} />
-						<Route path="profile" element={<ProfilePage />} />
-					</Route>
-					<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
+					/>
+					<Route
+						path="portfolio"
+						element={
+							<Protected>
+								<PortfolioPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="activity"
+						element={
+							<Protected>
+								<ActivityPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="settings/profile"
+						element={
+							<Protected>
+								<ProfilePage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="settings/api-keys"
+						element={
+							<Protected>
+								<ApiKeysPage />
+							</Protected>
+						}
+					/>
+					<Route path="settings" element={<Navigate to="/settings/profile" replace />} />
+					<Route path="profile" element={<Navigate to="/settings/profile" replace />} />
 					<Route path="markets" element={<MarketsPage />} />
 					<Route path="leaderboard" element={<LeaderboardPage />} />
 					<Route path="trade/:symbol" element={<TradePage />} />

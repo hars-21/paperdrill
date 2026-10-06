@@ -470,12 +470,12 @@ export function DataPanel({ loading = false, symbol }: DataPanelProps) {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button asChild size="sm">
-						<Link to="/login" state={{ returnTo: symbol ? `/trade/${symbol}` : "/dashboard/data" }}>
+						<Link to="/login" state={{ returnTo: symbol ? `/trade/${symbol}` : "/activity" }}>
 							Sign in
 						</Link>
 					</Button>
 					<Button asChild size="sm" variant="outline">
-						<Link to="/signup" state={{ returnTo: symbol ? `/trade/${symbol}` : "/dashboard/data" }}>
+						<Link to="/signup" state={{ returnTo: symbol ? `/trade/${symbol}` : "/activity" }}>
 							Create account
 						</Link>
 					</Button>

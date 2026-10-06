@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import Navbar from "@/components/landing/navbar";
+import Navbar from "@/components/navbar";
 import Footer from "@/components/landing/footer";
 import { SeoHead } from "@/components/seo-head";
 import { SkipLink } from "@/components/ui/skip-link";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Copy, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { DashboardPage } from "@/components/dashboard-page";
+import { AccountPage } from "@/components/account-page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ export function ProfilePage() {
 	};
 
 	return (
-		<DashboardPage
+		<AccountPage
 			title="Profile"
 			description="Your basic account details and session controls."
 			action={
@@ -68,7 +68,7 @@ export function ProfilePage() {
 						) : (
 							<Link
 								to="/verify-email"
-								state={{ returnTo: "/dashboard/profile" }}
+								state={{ returnTo: "/settings/profile" }}
 								className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
 							>
 								<Mail className="size-4" /> Verify email
@@ -98,7 +98,7 @@ export function ProfilePage() {
 					</div>
 				</div>
 			</div>
-		</DashboardPage>
+		</AccountPage>
 	);
 }
 

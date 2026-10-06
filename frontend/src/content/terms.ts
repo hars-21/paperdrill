@@ -22,7 +22,7 @@ export const terms: LegalContent = {
 			blocks: [
 				{
 					type: "paragraph",
-					text: "PaperDrill is a paper-trading simulator, not a real exchange. All balances, credits, prices, orders, trades, profit and loss, and leaderboard results are simulated. No real funds or assets are deposited, held, transferred or withdrawn, and nothing on PaperDrill can be redeemed for money or other value.",
+					text: "PaperDrill is a simulated trading platform, not a real exchange. All balances, credits, prices, orders, trades, profit and loss, and leaderboard results are simulated. No real funds or assets are deposited, held, transferred or withdrawn, and nothing on PaperDrill can be redeemed for money or other value.",
 				},
 			],
 		},

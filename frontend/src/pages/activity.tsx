@@ -1,15 +1,15 @@
-import { DashboardPage } from "@/components/dashboard-page";
+import { AccountPage } from "@/components/account-page";
 import { DataPanel } from "@/components/market/data-panel";
 
-export function DashboardDataPage() {
+export function ActivityPage() {
 	return (
-		<DashboardPage
-			title="Account data"
+		<AccountPage
+			title="Orders & trades"
 			description="Review balances, open orders, order history and completed trades."
 		>
 			<div className="overflow-hidden rounded-xl border border-border/60 bg-l1">
 				<DataPanel />
 			</div>
-		</DashboardPage>
+		</AccountPage>
 	);
 }

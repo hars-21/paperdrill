@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function CtaSection() {
+	const { user, loading } = useAuth();
+
 	return (
 		<section className="px-6 py-20 lg:py-28">
 			<div className="mx-auto max-w-3xl text-center">
@@ -10,11 +13,15 @@ export function CtaSection() {
 					Risk nothing. <span className="text-primary">Learn everything.</span>
 				</h2>
 				<div className="mt-8">
-					<Link to="/signup">
-						<Button size="lg" className="gap-1.5 px-8">
-							Start Trading <ArrowRight className="size-4" />
+					{loading ? (
+						<Button size="lg" className="px-8" disabled>Loading…</Button>
+					) : (
+						<Button asChild size="lg" className="gap-1.5 px-8">
+							<Link to={user ? "/home" : "/signup"}>
+								{user ? "Go to home" : "Start trading"} <ArrowRight className="size-4" />
+							</Link>
 						</Button>
-					</Link>
+					)}
 				</div>
 			</div>
 		</section>

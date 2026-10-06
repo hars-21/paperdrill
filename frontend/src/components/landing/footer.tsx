@@ -29,7 +29,12 @@ export function Footer() {
 							</li>
 							<li>
 								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
-									Trading
+									Trade
+								</Link>
+							</li>
+							<li>
+								<Link to="/leaderboard" className="transition-colors hover:text-high-emphasis">
+									Leaderboard
 								</Link>
 							</li>
 						</ul>

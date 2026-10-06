@@ -3,7 +3,7 @@ export type ReturnLocationState = {
 	emailSent?: boolean;
 };
 
-export function getSafeReturnTo(state: unknown, fallback = "/dashboard") {
+export function getSafeReturnTo(state: unknown, fallback = "/home") {
 	if (!state || typeof state !== "object" || !("returnTo" in state)) return fallback;
 
 	const returnTo = (state as ReturnLocationState).returnTo;

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { ArrowRight, Database, KeyRound, WalletCards } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AssetIcon, assetNames } from "@/components/icons/asset-icon";
-import { DashboardPage } from "@/components/dashboard-page";
+import { AccountPage } from "@/components/account-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,14 +15,14 @@ import { useBalance } from "@/hooks/use-balance";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { formatDateTime, formatPrice, formatQty } from "@/utils/format";
 
-export function DashboardOverviewPage() {
+export function HomePage() {
 	const { user } = useAuth();
 	const { markets } = useMarkets();
 	const { balances, loading: balanceLoading, error: balanceError } = useBalance();
 	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
 	const { openOrders, loading: openOrdersLoading, error: openOrdersError } = useOpenOrders();
 	const { trades, loading: tradesLoading, error: tradesError } = useTradeHistory(5);
-	const dashboardError = balanceError ?? portfolioError ?? openOrdersError ?? tradesError;
+	const accountError = balanceError ?? portfolioError ?? openOrdersError ?? tradesError;
 
 	const balanceEntries = useMemo(() => Object.entries(balances), [balances]);
 	const pnl = Number(portfolio?.pnl ?? 0);
@@ -35,7 +35,7 @@ export function DashboardOverviewPage() {
 	};
 
 	return (
-		<DashboardPage
+		<AccountPage
 			title={`Welcome back, ${user?.name ?? "trader"}`}
 			description="A concise view of your PaperDrill account and recent activity."
 			action={
@@ -46,7 +46,7 @@ export function DashboardOverviewPage() {
 				</Button>
 			}
 		>
-			{dashboardError && (
+			{accountError && (
 				<InlineNotice tone="error" className="mb-6 rounded-lg border border-red-text/20 bg-red-bg/20">
 					Some account data could not be loaded. The available information is still shown.
 				</InlineNotice>
@@ -176,25 +176,25 @@ export function DashboardOverviewPage() {
 
 			<div className="mt-6 grid gap-3 md:grid-cols-3">
 				<QuickLink
-					to="/dashboard/api-keys"
+					to="/settings/api-keys"
 					icon={KeyRound}
 					title="Manage API keys"
 					text="Connect a bot with scoped access."
 				/>
 				<QuickLink
-					to="/dashboard/balances"
+					to="/portfolio"
 					icon={WalletCards}
 					title="View balances"
 					text="Review available and locked assets."
 				/>
 				<QuickLink
-					to="/dashboard/data"
+					to="/activity"
 					icon={Database}
 					title="Account data"
 					text="Inspect orders and trade history."
 				/>
 			</div>
-		</DashboardPage>
+		</AccountPage>
 	);
 }
 
