@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 interface LandingVisualProps {
 	src: string;
 	alt: string;
+	width: number;
+	height: number;
 	className?: string;
 	imageClassName?: string;
 	eager?: boolean;
@@ -12,6 +14,8 @@ interface LandingVisualProps {
 export function LandingVisual({
 	src,
 	alt,
+	width,
+	height,
 	className,
 	imageClassName,
 	eager = false,
@@ -27,7 +31,9 @@ export function LandingVisual({
 		>
 			<img
 				src={src}
-				alt={loaded ? alt : ""}
+				alt={alt}
+				width={width}
+				height={height}
 				loading={eager ? "eager" : "lazy"}
 				fetchPriority={eager ? "high" : "auto"}
 				decoding="async"

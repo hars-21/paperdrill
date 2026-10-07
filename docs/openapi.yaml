@@ -3,7 +3,7 @@ info:
   title: PaperDrill REST API
   version: 1.0.0
   description: |
-    Trade with simulated funds and read PaperDrill market data.
+    Trade PaperDrill credit markets and read live market data.
 
     Prices, quantities, balances, and other decimal values are encoded as strings so clients do not lose precision.
 servers:

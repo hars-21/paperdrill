@@ -3,7 +3,7 @@ title: "Build a simple trading bot"
 description: "Create a one-shot TypeScript bot that reads the book, places a limit order, monitors it, and cancels the remainder."
 ---
 
-This guide builds a deliberately small bot that places one simulated limit order and cleans up any unfilled quantity. It demonstrates the API lifecycle without hiding order state or precision handling behind an SDK.
+This guide builds a deliberately small bot that places one credit-funded limit order and cleans up any unfilled quantity. It demonstrates the API lifecycle without hiding order state or precision handling behind an SDK.
 
 <Warning>
 	The example can create a real order on your PaperDrill account, but it only uses simulated funds.
@@ -13,7 +13,7 @@ This guide builds a deliberately small bot that places one simulated limit order
 ## Prerequisites
 
 - [Bun](https://bun.sh) installed locally
-- A verified PaperDrill account with a simulated balance
+- A verified PaperDrill account with a funded credit balance
 - An API key with `ORDER_READ`, `ORDER_CREATE`, and `ORDER_CANCEL`
 
 Set the key and, optionally, the market:

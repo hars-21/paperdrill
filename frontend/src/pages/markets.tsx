@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, Search } from "lucide-react";
 import { AssetIcon } from "@/components/icons/asset-icon";
 import { MarketLineChart } from "@/components/market/market-line-chart";
@@ -143,7 +143,8 @@ function MarketCardSkeleton({ featured = false }: { featured?: boolean }) {
 }
 
 export function MarketsPage() {
-	const [query, setQuery] = useState("");
+	const [searchParams, setSearchParams] = useSearchParams();
+	const query = searchParams.get("q") ?? "";
 	const {
 		markets,
 		loading: marketsLoading,
@@ -176,13 +177,28 @@ export function MarketsPage() {
 	}, [query, sortedMarkets]);
 
 	const initialLoading = marketsLoading || (tickersLoading && !Object.keys(tickers).length);
+	const updateQuery = (value: string) => {
+		setSearchParams(
+			(current) => {
+				const next = new URLSearchParams(current);
+				const normalized = value.trimStart();
+				if (normalized) next.set("q", normalized);
+				else next.delete("q");
+				return next;
+			},
+			{ replace: true },
+		);
+	};
 
 	return (
 		<Page>
 			<PageContent className="max-w-384 space-y-5">
 				<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 					<div>
-						<h1 id="live-markets-heading" className="text-xl font-semibold tracking-tight text-high-emphasis">
+						<h1
+							id="live-markets-heading"
+							className="text-xl font-semibold tracking-tight text-high-emphasis"
+						>
 							Live markets
 						</h1>
 						<p className="mt-1 text-sm text-medium-emphasis">
@@ -197,9 +213,11 @@ export function MarketsPage() {
 						/>
 						<Input
 							type="search"
+							name="market-search"
 							value={query}
-							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Search markets"
+							onChange={(event) => updateQuery(event.target.value)}
+							autoComplete="off"
+							placeholder="Search markets…"
 							className="h-10 rounded-lg bg-l1 pl-9 shadow-sm"
 						/>
 					</label>

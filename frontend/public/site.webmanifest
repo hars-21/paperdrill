@@ -1,7 +1,7 @@
 {
 	"name": "PaperDrill",
 	"short_name": "PaperDrill",
-	"description": "The exchange built for developers - real matching engine, paper trading, zero risk.",
+	"description": "Trade competitive credit markets, connect bots, and climb the global leaderboard.",
 	"start_url": "/",
 	"display": "standalone",
 	"background_color": "#0a0a0a",

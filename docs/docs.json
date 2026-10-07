@@ -2,7 +2,10 @@
 	"$schema": "https://mintlify.com/docs.json",
 	"theme": "mint",
 	"name": "PaperDrill",
-	"description": "Guides and API reference for PaperDrill's simulated trading platform.",
+	"description": "Guides and API reference for PaperDrill's competitive trading platform.",
+	"seo": {
+		"indexing": "all"
+	},
 	"colors": {
 		"primary": "#E11D48",
 		"light": "#E11D48",

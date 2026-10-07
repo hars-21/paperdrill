@@ -1,14 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {
-	SITE,
-	OG_IMAGE,
-	resolvePageSeo,
-	canonicalUrl,
-	jsonLdWebSite,
-	jsonLdOrganization,
-	jsonLdSoftwareApplication,
-} from "@/lib/seo";
+import { SITE, OG_IMAGE, resolvePageSeo, canonicalUrl, jsonLdWebPage } from "@/lib/seo";
 
 function upsertMeta(attr: "name" | "property", key: string, content: string) {
 	let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -56,16 +48,19 @@ export function SeoHead(props?: SeoHeadProps) {
 	const title = seo.title;
 	const description = seo.description ?? SITE.description;
 	const canonical = canonicalUrl(seo.path ?? pathname);
-	const robots = seo.noIndex ? "noindex, nofollow" : "index, follow";
+	const robots = seo.noIndex ? "noindex, nofollow" : "index, follow, max-image-preview:large";
 
 	useEffect(() => {
 		document.title = title;
 
 		upsertMeta("name", "description", description);
-		upsertMeta("name", "keywords", SITE.keywords.join(", "));
 		upsertMeta("name", "robots", robots);
 		upsertMeta("name", "author", SITE.name);
-		upsertMeta("name", "theme-color", "#0a0a0a");
+		upsertMeta(
+			"name",
+			"theme-color",
+			document.documentElement.classList.contains("dark") ? "#0a0a0c" : "#ffffff",
+		);
 
 		upsertLink("canonical", canonical);
 
@@ -75,23 +70,20 @@ export function SeoHead(props?: SeoHeadProps) {
 		upsertMeta("property", "og:description", description);
 		upsertMeta("property", "og:url", canonical);
 		upsertMeta("property", "og:image", OG_IMAGE);
-		upsertMeta("property", "og:image:width", "1734");
-		upsertMeta("property", "og:image:height", "907");
-		upsertMeta("property", "og:image:alt", `${SITE.name} — ${SITE.tagline}`);
+		upsertMeta("property", "og:image:secure_url", OG_IMAGE);
+		upsertMeta("property", "og:image:type", "image/png");
+		upsertMeta("property", "og:image:width", "1737");
+		upsertMeta("property", "og:image:height", "906");
+		upsertMeta("property", "og:image:alt", "PaperDrill logo with a candlestick trading chart");
 		upsertMeta("property", "og:locale", SITE.locale);
 
 		upsertMeta("name", "twitter:card", "summary_large_image");
-		upsertMeta("name", "twitter:site", SITE.twitter);
 		upsertMeta("name", "twitter:title", title);
 		upsertMeta("name", "twitter:description", description);
 		upsertMeta("name", "twitter:image", OG_IMAGE);
-		upsertMeta("name", "twitter:image:alt", `${SITE.name} — ${SITE.tagline}`);
+		upsertMeta("name", "twitter:image:alt", "PaperDrill logo with a candlestick trading chart");
 
-		if (pathname === "/") {
-			upsertJsonLd("website", jsonLdWebSite());
-			upsertJsonLd("organization", jsonLdOrganization());
-			upsertJsonLd("software", jsonLdSoftwareApplication());
-		}
+		upsertJsonLd("webpage", jsonLdWebPage(title, description, canonical));
 	}, [title, description, canonical, robots, pathname]);
 
 	return null;

@@ -19,6 +19,8 @@ export default function TradingModesSection() {
 						<LandingVisual
 							src={landing.trading}
 							alt="PaperDrill browser trading interface with chart, order book, and order controls"
+							width={2940}
+							height={1846}
 							className="aspect-8/5"
 						/>
 						<figcaption className="mt-5 max-w-lg">
@@ -33,6 +35,8 @@ export default function TradingModesSection() {
 						<LandingVisual
 							src={landing.apiTrading}
 							alt="Developer workflow connecting an automated trading bot to PaperDrill"
+							width={1292}
+							height={1668}
 							className="aspect-5/6"
 						/>
 						<figcaption className="mt-5">

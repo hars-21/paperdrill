@@ -38,6 +38,8 @@ export function Hero() {
 					<LandingVisual
 						src={landing.arena}
 						alt="PaperDrill trading arena showing live markets and account performance"
+						width={1586}
+						height={992}
 						eager
 						className="aspect-8/5 shadow-[0_28px_80px_-48px_color-mix(in_srgb,var(--foreground)_35%,transparent)]"
 					/>

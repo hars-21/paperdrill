@@ -28,7 +28,10 @@ export function Footer() {
 								</Link>
 							</li>
 							<li>
-								<Link to={getLastTradePath()} className="transition-colors hover:text-high-emphasis">
+								<Link
+									to={getLastTradePath()}
+									className="transition-colors hover:text-high-emphasis"
+								>
 									Trade
 								</Link>
 							</li>
@@ -76,7 +79,7 @@ export function Footer() {
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						Simulated trading only. No real funds or assets are involved.
+						Credits have no monetary value. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>

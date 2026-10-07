@@ -19,6 +19,8 @@ export default function RankingSection() {
 				<LandingVisual
 					src={landing.leaderboard}
 					alt="PaperDrill global leaderboard showing trader ranks and portfolio returns"
+					width={1672}
+					height={941}
 					className="mt-10 aspect-video"
 				/>
 

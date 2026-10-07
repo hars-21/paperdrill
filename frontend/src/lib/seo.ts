@@ -3,26 +3,13 @@ export const SITE = {
 	tagline: "Competitive Trading Platform",
 	url: "https://paperdrill.dev",
 	description:
-		"PaperDrill is a competitive trading platform where traders use credits, trade through a live matching engine, connect bots via API, and climb the leaderboard.",
+		"PaperDrill is a competitive trading platform where traders trade credit markets, connect bots through the API, and climb the global leaderboard.",
 	shortDescription:
-		"Trade with credits through a live matching engine, connect bots, and climb the leaderboard.",
-	keywords: [
-		"competitive trading",
-		"virtual trading",
-		"credit trading",
-		"trading leaderboard",
-		"matching engine",
-		"order book",
-		"algorithmic trading",
-		"BTC virtual trading",
-		"API trading",
-		"WebSocket trading",
-		"PaperDrill",
-	],
+		"Trade credit markets through a live matching engine, connect bots, and earn your rank.",
 	locale: "en_US",
-	twitter: "@paperdrill",
 	contact: "support@paperdrill.dev",
 	securityContact: "security@paperdrill.dev",
+	github: "https://github.com/hars-21/paperdrill",
 } as const;
 
 export const OG_IMAGE = `${SITE.url}/og-image.png`;
@@ -48,7 +35,7 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 	},
 	"/terms": {
 		title: `Terms of Service | ${SITE.name}`,
-		description: "Terms of service for using the PaperDrill simulated trading platform.",
+		description: "Rules and terms for using the PaperDrill competitive trading platform.",
 		path: "/terms",
 	},
 	"/privacy": {
@@ -59,13 +46,13 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 	"/markets": {
 		title: `Markets | ${SITE.name}`,
 		description:
-			"Browse live BTC/USD, ETH/USD, and SOL/USD spot markets on PaperDrill with real-time order books.",
+			"Explore live BTC/USD, ETH/USD, and SOL/USD credit markets with real-time charts and order books.",
 		path: "/markets",
 	},
 	"/leaderboard": {
 		title: `Leaderboard | ${SITE.name}`,
 		description:
-			"View PaperDrill's global leaderboard, ranked by all-time portfolio return across live credit markets.",
+			"See the PaperDrill global trading leaderboard, ranked by portfolio return across live credit markets.",
 		path: "/leaderboard",
 	},
 	"/login": {
@@ -76,8 +63,15 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 	},
 	"/signup": {
 		title: `Sign Up | ${SITE.name}`,
-		description: "Create a free PaperDrill account and start trading with credits.",
+		description:
+			"Join PaperDrill, trade live credit markets, and build your place on the leaderboard.",
 		path: "/signup",
+	},
+	"/verify-email": {
+		title: `Verify Email | ${SITE.name}`,
+		description: "Verify your email address to finish setting up your PaperDrill account.",
+		path: "/verify-email",
+		noIndex: true,
 	},
 	"/home": {
 		title: `Home | ${SITE.name}`,
@@ -116,7 +110,7 @@ export function resolvePageSeo(pathname: string): PageSeo {
 
 	const tradeMatch = pathname.match(/^\/trade\/([A-Z_]+)$/);
 	if (tradeMatch) {
-		const symbol = tradeMatch[1]?.replace("_", "/") ?? "BTC/USD";
+		const symbol = tradeMatch[1]?.replaceAll("_", "/") ?? "BTC/USD";
 		return {
 			title: `Trade ${symbol} | ${SITE.name}`,
 			description: `Trade ${symbol} with credits through PaperDrill's live matching engine, order book depth, and WebSocket market data.`,
@@ -137,18 +131,29 @@ export function canonicalUrl(path = "/"): string {
 	return normalized === "/" ? SITE.url : `${SITE.url}${normalized}`;
 }
 
+export function jsonLdWebPage(title: string, description: string, url: string): object {
+	return {
+		"@context": "https://schema.org",
+		"@type": "WebPage",
+		"@id": `${url}#webpage`,
+		url,
+		name: title,
+		description,
+		inLanguage: "en",
+		isPartOf: { "@id": `${SITE.url}/#website` },
+	};
+}
+
 export function jsonLdWebSite(): object {
 	return {
 		"@context": "https://schema.org",
 		"@type": "WebSite",
+		"@id": `${SITE.url}/#website`,
 		name: SITE.name,
 		url: SITE.url,
 		description: SITE.description,
-		potentialAction: {
-			"@type": "SearchAction",
-			target: `${SITE.url}/markets?q={search_term_string}`,
-			"query-input": "required name=search_term_string",
-		},
+		inLanguage: "en",
+		publisher: { "@id": `${SITE.url}/#organization` },
 	};
 }
 
@@ -156,10 +161,17 @@ export function jsonLdOrganization(): object {
 	return {
 		"@context": "https://schema.org",
 		"@type": "Organization",
+		"@id": `${SITE.url}/#organization`,
 		name: SITE.name,
 		url: SITE.url,
-		logo: `${SITE.url}/og-image.png`,
+		logo: {
+			"@type": "ImageObject",
+			url: `${SITE.url}/apple-touch-icon.png`,
+			width: 180,
+			height: 180,
+		},
 		description: SITE.description,
+		sameAs: [SITE.github],
 		contactPoint: {
 			"@type": "ContactPoint",
 			email: SITE.contact,
@@ -171,12 +183,24 @@ export function jsonLdOrganization(): object {
 export function jsonLdSoftwareApplication(): object {
 	return {
 		"@context": "https://schema.org",
-		"@type": "SoftwareApplication",
+		"@type": "WebApplication",
+		"@id": `${SITE.url}/#application`,
 		name: SITE.name,
 		applicationCategory: "FinanceApplication",
+		applicationSubCategory: "Competitive trading",
 		operatingSystem: "Web",
 		url: SITE.url,
 		description: SITE.description,
+		isAccessibleForFree: true,
+		browserRequirements: "Requires a modern web browser with JavaScript enabled.",
+		featureList: [
+			"Competitive credit markets",
+			"Global trading leaderboard",
+			"Live order books and matching engine",
+			"REST API and WebSocket market data",
+			"API keys for trading bots",
+		],
+		provider: { "@id": `${SITE.url}/#organization` },
 		offers: {
 			"@type": "Offer",
 			price: "0",

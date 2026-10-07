@@ -5,11 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
-    content="PaperDrill is a competitive trading platform where traders use credits, trade through a live matching engine, connect bots via API, and climb the leaderboard." />
-  <meta name="keywords"
-    content="competitive trading, virtual trading, credit trading, trading leaderboard, matching engine, order book, API trading, PaperDrill" />
+    content="PaperDrill is a competitive trading platform where traders trade credit markets, connect bots through the API, and climb the global leaderboard." />
   <meta name="author" content="PaperDrill" />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="color-scheme" content="dark light" />
   <meta name="application-name" content="PaperDrill" />
@@ -31,39 +29,68 @@
   <meta property="og:site_name" content="PaperDrill" />
   <meta property="og:title" content="PaperDrill - Competitive Trading Platform" />
   <meta property="og:description"
-    content="Trade with credits through a live matching engine, connect bots, and climb the leaderboard." />
+    content="Trade credit markets through a live matching engine, connect bots, and earn your rank." />
   <meta property="og:url" content="https://paperdrill.dev/" />
   <meta property="og:image" content="https://paperdrill.dev/og-image.png" />
-  <meta property="og:image:width" content="1734" />
-  <meta property="og:image:height" content="907" />
-  <meta property="og:image:alt" content="PaperDrill - Competitive Trading Platform" />
+  <meta property="og:image:secure_url" content="https://paperdrill.dev/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1737" />
+  <meta property="og:image:height" content="906" />
+  <meta property="og:image:alt" content="PaperDrill logo with a candlestick trading chart" />
   <meta property="og:locale" content="en_US" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@paperdrill" />
   <meta name="twitter:title" content="PaperDrill - Competitive Trading Platform" />
   <meta name="twitter:description"
-    content="Trade with credits through a live matching engine, connect bots, and climb the leaderboard." />
+    content="Trade credit markets through a live matching engine, connect bots, and earn your rank." />
   <meta name="twitter:image" content="https://paperdrill.dev/og-image.png" />
-  <meta name="twitter:image:alt" content="PaperDrill - Competitive Trading Platform" />
+  <meta name="twitter:image:alt" content="PaperDrill logo with a candlestick trading chart" />
 
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "PaperDrill",
-      "url": "https://paperdrill.dev",
-      "description": "PaperDrill is a competitive trading platform where traders use credits, trade through a live matching engine, connect bots via API, and climb the leaderboard."
-    }
-  </script>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "PaperDrill",
-      "url": "https://paperdrill.dev",
-      "logo": "https://paperdrill.dev/og-image.png",
-      "description": "Competitive credit-based trading with a live matching engine, API access, and rankings."
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://paperdrill.dev/#website",
+          "name": "PaperDrill",
+          "url": "https://paperdrill.dev",
+          "description": "PaperDrill is a competitive trading platform where traders trade credit markets, connect bots through the API, and climb the global leaderboard.",
+          "inLanguage": "en",
+          "publisher": { "@id": "https://paperdrill.dev/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://paperdrill.dev/#organization",
+          "name": "PaperDrill",
+          "url": "https://paperdrill.dev",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://paperdrill.dev/apple-touch-icon.png",
+            "width": 180,
+            "height": 180
+          },
+          "description": "PaperDrill is a competitive trading platform where traders trade credit markets, connect bots through the API, and climb the global leaderboard.",
+          "sameAs": ["https://github.com/hars-21/paperdrill"]
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://paperdrill.dev/#application",
+          "name": "PaperDrill",
+          "url": "https://paperdrill.dev",
+          "applicationCategory": "FinanceApplication",
+          "applicationSubCategory": "Competitive trading",
+          "operatingSystem": "Web",
+          "description": "Trade credit markets through a live matching engine, connect bots, and earn your rank.",
+          "isAccessibleForFree": true,
+          "provider": { "@id": "https://paperdrill.dev/#organization" },
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+      ]
     }
   </script>
 
