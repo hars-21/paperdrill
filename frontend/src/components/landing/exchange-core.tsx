@@ -1,3 +1,4 @@
+import { landing } from "@/assets";
 import { LandingVisual } from "./landing-visual";
 
 export default function ExchangeCoreSection() {
@@ -16,10 +17,8 @@ export default function ExchangeCoreSection() {
 
 				<div className="lg:col-span-8">
 					<LandingVisual
-						src="/landing/landing-exchange-core.webp"
+						src={landing.exchange}
 						alt="PaperDrill exchange infrastructure showing the path from order entry to matching and live market data"
-						filename="landing-exchange-core.webp"
-						dimensions="1600 x 900"
 						className="aspect-video"
 					/>
 				</div>

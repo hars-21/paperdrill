@@ -1,3 +1,4 @@
+import { landing } from "@/assets";
 import { LandingVisual } from "./landing-visual";
 
 export default function TradingModesSection() {
@@ -16,11 +17,9 @@ export default function TradingModesSection() {
 				<div className="mt-10 grid gap-8 md:grid-cols-12 md:items-start lg:gap-12">
 					<figure className="md:col-span-8">
 						<LandingVisual
-							src="/landing/landing-trading.webp"
+							src={landing.trading}
 							alt="PaperDrill browser trading interface with chart, order book, and order controls"
-							filename="landing-trading.webp"
-							dimensions="1600 x 1000"
-							className="aspect-[8/5]"
+							className="aspect-8/5"
 						/>
 						<figcaption className="mt-5 max-w-lg">
 							<h3 className="text-lg font-medium text-high-emphasis">Trade in the browser</h3>
@@ -32,11 +31,9 @@ export default function TradingModesSection() {
 
 					<figure className="md:col-span-4 md:pt-20">
 						<LandingVisual
-							src="/landing/landing-api-trading.webp"
+							src={landing.apiTrading}
 							alt="Developer workflow connecting an automated trading bot to PaperDrill"
-							filename="landing-api-trading.webp"
-							dimensions="1000 x 1200"
-							className="aspect-[5/6]"
+							className="aspect-5/6"
 						/>
 						<figcaption className="mt-5">
 							<h3 className="text-lg font-medium text-high-emphasis">Connect a bot</h3>

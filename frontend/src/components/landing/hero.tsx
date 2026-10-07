@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { LandingVisual } from "./landing-visual";
+import { landing } from "@/assets";
 
 export function Hero() {
 	const { user, loading } = useAuth();
@@ -35,10 +36,8 @@ export function Hero() {
 
 				<div className="lg:col-span-7">
 					<LandingVisual
-						src="/landing/landing-arena.webp"
+						src={landing.arena}
 						alt="PaperDrill trading arena showing live markets and account performance"
-						filename="landing-arena.webp"
-						dimensions="1600 x 1000"
 						eager
 						className="aspect-8/5 shadow-[0_28px_80px_-48px_color-mix(in_srgb,var(--foreground)_35%,transparent)]"
 					/>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LandingVisual } from "./landing-visual";
+import { landing } from "@/assets";
 
 export default function RankingSection() {
 	return (
@@ -16,11 +17,9 @@ export default function RankingSection() {
 				</div>
 
 				<LandingVisual
-					src="/landing/landing-leaderboard.webp"
+					src={landing.leaderboard}
 					alt="PaperDrill global leaderboard showing trader ranks and portfolio returns"
-					filename="landing-leaderboard.webp"
-					dimensions="1600 x 900"
-					className="mt-10 aspect-[16/9]"
+					className="mt-10 aspect-video"
 				/>
 
 				<div className="mt-6 flex justify-start">

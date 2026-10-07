@@ -4,8 +4,6 @@ import { cn } from "@/lib/utils";
 interface LandingVisualProps {
 	src: string;
 	alt: string;
-	filename: string;
-	dimensions: string;
 	className?: string;
 	imageClassName?: string;
 	eager?: boolean;
@@ -14,8 +12,6 @@ interface LandingVisualProps {
 export function LandingVisual({
 	src,
 	alt,
-	filename,
-	dimensions,
 	className,
 	imageClassName,
 	eager = false,
@@ -43,19 +39,6 @@ export function LandingVisual({
 					imageClassName,
 				)}
 			/>
-
-			{!loaded ? (
-				<div
-					role="img"
-					aria-label={alt}
-					className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center"
-				>
-					<span className="text-sm font-medium text-high-emphasis">{filename}</span>
-					<span className="text-xs text-medium-emphasis">
-						Add to public/landing · {dimensions}
-					</span>
-				</div>
-			) : null}
 		</div>
 	);
 }

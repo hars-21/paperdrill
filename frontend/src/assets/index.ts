@@ -5,6 +5,12 @@ import logo from "./brand/logo.png";
 import bannerDark from "./brand/banner-dark.png";
 import banner from "./brand/banner.png";
 
+import arena from "./landing/arena.png";
+import trading from "./landing/trading.png";
+import apiTrading from "./landing/api-trading.png";
+import leaderboard from "./landing/leaderboard.png";
+import exchange from "./landing/exchange.png";
+
 import btcLogo from "./crypto/btc.svg";
 import ethLogo from "./crypto/eth.svg";
 import solLogo from "./crypto/sol.svg";
@@ -26,6 +32,14 @@ export const brand = {
 		light: banner,
 	},
 } as const;
+
+export const landing = {
+	arena,
+	trading,
+	apiTrading,
+	leaderboard,
+	exchange,
+};
 
 export const crypto = {
 	BTC: btcLogo,
