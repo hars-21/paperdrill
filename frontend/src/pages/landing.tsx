@@ -1,17 +1,17 @@
 import Hero from "@/components/landing/hero";
-import MarketDataSection from "@/components/landing/market-data";
-import MatchingEngineSection from "@/components/landing/matching-engine";
-import PersistentSection from "@/components/landing/persistent";
+import TradingModesSection from "@/components/landing/trading-modes";
+import RankingSection from "@/components/landing/ranking-section";
+import ExchangeCoreSection from "@/components/landing/exchange-core";
 import CtaSection from "@/components/landing/cta-section";
 
 export function LandingPage() {
 	return (
-		<>
+		<div className="bg-background">
 			<Hero />
-			<MarketDataSection />
-			<MatchingEngineSection />
-			<PersistentSection />
+			<TradingModesSection />
+			<RankingSection />
+			<ExchangeCoreSection />
 			<CtaSection />
-		</>
+		</div>
 	);
 }

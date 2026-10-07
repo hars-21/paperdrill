@@ -26,6 +26,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			root.classList.remove("dark");
 		}
 		localStorage.setItem("theme", theme);
+		document
+			.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+			?.setAttribute("content", theme === "dark" ? "#0a0a0c" : "#ffffff");
 
 		let favicon = document.querySelector<HTMLLinkElement>('link[data-theme-favicon="true"]');
 		if (!favicon) {

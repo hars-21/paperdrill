@@ -53,17 +53,17 @@ export function ChartToolbar({
 	const ActiveChartIcon = activeChartStyle.Icon;
 
 	return (
-		<div className="flex h-10 shrink-0 items-center justify-between border-b border-border/40 px-2">
-			<div className="flex items-center gap-1">
+		<div className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/40 px-1.5 sm:px-2">
+			<div className="flex min-w-0 items-center gap-0.5 sm:gap-1">
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
 							type="button"
 							variant="ghost"
 							size="sm"
-							className="gap-1.5 px-2 text-xs focus-visible:border-transparent focus-visible:brightness-100 focus-visible:ring-0"
+							className="gap-1 px-1.5 text-xs focus-visible:border-transparent focus-visible:brightness-100 focus-visible:ring-0 sm:gap-1.5 sm:px-2"
 						>
-							<span className="w-10">{interval}</span>
+							<span className="sm:w-10">{interval}</span>
 							<ChevronDown className="size-3" />
 						</Button>
 					</DropdownMenuTrigger>
@@ -81,7 +81,7 @@ export function ChartToolbar({
 					</DropdownMenuContent>
 				</DropdownMenu>
 
-				<div className="mx-1 h-4 w-px bg-border/70" />
+				<div className="mx-0.5 h-4 w-px bg-border/70 sm:mx-1" />
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -89,13 +89,13 @@ export function ChartToolbar({
 							type="button"
 							variant="ghost"
 							size="sm"
-							className="w-28 justify-between gap-1.5 px-2 text-xs focus-visible:border-transparent focus-visible:brightness-100 focus-visible:ring-0"
+							className="w-9 justify-center gap-1 px-1.5 text-xs focus-visible:border-transparent focus-visible:brightness-100 focus-visible:ring-0 sm:w-28 sm:justify-between sm:gap-1.5 sm:px-2"
 						>
 							<span className="flex items-center gap-1.5">
 								<ActiveChartIcon className="size-3.5" />
-								{activeChartStyle.label}
+								<span className="hidden sm:inline">{activeChartStyle.label}</span>
 							</span>
-							<ChevronDown className="size-3" />
+							<ChevronDown className="hidden size-3 sm:block" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="start" className="w-28 min-w-28" portalled={false}>
@@ -145,6 +145,7 @@ export function ChartToolbar({
 					onClick={onReset}
 					title="Reset chart"
 					aria-label="Reset chart"
+					className="hidden sm:inline-flex"
 				>
 					<RotateCcw />
 				</Button>
@@ -155,6 +156,7 @@ export function ChartToolbar({
 					onClick={onFullscreen}
 					title="Fullscreen"
 					aria-label="Fullscreen"
+					className="hidden sm:inline-flex"
 				>
 					<Maximize2 />
 				</Button>

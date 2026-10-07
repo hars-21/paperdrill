@@ -1,0 +1,44 @@
+---
+title: "Read trade history"
+description: "Read recent public fills and distinguish them from your private trade history."
+---
+
+A trade is created when a buy order and sell order match. PaperDrill exposes a public market feed and a private history containing only your fills.
+
+## Read public trades
+
+`GET /markets/:symbol/trades` requires no authentication and returns recent fills newest first.
+
+```bash
+curl "https://api.paperdrill.dev/v1/markets/SOL_USD/trades?limit=2"
+```
+
+```json
+[
+	{
+		"id": "fill_123",
+		"symbol": "SOL_USD",
+		"price": "125.50",
+		"qty": "1.25",
+		"buyOrderId": "buy_order_123",
+		"sellOrderId": "sell_order_123",
+		"buyerId": "buyer_123",
+		"sellerId": "seller_123",
+		"isBuyerMaker": false,
+		"createdAt": 1789812000000
+	}
+]
+```
+
+`isBuyerMaker` is `true` when the resting order was the buy order. `createdAt` is Unix milliseconds. A market with no fills returns an empty array.
+
+## Read your fills
+
+`GET /trades` requires `ORDER_READ` and returns only trades in which your account participated. Its response adds your `side`, whether your order was the maker, and your `orderId`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/trades?limit=20" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+Public and private trade limits accept values from 1 through 500. Use the `trade:SYMBOL` [WebSocket stream](/websocket) for new public trades instead of repeatedly polling the REST endpoint.

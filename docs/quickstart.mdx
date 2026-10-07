@@ -1,0 +1,158 @@
+---
+title: "Quickstart"
+description: "Create an API key and complete your first PaperDrill order workflow."
+---
+
+In this workflow, you discover a market, inspect its order book, place a limit order, check its status, and cancel any unfilled quantity.
+
+<Steps>
+	<Step title="Verify your account and create an API key">
+		Open [API keys](https://paperdrill.dev/settings/api-keys) and create a key with these scopes:
+
+    	- `ORDER_READ`
+    	- `ORDER_CREATE`
+    	- `ORDER_CANCEL`
+
+    	Copy the complete key when it appears. PaperDrill shows it only once.
+    </Step>
+
+    <Step title="Store the key">
+    	Set the key in your shell so you do not paste it into source code:
+
+    	```bash
+    	export PAPERDRILL_API_KEY="pdk_your_key_here"
+    	```
+
+    	See [Authentication](/authentication) for permission and storage guidance.
+    </Step>
+
+    <Step title="Read the market rules">
+    	Never hardcode a symbol's precision. Fetch the market before constructing an order.
+
+    	<CodeGroup>
+    	```bash cURL
+    	curl https://api.paperdrill.dev/v1/markets
+    	```
+
+    	```js JavaScript
+    	const response = await fetch("https://api.paperdrill.dev/v1/markets");
+    	const { data: markets } = await response.json();
+    	console.log(markets);
+    	```
+
+    	```python Python
+    	import requests
+
+    	response = requests.get("https://api.paperdrill.dev/v1/markets", timeout=10)
+    	response.raise_for_status()
+    	print(response.json()["data"])
+    	```
+    	</CodeGroup>
+
+    	```json
+    	{
+    	  "data": [
+    	    {
+    	      "symbol": "SOL_USD",
+    	      "baseAsset": "SOL",
+    	      "quoteAsset": "USD",
+    	      "pricePrecision": 2,
+    	      "qtyPrecision": 2
+    	    }
+    	  ]
+    	}
+    	```
+
+    	For this market, `price` and `qty` accept up to two decimal places. Send both values as strings.
+    </Step>
+
+    <Step title="Inspect the order book">
+    	```bash
+    	curl https://api.paperdrill.dev/v1/markets/SOL_USD/orderbook
+    	```
+
+    	Choose a buy price below the best ask if you want the order to rest instead of executing immediately. The example below uses a deliberately low price; choose an appropriate value for the current book.
+    </Step>
+
+    <Step title="Place a limit order">
+    	<CodeGroup>
+    	```bash cURL
+    	curl --request POST https://api.paperdrill.dev/v1/orders \
+    	  --header "Content-Type: application/json" \
+    	  --header "x-api-key: $PAPERDRILL_API_KEY" \
+    	  --data '{
+    	    "symbol": "SOL_USD",
+    	    "side": "BUY",
+    	    "type": "LIMIT",
+    	    "price": "1.00",
+    	    "qty": "1.00"
+    	  }'
+    	```
+
+    	```js JavaScript
+    	const response = await fetch("https://api.paperdrill.dev/v1/orders", {
+    		method: "POST",
+    		headers: {
+    			"Content-Type": "application/json",
+    			"x-api-key": process.env.PAPERDRILL_API_KEY,
+    		},
+    		body: JSON.stringify({
+    			symbol: "SOL_USD",
+    			side: "BUY",
+    			type: "LIMIT",
+    			price: "1.00",
+    			qty: "1.00",
+    		}),
+    	});
+
+    	if (!response.ok) throw new Error(await response.text());
+    	console.log(await response.json());
+    	```
+
+    	```python Python
+    	import os
+    	import requests
+
+    	response = requests.post(
+    	    "https://api.paperdrill.dev/v1/orders",
+    	    headers={"x-api-key": os.environ["PAPERDRILL_API_KEY"]},
+    	    json={
+    	        "symbol": "SOL_USD",
+    	        "side": "BUY",
+    	        "type": "LIMIT",
+    	        "price": "1.00",
+    	        "qty": "1.00",
+    	    },
+    	    timeout=10,
+    	)
+    	response.raise_for_status()
+    	print(response.json())
+    	```
+    	</CodeGroup>
+
+    	Save the returned `id`. A limit order can be `OPEN`, `PARTIALLY_FILLED`, or `FILLED` immediately, so always use the returned status.
+    </Step>
+
+    <Step title="Check the order">
+    	Replace `ORDER_ID` with the returned ID:
+
+    	```bash
+    	curl https://api.paperdrill.dev/v1/orders/ORDER_ID \
+    	  --header "x-api-key: $PAPERDRILL_API_KEY"
+    	```
+
+    	You can also request every open order with `GET /orders/open`.
+    </Step>
+
+    <Step title="Cancel any remaining quantity">
+    	Only cancel an order whose status is `OPEN` or `PARTIALLY_FILLED`:
+
+    	```bash
+    	curl --request DELETE https://api.paperdrill.dev/v1/orders/ORDER_ID \
+    	  --header "x-api-key: $PAPERDRILL_API_KEY"
+    	```
+    </Step>
+
+</Steps>
+
+Continue to [Place and manage orders](/orders) for order behavior or [Build a simple bot](/build-a-bot) for a complete TypeScript workflow.

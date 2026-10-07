@@ -1,5 +1,5 @@
 import "./index.css";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { SignupPage } from "./pages/signup";
@@ -7,83 +7,102 @@ import { VerifyEmailPage } from "./pages/verify-email";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
 import { MarketsPage } from "./pages/markets";
-import { DocsPage } from "./pages/docs";
 import { TermsPage } from "./pages/terms";
 import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
 import { RootLayout } from "./components/root-layout";
 import { Protected, PublicOnly } from "./components/route-guards";
-import { DashboardLayout } from "./components/dashboard-layout";
-import { DashboardOverviewPage } from "./pages/dashboard/overview";
-import { DashboardApiKeysPage } from "./pages/dashboard/api-keys";
-import { DashboardBalancesPage } from "./pages/dashboard/balances";
-import { DashboardDataPage } from "./pages/dashboard/data";
-import { DocsLayout } from "./components/docs/docs-layout";
+import { HomePage } from "./pages/home";
+import { ApiKeysPage } from "./pages/api-keys";
+import { PortfolioPage } from "./pages/portfolio";
+import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
+import { NotFoundPage } from "./pages/not-found";
+import { RouteBehavior } from "./components/route-behavior";
+import { getLastTradePath } from "./lib/ux-preferences";
 
-function NotFound() {
-	return (
-		<div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4 text-center px-4">
-			<h1 className="text-6xl font-bold text-medium-emphasis">404</h1>
-			<p className="text-lg text-medium-emphasis">This page doesn't exist on PaperDrill yet.</p>
-			<Link to="/" className="text-primary hover:underline text-sm">
-				Go home
-			</Link>
-		</div>
-	);
+function TradeRedirect() {
+	return <Navigate to={getLastTradePath()} replace />;
 }
 
 export function App() {
 	return (
-		<Routes>
-			<Route element={<RootLayout />}>
-				<Route index element={<LandingPage />} />
-				<Route path="docs" element={<DocsLayout />}>
-					<Route index element={<DocsPage />} />
-					<Route path=":slug" element={<DocsPage />} />
+		<>
+			<RouteBehavior />
+			<Routes>
+				<Route element={<RootLayout />}>
+					<Route index element={<LandingPage />} />
+					<Route path="terms" element={<TermsPage />} />
+					<Route path="privacy" element={<PrivacyPage />} />
 				</Route>
-				<Route path="terms" element={<TermsPage />} />
-				<Route path="privacy" element={<PrivacyPage />} />
-			</Route>
 
-			<Route element={<AppLayout />}>
-				<Route
-					path="dashboard"
-					element={
-						<Protected>
-							<DashboardLayout />
-						</Protected>
-					}
-				>
-					<Route index element={<DashboardOverviewPage />} />
-					<Route path="api-keys" element={<DashboardApiKeysPage />} />
-					<Route path="balances" element={<DashboardBalancesPage />} />
-					<Route path="data" element={<DashboardDataPage />} />
-					<Route path="profile" element={<ProfilePage />} />
+				<Route element={<AppLayout />}>
+					<Route
+						path="home"
+						element={
+							<Protected>
+								<HomePage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="portfolio"
+						element={
+							<Protected>
+								<PortfolioPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="activity"
+						element={
+							<Protected>
+								<ActivityPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="settings/profile"
+						element={
+							<Protected>
+								<ProfilePage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="settings/api-keys"
+						element={
+							<Protected>
+								<ApiKeysPage />
+							</Protected>
+						}
+					/>
+					<Route path="settings" element={<Navigate to="/settings/profile" replace />} />
+					<Route path="profile" element={<Navigate to="/settings/profile" replace />} />
+					<Route path="markets" element={<MarketsPage />} />
+					<Route path="leaderboard" element={<LeaderboardPage />} />
+					<Route path="trade" element={<TradeRedirect />} />
+					<Route path="trade/:symbol" element={<TradePage />} />
+					<Route
+						path="login"
+						element={
+							<PublicOnly>
+								<LoginPage />
+							</PublicOnly>
+						}
+					/>
+					<Route
+						path="signup"
+						element={
+							<PublicOnly>
+								<SignupPage />
+							</PublicOnly>
+						}
+					/>
+					<Route path="verify-email" element={<VerifyEmailPage />} />
+					<Route path="*" element={<NotFoundPage />} />
 				</Route>
-				<Route path="profile" element={<Navigate to="/dashboard/profile" replace />} />
-				<Route path="markets" element={<MarketsPage />} />
-				<Route path="leaderboard" element={<LeaderboardPage />} />
-				<Route path="trade/:symbol" element={<TradePage />} />
-				<Route
-					path="login"
-					element={
-						<PublicOnly>
-							<LoginPage />
-						</PublicOnly>
-					}
-				/>
-				<Route
-					path="signup"
-					element={
-						<PublicOnly>
-							<SignupPage />
-						</PublicOnly>
-					}
-				/>
-				<Route path="verify-email" element={<VerifyEmailPage />} />
-				<Route path="*" element={<NotFound />} />
-			</Route>
-		</Routes>
+			</Routes>
+		</>
 	);
 }

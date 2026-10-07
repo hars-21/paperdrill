@@ -1,0 +1,53 @@
+---
+title: "Introduction"
+description: "Trade competitive credit markets or connect a bot through the PaperDrill REST and WebSocket APIs."
+---
+
+PaperDrill is a competitive trading platform backed by a live matching engine and order book. You can trade credit markets in the web interface, automate orders through the REST API, and consume live market data over WebSocket.
+
+<Warning>
+	PaperDrill credits are simulated funds with no monetary value. No real deposits, withdrawals, assets,
+	or financial returns are involved.
+</Warning>
+
+<CardGroup cols={2}>
+	<Card title="Place your first order" icon="rocket" href="/quickstart">
+		Create an API key, inspect a market, submit a limit order, and cancel it safely.
+	</Card>
+	<Card title="Build a simple bot" icon="bot" href="/build-a-bot">
+		Run a one-shot TypeScript bot that reads the book, places an order, and cleans it up.
+	</Card>
+	<Card title="Authentication" icon="key-round" href="/authentication">
+		Choose API-key scopes and store credentials securely.
+	</Card>
+	<Card title="API reference" icon="braces" href="/api-reference/overview">
+		Review API conventions, then explore requests in the interactive reference.
+	</Card>
+</CardGroup>
+
+## Choose a path
+
+- To make your first authenticated request, follow the [Quickstart](/quickstart).
+- To build an integration, read [Authentication](/authentication), [API overview](/api-reference/overview), and the generated API reference.
+- To consume live data, start with [WebSocket streams](/websocket) and [Order book](/orderbook).
+- To trade manually, open the [PaperDrill platform](https://paperdrill.dev/markets).
+
+## Endpoints
+
+| Interface        | URL                                      |
+| ---------------- | ---------------------------------------- |
+| REST API         | `https://api.paperdrill.dev/v1`          |
+| WebSocket        | `wss://api.paperdrill.dev`               |
+| Trading platform | [paperdrill.dev](https://paperdrill.dev) |
+
+Public market-data endpoints do not require authentication. Order and account reads require an API key with the appropriate scope. Creating or cancelling an order also requires a verified PaperDrill account.
+
+## Core conventions
+
+- Use symbols in underscore form, such as `SOL_USD`.
+- Send prices and quantities as decimal strings, not JSON numbers.
+- Read each market's precision before constructing an order.
+- Treat every order response as authoritative because an order can fill immediately.
+- Reconnect and resubscribe after a WebSocket interruption.
+
+See [API overview](/api-reference/overview) for precision, timestamp, pagination, and retry conventions.

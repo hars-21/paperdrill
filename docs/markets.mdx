@@ -1,0 +1,74 @@
+---
+title: "Read market data"
+description: "Discover markets, apply precision rules, read tickers, and request historical candles."
+---
+
+Market-data endpoints are public. Use them to discover valid symbols and precision rules before constructing orders.
+
+## Discover a market
+
+```bash
+curl https://api.paperdrill.dev/v1/markets
+```
+
+```json
+{
+	"data": [
+		{
+			"id": "market_123",
+			"name": "Solana",
+			"symbol": "SOL_USD",
+			"baseAsset": "SOL",
+			"quoteAsset": "USD",
+			"pricePrecision": 2,
+			"qtyPrecision": 2
+		}
+	]
+}
+```
+
+Use the exact symbol returned by the API. `SOL_USD` means the base asset is `SOL` and its price is expressed in `USD`.
+
+## Apply precision
+
+`pricePrecision` and `qtyPrecision` define the maximum number of decimal places accepted for an order. For a market with precision `2`, `"125.50"` and `"2.00"` are valid; `"125.501"` is not.
+
+Keep decimal values as strings and use decimal or scaled-integer arithmetic in your application.
+
+## Read a ticker
+
+Use `GET /markets/tickers` for every market or request one symbol:
+
+```bash
+curl https://api.paperdrill.dev/v1/markets/SOL_USD/ticker
+```
+
+A ticker summarizes the latest price and rolling 24-hour open, high, low, base volume, and quote volume. Before the first trade, price and volume fields can be `null`.
+
+Ticker values are summaries, not executable quotes. Read the [Order book](/orderbook) when you need current bid and ask liquidity.
+
+## Request candles
+
+`GET /markets/:symbol/candles` returns OHLCV candles in chronological order. Choose one of `1m`, `5m`, `15m`, `30m`, `1H`, `4H`, or `1D`; the default is `15m`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/markets/SOL_USD/candles?interval=1H"
+```
+
+```json
+{
+	"data": [
+		{
+			"time": 1789812000000,
+			"symbol": "SOL_USD",
+			"open": "125.00",
+			"high": "126.00",
+			"low": "124.50",
+			"close": "125.50",
+			"volume": "20.00"
+		}
+	]
+}
+```
+
+`time` is the candle start in Unix milliseconds. For live ticker and candle updates, use [WebSocket streams](/websocket).

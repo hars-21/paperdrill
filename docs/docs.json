@@ -1,0 +1,136 @@
+{
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "PaperDrill",
+	"description": "Guides and API reference for PaperDrill's competitive trading platform.",
+	"seo": {
+		"indexing": "all"
+	},
+	"colors": {
+		"primary": "#E11D48",
+		"light": "#E11D48",
+		"dark": "#E11D48"
+	},
+	"appearance": {
+		"default": "system"
+	},
+	"fonts": {
+		"family": "IBM Plex Sans"
+	},
+	"icons": {
+		"library": "lucide"
+	},
+	"background": {
+		"color": {
+			"light": "#FFFFFF",
+			"dark": "#0A0A0C"
+		}
+	},
+	"styling": {
+		"eyebrows": "section",
+		"codeblocks": {
+			"theme": {
+				"light": "github-light",
+				"dark": "github-dark"
+			}
+		}
+	},
+	"api": {
+		"playground": {
+			"display": "interactive"
+		},
+		"examples": {
+			"languages": ["curl", "javascript", "python"],
+			"defaults": "required"
+		}
+	},
+	"favicon": {
+		"light": "/favicon-light.svg",
+		"dark": "/favicon-dark.svg"
+	},
+	"logo": {
+		"light": "/logo/light.svg",
+		"dark": "/logo/dark.svg",
+		"href": "https://paperdrill.dev"
+	},
+	"navigation": {
+		"tabs": [
+			{
+				"tab": "Documentation",
+				"groups": [
+					{
+						"group": "Get started",
+						"pages": ["index", "quickstart", "authentication"]
+					},
+					{
+						"group": "Guides",
+						"pages": ["orders", "markets", "trades", "orderbook", "websocket", "account"]
+					},
+					{
+						"group": "Examples",
+						"pages": ["build-a-bot"]
+					}
+				]
+			},
+			{
+				"tab": "API reference",
+				"openapi": {
+					"source": "openapi.yaml",
+					"directory": "api-reference"
+				},
+				"groups": [
+					{
+						"group": "Overview",
+						"pages": ["api-reference/overview", "api-reference/errors-and-limits"]
+					},
+					{
+						"group": "Markets",
+						"pages": [
+							"GET /markets",
+							"GET /markets/tickers",
+							"GET /markets/{symbol}/ticker",
+							"GET /markets/{symbol}/orderbook",
+							"GET /markets/{symbol}/trades",
+							"GET /markets/{symbol}/candles"
+						]
+					},
+					{
+						"group": "Orders",
+						"pages": [
+							"GET /orders",
+							"POST /orders",
+							"GET /orders/open",
+							"GET /orders/{orderId}",
+							"DELETE /orders/{orderId}"
+						]
+					},
+					{
+						"group": "Account",
+						"pages": ["GET /trades", "GET /balances", "GET /portfolio"]
+					}
+				]
+			}
+		]
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "Support",
+				"href": "mailto:support@paperdrill.dev"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Open PaperDrill",
+			"href": "https://paperdrill.dev/markets"
+		}
+	},
+	"contextual": {
+		"options": ["copy", "view"]
+	},
+	"footer": {
+		"socials": {
+			"github": "https://github.com/hars-21/paperdrill"
+		}
+	}
+}

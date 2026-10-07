@@ -12,24 +12,23 @@ interface OrderbookProps {
 	bids: Record<string, string>;
 	asks: Record<string, string>;
 	loading?: boolean;
+	error?: string | null;
+	onRetry?: () => void;
 	symbol: string;
-	compact?: boolean;
 	lastPrice?: string | null;
 }
 
-const DESKTOP_ROWS = 18;
-const MOBILE_ROWS = 10;
+const DISPLAY_ROWS = 18;
 
 export function Orderbook({
 	bids,
 	asks,
 	loading,
+	error,
+	onRetry,
 	symbol,
-	compact = false,
 	lastPrice,
 }: OrderbookProps) {
-	const DISPLAY_ROWS = compact ? MOBILE_ROWS : DESKTOP_ROWS;
-
 	const market = useMarket(symbol);
 	const base = market?.baseAsset ?? symbol.split("_")[0];
 	const quote = market?.quoteAsset ?? symbol.split("_")[1];
@@ -84,6 +83,20 @@ export function Orderbook({
 		return <OrderbookSkeleton />;
 	}
 
+	if (error) {
+		return (
+			<div role="alert" className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center">
+				<p className="text-sm font-medium text-high-emphasis">Order book unavailable</p>
+				<p className="text-xs text-medium-emphasis">{error}</p>
+				{onRetry && (
+					<Button type="button" variant="secondary" size="sm" className="mt-2" onClick={onRetry}>
+						Try again
+					</Button>
+				)}
+			</div>
+		);
+	}
+
 	const sortedAsks = Object.entries(asks)
 		.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }))
 		.filter(({ qty }) => qty > 0)
@@ -122,25 +135,25 @@ export function Orderbook({
 	const askDepthPct = 100 - bidDepthPct;
 
 	return (
-		<div className="flex h-full flex-col select-none">
+		<div className="flex h-full flex-col">
 			<div className="flex flex-col h-full grow">
 				<div className="flex items-center justify-between flex-row px-2">
 					<div className="flex items-center flex-row gap-2">
 						<div className="flex items-center justify-center flex-row gap-2">
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("bids")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("bids")} aria-label="Show bids only">
 								<BidsIcon />
 							</Button>
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("asks")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("asks")} aria-label="Show asks only">
 								<AsksIcon />
 							</Button>
-							<Button variant="icon" size="icon" onClick={() => setDisplayMode("both")}>
+							<Button variant="icon" size="icon" onClick={() => setDisplayMode("both")} aria-label="Show bids and asks">
 								<BidsAsksIcon />
 							</Button>
 						</div>
 					</div>
 					<div className="flex items-center justify-center flex-row gap-2">
 						<p className="text-high-emphasis truncate text-[10px]">
-							Spread: {spread > 0 ? formatPrice(spread, pricePrecision) : "—"}
+							Spread: {spread > 0 ? formatPrice(spread, pricePrecision) : "-"}
 						</p>
 					</div>
 				</div>
@@ -225,6 +238,7 @@ export function Orderbook({
 							</div>
 
 							<button
+								type="button"
 								onClick={recenterOrderbook}
 								className={`text-[10px] text-chart-5 cursor-pointer hover:text-chart-5/90 transition-colors ${isCentered ? "opacity-0" : ""}`}
 							>

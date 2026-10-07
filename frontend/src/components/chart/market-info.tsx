@@ -36,7 +36,7 @@ export function MarketInfo({ symbol, ticker }: { symbol: string; ticker: Ticker 
 					label="Minimum order size"
 					value={`${increment(market.qtyPrecision)} ${market.baseAsset}`}
 				/>
-				<InfoRow label="Maximum order size" value="–" />
+				<InfoRow label="Maximum order size" value="-" />
 			</div>
 			<div>
 				<InfoRow label="Last price" value={formatPrice(ticker?.lastPrice, market.pricePrecision)} />
@@ -45,7 +45,7 @@ export function MarketInfo({ symbol, ticker }: { symbol: string; ticker: Ticker 
 					value={
 						ticker
 							? `${formatPrice(ticker.priceChange, market.pricePrecision)} (${change.text})`
-							: "—"
+							: "-"
 					}
 				/>
 				<InfoRow label="24h high" value={formatPrice(ticker?.high, market.pricePrecision)} />

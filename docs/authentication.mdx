@@ -1,0 +1,73 @@
+---
+title: "Authentication"
+description: "Authenticate API requests with scoped PaperDrill API keys."
+---
+
+Programmable access to protected PaperDrill endpoints uses scoped API keys. Public market-data endpoints do not require authentication.
+
+## Create an API key
+
+Verify your email, sign in to PaperDrill, and open [API keys](https://paperdrill.dev/settings/api-keys). Create a separate key for each integration and grant only the permissions it needs.
+
+Copy the complete key when it appears. PaperDrill shows it only once.
+
+## Store the key
+
+Keep the key in a server-side environment variable or secret manager:
+
+```bash
+export PAPERDRILL_API_KEY="pdk_your_key_here"
+```
+
+Never commit the value to source control or embed it in browser or mobile code. Revoke and replace a key immediately if it may have been exposed.
+
+## Send the key
+
+Pass the complete value in the `x-api-key` header:
+
+<CodeGroup>
+```bash cURL
+curl https://api.paperdrill.dev/v1/orders/open \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+```js JavaScript
+const response = await fetch("https://api.paperdrill.dev/v1/orders/open", {
+	headers: { "x-api-key": process.env.PAPERDRILL_API_KEY },
+});
+```
+
+```python Python
+import os
+import requests
+
+response = requests.get(
+    "https://api.paperdrill.dev/v1/orders/open",
+    headers={"x-api-key": os.environ["PAPERDRILL_API_KEY"]},
+    timeout=10,
+)
+```
+
+</CodeGroup>
+
+Do not use `Authorization: Bearer`, prepend another prefix, or remove the key's existing `pdk_` prefix.
+
+## Permissions
+
+| Scope          | Allows                                  |
+| -------------- | --------------------------------------- |
+| `ACCOUNT_READ` | Read balances and portfolio performance |
+| `ORDER_READ`   | Read orders and private trade history   |
+| `ORDER_CREATE` | Place limit and market orders           |
+| `ORDER_CANCEL` | Cancel open orders                      |
+
+Creating and cancelling orders requires a verified account. Read-only order and account endpoints still enforce their listed API-key scope.
+
+## Authentication errors
+
+- `401 AUTHENTICATION_REQUIRED` means no usable credential was supplied.
+- `401 INVALID_API_KEY` means the key is malformed, revoked, or incorrect.
+- `403 FORBIDDEN` means the key lacks the required scope.
+- `403 EMAIL_NOT_VERIFIED` means the account must be verified before the requested mutation.
+
+See [Errors and rate limits](/api-reference/errors-and-limits) for the shared error envelope and retry guidance.

@@ -1,0 +1,83 @@
+---
+title: "Place and manage orders"
+description: "Choose an order type, handle fills, inspect status, and cancel remaining quantity."
+---
+
+PaperDrill supports limit and market orders. Before placing either type, read the market metadata and current book rather than hardcoding a symbol, price, or precision.
+
+Creating an order requires `ORDER_CREATE` and a verified account. Reading orders requires `ORDER_READ`; cancellation requires `ORDER_CANCEL` and a verified account.
+
+## Choose an order type
+
+| Type     | Use it when                                                                | Price field |
+| -------- | -------------------------------------------------------------------------- | ----------- |
+| `LIMIT`  | You want to set the highest buy price or lowest sell price you will accept | Required    |
+| `MARKET` | You want to trade immediately against available liquidity                  | Omitted     |
+
+A limit order can execute immediately when it crosses the book. A market order can be partially filled when the book does not contain enough quantity.
+
+## Construct valid values
+
+Fetch `GET /markets` and locate the selected symbol. If `pricePrecision` and `qtyPrecision` are both `2`, values such as `"125.50"` and `"2.00"` are valid.
+
+Send decimals as JSON strings:
+
+```json
+{
+	"symbol": "SOL_USD",
+	"side": "BUY",
+	"type": "LIMIT",
+	"price": "125.50",
+	"qty": "2.00"
+}
+```
+
+For a market order, set `type` to `MARKET` and omit `price`.
+
+## Use the returned status
+
+Do not assume a newly created order is open. The matching engine returns its current state:
+
+```text
+OPEN → PARTIALLY_FILLED → FILLED
+  └───────────────┬────→ CANCELLED
+                  └────→ CANCELLED
+```
+
+| Status             | Meaning                                              |
+| ------------------ | ---------------------------------------------------- |
+| `OPEN`             | No quantity has filled and the remainder is resting  |
+| `PARTIALLY_FILLED` | Some quantity filled and the remainder is still open |
+| `FILLED`           | The complete quantity filled                         |
+| `CANCELLED`        | The remaining quantity was removed from the book     |
+
+Use `filledQty` to determine how much executed. `averagePrice` appears after the first fill.
+
+## Inspect an order
+
+Read a specific order when you already have its ID:
+
+```bash
+curl https://api.paperdrill.dev/v1/orders/ORDER_ID \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+Use `GET /orders/open` for every open or partially filled order. Use `GET /orders` for paginated history and optional `symbol` or `status` filters.
+
+## Cancel the remainder
+
+Cancellation affects only unfilled quantity. It does not reverse completed fills.
+
+```bash
+curl --request DELETE https://api.paperdrill.dev/v1/orders/ORDER_ID \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+A filled or already cancelled order returns `409 ORDER_NOT_CANCELLABLE`. If a cancel request fails because of a network interruption, read the order before deciding what to do next.
+
+<Warning>
+	Do not blindly retry order creation after a timeout. PaperDrill does not currently accept an
+	idempotency key, so a retry can create another order. Inspect order history first.
+</Warning>
+
+Use the generated **API reference** for complete request and response schemas. Continue to [Build a simple bot](/build-a-bot) for an end-to-end implementation.

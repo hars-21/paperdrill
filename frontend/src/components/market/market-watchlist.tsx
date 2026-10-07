@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { Market, Ticker } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatChange, formatPrice } from "@/utils/format";
@@ -11,14 +11,12 @@ type MarketWatchlistProps = {
 };
 
 export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistProps) {
-	const navigate = useNavigate();
-
 	if (markets.length === 0) {
 		return null;
 	}
 
 	return (
-		<div className="overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm">
+		<div className="overflow-hidden rounded-xl border border-border/60 bg-l1 shadow-sm">
 			<div className="border-b border-border/40 px-3 py-2.5 text-sm font-semibold text-high-emphasis">
 				Markets
 			</div>
@@ -27,10 +25,10 @@ export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistPro
 					const ticker = tickers[market.symbol];
 					const change = formatChange(ticker?.priceChangePercent);
 					return (
-						<button
+						<Link
 							key={market.symbol}
-							type="button"
-							onClick={() => market.symbol !== symbol && navigate(`/trade/${market.symbol}`)}
+							to={`/trade/${market.symbol}`}
+							aria-current={market.symbol === symbol ? "page" : undefined}
 							className={cn(
 								"flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/70",
 								market.symbol === symbol && "bg-muted",
@@ -45,7 +43,7 @@ export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistPro
 							</div>
 							<div className="text-right">
 								<div className="text-sm font-medium tabular-nums text-high-emphasis">
-									{ticker ? formatPrice(ticker.lastPrice, market.pricePrecision) : "—"}
+									{ticker ? formatPrice(ticker.lastPrice, market.pricePrecision) : "-"}
 								</div>
 								<div
 									className={cn(
@@ -57,10 +55,10 @@ export function MarketWatchlist({ symbol, markets, tickers }: MarketWatchlistPro
 											: "text-medium-emphasis",
 									)}
 								>
-									{ticker ? change.text : "—"}
+									{ticker ? change.text : "-"}
 								</div>
 							</div>
-						</button>
+						</Link>
 					);
 				})}
 			</div>

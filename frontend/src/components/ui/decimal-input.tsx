@@ -106,7 +106,7 @@ export const DecimalInput = forwardRef<HTMLInputElement, DecimalInputProps>(func
 				aria-valuemax={props.max === undefined ? undefined : Number(props.max)}
 				aria-valuenow={Number.isFinite(Number(value)) ? Number(value) : undefined}
 				className={cn(
-					"bg-l3 border-border/60 placeholder-medium-emphasis border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3 placeholder:font-normal",
+					"bg-l3 border-border/60 placeholder-medium-emphasis border-1.5 w-full rounded-lg border-solid pr-12 text-left ring-0 text-lg tabular-nums text-high-emphasis outline-none h-11 px-3 placeholder:font-normal focus-visible:border-primary",
 					focused && "border-primary focus:border-primary",
 					disabled && "opacity-50 cursor-not-allowed",
 					asset && "pr-12",

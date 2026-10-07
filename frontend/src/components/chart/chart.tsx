@@ -1,8 +1,10 @@
 import { Activity, CircleAlert } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Candle, OrderBook, Ticker } from "@/types";
 import { type CandleInterval, useCandles } from "../../hooks/use-candles";
 import { useMarket } from "@/context/MarketContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { getChartPreferences, saveChartPreferences } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
 import { ChartToolbar } from "./chart-toolbar";
 import { CHART_RANGES, type ChartRange, type ChartStyle } from "./chart-utils";
@@ -16,15 +18,44 @@ type ChartProps = {
 	symbol: string;
 	orderbook: OrderBook;
 	ticker: Ticker | null;
+	mobileOrderbook?: ReactNode;
+	mobileTrades?: ReactNode;
 };
 
-type ChartTab = "chart" | "depth" | "info";
+type ChartTab = "chart" | "depth" | "book" | "trades" | "info";
 
-const TABS: { value: ChartTab; label: string }[] = [
+const DESKTOP_TABS: { value: ChartTab; label: string }[] = [
 	{ value: "chart", label: "Chart" },
 	{ value: "depth", label: "Depth" },
 	{ value: "info", label: "Market info" },
 ];
+
+const MOBILE_TABS: { value: ChartTab; label: string }[] = [
+	{ value: "chart", label: "Chart" },
+	{ value: "book", label: "Book" },
+	{ value: "trades", label: "Trades" },
+	{ value: "info", label: "Info" },
+];
+
+const clockFormatter = new Intl.DateTimeFormat(undefined, {
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hour12: false,
+});
+
+const timeZoneFormatter = new Intl.DateTimeFormat(undefined, {
+	timeZoneName: "short",
+});
+
+function formatTimeZone(date: Date) {
+	const timeZoneName = timeZoneFormatter
+		.formatToParts(date)
+		.find((part) => part.type === "timeZoneName")?.value;
+	if (timeZoneName) return timeZoneName;
+
+	return Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("_", " ");
+}
 
 function Clock() {
 	const [now, setNow] = useState(() => new Date());
@@ -36,26 +67,24 @@ function Clock() {
 
 	return (
 		<div className="hidden items-center gap-1 whitespace-nowrap text-sm text-medium-emphasis sm:flex">
-			<span>
-				{now.toLocaleTimeString([], {
-					hour: "2-digit",
-					minute: "2-digit",
-					second: "2-digit",
-					hour12: false,
-				})}
-			</span>
-			<span>({now.toLocaleTimeString([], { timeZoneName: "shortOffset" }).split(" ")[2]})</span>
+			<time dateTime={now.toISOString()}>{clockFormatter.format(now)}</time>
+			<span>({formatTimeZone(now)})</span>
 		</div>
 	);
 }
 
-export function Chart({ symbol, orderbook, ticker }: ChartProps) {
+export function Chart({ symbol, orderbook, ticker, mobileOrderbook, mobileTrades }: ChartProps) {
 	const panelRef = useRef<HTMLDivElement>(null);
+	const isMobile = useIsMobile();
 	const [tab, setTab] = useState<ChartTab>("chart");
-	const [interval, setInterval] = useState<CandleInterval>("1H");
-	const [chartStyle, setChartStyle] = useState<ChartStyle>("candlestick");
+	const [interval, setInterval] = useState<CandleInterval>(
+		() => getChartPreferences().interval,
+	);
+	const [chartStyle, setChartStyle] = useState<ChartStyle>(
+		() => getChartPreferences().style,
+	);
 	const [range, setRange] = useState<ChartRange>("All");
-	const [showVolume, setShowVolume] = useState(true);
+	const [showVolume, setShowVolume] = useState(() => getChartPreferences().showVolume);
 	const [hoveredCandle, setHoveredCandle] = useState<Candle | null>(null);
 	const [resetKey, setResetKey] = useState(0);
 	const [goLiveKey, setGoLiveKey] = useState(0);
@@ -64,10 +93,15 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 	const candle = hoveredCandle ?? candles[candles.length - 1] ?? null;
 	const candleUp = !candle || Number(candle.close) >= Number(candle.open);
 	const marketName = market ? `${market.baseAsset}/${market.quoteAsset}` : symbol.replace("_", "/");
+	const tabs = isMobile ? MOBILE_TABS : DESKTOP_TABS;
 
 	useEffect(() => {
 		setHoveredCandle(null);
 	}, [symbol, interval]);
+
+	useEffect(() => {
+		if (!tabs.some((item) => item.value === tab)) setTab("chart");
+	}, [tab, tabs]);
 
 	const toggleFullscreen = () => {
 		if (document.fullscreenElement) {
@@ -82,17 +116,55 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 		setResetKey((key) => key + 1);
 	};
 
+	const handleIntervalChange = (nextInterval: CandleInterval) => {
+		setInterval(nextInterval);
+		saveChartPreferences({ interval: nextInterval });
+	};
+
+	const handleChartStyleChange = (nextStyle: ChartStyle) => {
+		setChartStyle(nextStyle);
+		saveChartPreferences({ style: nextStyle });
+	};
+
+	const toggleVolume = () => {
+		setShowVolume((visible) => {
+			const nextVisible = !visible;
+			saveChartPreferences({ showVolume: nextVisible });
+			return nextVisible;
+		});
+	};
+
+	const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+		if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+		event.preventDefault();
+		let nextIndex = index;
+		if (event.key === "Home") nextIndex = 0;
+		else if (event.key === "End") nextIndex = tabs.length - 1;
+		else if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+		else nextIndex = (index - 1 + tabs.length) % tabs.length;
+		const nextTab = tabs[nextIndex];
+		if (!nextTab) return;
+		setTab(nextTab.value);
+		document.getElementById(`chart-${nextTab.value}-tab`)?.focus();
+	};
+
 	return (
-		<div ref={panelRef} className="flex h-full min-h-0 flex-col bg-card">
+		<div ref={panelRef} className="flex h-full min-h-0 flex-col bg-l1">
 			<div className="no-scrollbar flex h-11 shrink-0 items-center overflow-x-auto border-b border-border/40 px-2 sm:px-3">
-				<div className="flex items-center gap-1">
-					{TABS.map((item) => (
+				<div className="flex items-center gap-1" role="tablist" aria-label="Market chart views">
+					{tabs.map((item, index) => (
 						<button
 							key={item.value}
+							id={`chart-${item.value}-tab`}
 							type="button"
+							role="tab"
+							aria-selected={tab === item.value}
+							aria-controls="chart-view-panel"
+							tabIndex={tab === item.value ? 0 : -1}
 							onClick={() => setTab(item.value)}
+							onKeyDown={(event) => handleTabKeyDown(event, index)}
 							className={cn(
-								"flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors",
+								"flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
 								tab === item.value
 									? "bg-muted text-high-emphasis"
 									: "text-medium-emphasis hover:text-high-emphasis",
@@ -110,34 +182,39 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 						interval={interval}
 						chartStyle={chartStyle}
 						showVolume={showVolume}
-						onIntervalChange={setInterval}
-						onChartStyleChange={setChartStyle}
-						onToggleVolume={() => setShowVolume((visible) => !visible)}
+						onIntervalChange={handleIntervalChange}
+						onChartStyleChange={handleChartStyleChange}
+						onToggleVolume={toggleVolume}
 						onGoLive={() => setGoLiveKey((key) => key + 1)}
 						onReset={resetChart}
 						onFullscreen={toggleFullscreen}
 					/>
 
-					<div className="relative min-h-0 flex-1 overflow-hidden">
-						<div className="pointer-events-none absolute left-6 top-2 z-10 flex max-w-[calc(100%-5rem)] flex-wrap items-center gap-x-6 gap-y-0.5">
+					<div
+						id="chart-view-panel"
+						role="tabpanel"
+						aria-labelledby="chart-chart-tab"
+						className="relative min-h-0 flex-1 overflow-hidden"
+					>
+						<div className="pointer-events-none absolute top-2 left-3 z-10 flex max-w-[calc(100%-4rem)] flex-wrap items-center gap-x-3 gap-y-0.5 sm:left-6 sm:gap-x-6">
 							<span className="font-medium text-medium-emphasis">
-								{marketName} · {interval} · PaperDrill
+								{marketName} · {interval}<span className="hidden sm:inline"> · PaperDrill</span>
 							</span>
 							{candle && (
-								<div className="flex items-center gap-1 text-xs text-medium-emphasis bg-l1/20">
+								<div className="flex items-center gap-1 text-xs text-medium-emphasis">
 									<span>
 										O{" "}
 										<span className={candleUp ? "text-green-text" : "text-red-text"}>
 											{formatPrice(candle.open)}
 										</span>
 									</span>
-									<span>
+									<span className="hidden sm:inline">
 										H{" "}
 										<span className={candleUp ? "text-green-text" : "text-red-text"}>
 											{formatPrice(candle.high)}
 										</span>
 									</span>
-									<span>
+									<span className="hidden sm:inline">
 										L{" "}
 										<span className={candleUp ? "text-green-text" : "text-red-text"}>
 											{formatPrice(candle.low)}
@@ -149,7 +226,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 											{formatPrice(candle.close)}
 										</span>
 									</span>
-									<span>
+									<span className="hidden sm:inline">
 										V{" "}
 										<span className={candleUp ? "text-green-text" : "text-red-text"}>
 											{formatPrice(candle.volume)}
@@ -206,6 +283,7 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 									onClick={() => setRange(item)}
 									className={cn(
 										"rounded px-1.5 py-1 text-xs font-medium transition-colors",
+										(item === "3M" || item === "1M") && "hidden sm:inline-flex",
 										range === item
 											? "text-chart-5 underline decoration-chart-5 underline-offset-4 hover:text-chart-5"
 											: "text-medium-emphasis hover:text-high-emphasis",
@@ -219,11 +297,39 @@ export function Chart({ symbol, orderbook, ticker }: ChartProps) {
 					</div>
 				</>
 			) : tab === "depth" ? (
-				<div className="min-h-0 flex-1">
+				<div
+					id="chart-view-panel"
+					role="tabpanel"
+					aria-labelledby="chart-depth-tab"
+					className="min-h-0 flex-1"
+				>
 					<DepthChart orderbook={orderbook} ticker={ticker} />
 				</div>
+			) : tab === "book" ? (
+				<div
+					id="chart-view-panel"
+					role="tabpanel"
+					aria-labelledby="chart-book-tab"
+					className="min-h-0 flex-1"
+				>
+					{mobileOrderbook}
+				</div>
+			) : tab === "trades" ? (
+				<div
+					id="chart-view-panel"
+					role="tabpanel"
+					aria-labelledby="chart-trades-tab"
+					className="min-h-0 flex-1"
+				>
+					{mobileTrades}
+				</div>
 			) : (
-				<div className="min-h-0 flex-1 overflow-y-auto">
+				<div
+					id="chart-view-panel"
+					role="tabpanel"
+					aria-labelledby="chart-info-tab"
+					className="min-h-0 flex-1 overflow-y-auto"
+				>
 					<MarketInfo symbol={symbol} ticker={ticker} />
 				</div>
 			)}

@@ -1,27 +1,15 @@
 export const SITE = {
 	name: "PaperDrill",
-	tagline: "The Exchange Built for Developers",
+	tagline: "Competitive Trading Platform",
 	url: "https://paperdrill.dev",
 	description:
-		"PaperDrill is a live paper-trading exchange with a real matching engine and order book. Trade on the UI or connect a bot via API — no KYC and no real funds at risk.",
+		"PaperDrill is a competitive trading platform where traders trade credit markets, connect bots through the API, and climb the global leaderboard.",
 	shortDescription:
-		"Real matching engine. Real order book. Trade on the UI or connect a bot. No real funds at risk.",
-	keywords: [
-		"paper trading",
-		"crypto exchange simulator",
-		"matching engine",
-		"order book",
-		"developer exchange",
-		"algorithmic trading sandbox",
-		"BTC paper trading",
-		"API trading",
-		"WebSocket trading",
-		"PaperDrill",
-	],
+		"Trade credit markets through a live matching engine, connect bots, and earn your rank.",
 	locale: "en_US",
-	twitter: "@paperdrill",
 	contact: "support@paperdrill.dev",
 	securityContact: "security@paperdrill.dev",
+	github: "https://github.com/hars-21/paperdrill",
 } as const;
 
 export const OG_IMAGE = `${SITE.url}/og-image.png`;
@@ -45,15 +33,9 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 		description: SITE.description,
 		path: "/",
 	},
-	"/docs": {
-		title: `Documentation | ${SITE.name}`,
-		description:
-			"Learn how PaperDrill works — markets, trading, REST API, WebSocket feeds, and paper-trading sandbox setup for developers.",
-		path: "/docs",
-	},
 	"/terms": {
 		title: `Terms of Service | ${SITE.name}`,
-		description: "Terms of service for using the PaperDrill simulated trading platform.",
+		description: "Rules and terms for using the PaperDrill competitive trading platform.",
 		path: "/terms",
 	},
 	"/privacy": {
@@ -64,67 +46,74 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 	"/markets": {
 		title: `Markets | ${SITE.name}`,
 		description:
-			"Browse live BTC/USD, ETH/USD, and SOL/USD spot markets on PaperDrill with real-time order books.",
+			"Explore live BTC/USD, ETH/USD, and SOL/USD credit markets with real-time charts and order books.",
 		path: "/markets",
 	},
 	"/leaderboard": {
 		title: `Leaderboard | ${SITE.name}`,
 		description:
-			"View PaperDrill's global leaderboard, ranked by all-time portfolio return across live simulated markets.",
+			"See the PaperDrill global trading leaderboard, ranked by portfolio return across live credit markets.",
 		path: "/leaderboard",
 	},
 	"/login": {
 		title: `Sign In | ${SITE.name}`,
-		description: "Sign in to your PaperDrill account to trade and manage simulated balances.",
+		description: "Sign in to your PaperDrill account to trade and manage your credit balance.",
 		path: "/login",
 		noIndex: true,
 	},
 	"/signup": {
 		title: `Sign Up | ${SITE.name}`,
-		description: "Create a free PaperDrill account and start paper trading with simulated funds.",
+		description:
+			"Join PaperDrill, trade live credit markets, and build your place on the leaderboard.",
 		path: "/signup",
 	},
-	"/profile": {
+	"/verify-email": {
+		title: `Verify Email | ${SITE.name}`,
+		description: "Verify your email address to finish setting up your PaperDrill account.",
+		path: "/verify-email",
+		noIndex: true,
+	},
+	"/home": {
+		title: `Home | ${SITE.name}`,
+		description: "Review your PaperDrill portfolio and recent trading activity.",
+		path: "/home",
+		noIndex: true,
+	},
+	"/portfolio": {
+		title: `Portfolio | ${SITE.name}`,
+		description: "Review your credit balance, asset positions, and portfolio performance.",
+		path: "/portfolio",
+		noIndex: true,
+	},
+	"/activity": {
+		title: `Orders & Trades | ${SITE.name}`,
+		description: "Review your open orders, order history, and completed trades.",
+		path: "/activity",
+		noIndex: true,
+	},
+	"/settings/profile": {
 		title: `Profile | ${SITE.name}`,
-		description: "View your PaperDrill account, balances, and trading history.",
-		path: "/profile",
+		description: "Manage your PaperDrill account details and session.",
+		path: "/settings/profile",
+		noIndex: true,
+	},
+	"/settings/api-keys": {
+		title: `API Keys | ${SITE.name}`,
+		description: "Manage scoped API credentials for your trading bots and clients.",
+		path: "/settings/api-keys",
 		noIndex: true,
 	},
 };
 
 export function resolvePageSeo(pathname: string): PageSeo {
 	if (ROUTE_SEO[pathname]) return ROUTE_SEO[pathname];
-	if (pathname.startsWith("/docs/")) {
-		const page = pathname.split("/").at(-1)?.replaceAll("-", " ") ?? "Documentation";
-		return {
-			title: `${page.replace(/^./, (letter) => letter.toUpperCase())} | ${SITE.name}`,
-			description: "PaperDrill API documentation and developer guides.",
-			path: pathname,
-		};
-	}
-
-	if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
-		const page =
-			pathname.split("/").at(-1)?.replace("api-keys", "API Keys").replace("data", "Account Data") ??
-			"Dashboard";
-		const title =
-			pathname === "/dashboard"
-				? "Dashboard"
-				: page.replace(/^./, (letter) => letter.toUpperCase());
-		return {
-			title: `${title} | ${SITE.name}`,
-			description: "Manage your PaperDrill account, balances, API keys and trading activity.",
-			path: pathname,
-			noIndex: true,
-		};
-	}
 
 	const tradeMatch = pathname.match(/^\/trade\/([A-Z_]+)$/);
 	if (tradeMatch) {
-		const symbol = tradeMatch[1]?.replace("_", "/") ?? "BTC/USD";
+		const symbol = tradeMatch[1]?.replaceAll("_", "/") ?? "BTC/USD";
 		return {
 			title: `Trade ${symbol} | ${SITE.name}`,
-			description: `Live ${symbol} paper trading on PaperDrill — real matching engine, order book depth, and WebSocket market data.`,
+			description: `Trade ${symbol} with credits through PaperDrill's live matching engine, order book depth, and WebSocket market data.`,
 			path: pathname,
 		};
 	}
@@ -142,18 +131,29 @@ export function canonicalUrl(path = "/"): string {
 	return normalized === "/" ? SITE.url : `${SITE.url}${normalized}`;
 }
 
+export function jsonLdWebPage(title: string, description: string, url: string): object {
+	return {
+		"@context": "https://schema.org",
+		"@type": "WebPage",
+		"@id": `${url}#webpage`,
+		url,
+		name: title,
+		description,
+		inLanguage: "en",
+		isPartOf: { "@id": `${SITE.url}/#website` },
+	};
+}
+
 export function jsonLdWebSite(): object {
 	return {
 		"@context": "https://schema.org",
 		"@type": "WebSite",
+		"@id": `${SITE.url}/#website`,
 		name: SITE.name,
 		url: SITE.url,
 		description: SITE.description,
-		potentialAction: {
-			"@type": "SearchAction",
-			target: `${SITE.url}/markets?q={search_term_string}`,
-			"query-input": "required name=search_term_string",
-		},
+		inLanguage: "en",
+		publisher: { "@id": `${SITE.url}/#organization` },
 	};
 }
 
@@ -161,10 +161,17 @@ export function jsonLdOrganization(): object {
 	return {
 		"@context": "https://schema.org",
 		"@type": "Organization",
+		"@id": `${SITE.url}/#organization`,
 		name: SITE.name,
 		url: SITE.url,
-		logo: `${SITE.url}/og-image.png`,
+		logo: {
+			"@type": "ImageObject",
+			url: `${SITE.url}/apple-touch-icon.png`,
+			width: 180,
+			height: 180,
+		},
 		description: SITE.description,
+		sameAs: [SITE.github],
 		contactPoint: {
 			"@type": "ContactPoint",
 			email: SITE.contact,
@@ -176,12 +183,24 @@ export function jsonLdOrganization(): object {
 export function jsonLdSoftwareApplication(): object {
 	return {
 		"@context": "https://schema.org",
-		"@type": "SoftwareApplication",
+		"@type": "WebApplication",
+		"@id": `${SITE.url}/#application`,
 		name: SITE.name,
 		applicationCategory: "FinanceApplication",
+		applicationSubCategory: "Competitive trading",
 		operatingSystem: "Web",
 		url: SITE.url,
 		description: SITE.description,
+		isAccessibleForFree: true,
+		browserRequirements: "Requires a modern web browser with JavaScript enabled.",
+		featureList: [
+			"Competitive credit markets",
+			"Global trading leaderboard",
+			"Live order books and matching engine",
+			"REST API and WebSocket market data",
+			"API keys for trading bots",
+		],
+		provider: { "@id": `${SITE.url}/#organization` },
 		offers: {
 			"@type": "Offer",
 			price: "0",

@@ -7,6 +7,7 @@ export function useOrderbook(symbol: string) {
 	const [orderbook, setOrderbook] = useState<OrderBook>({ bids: {}, asks: {} });
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [retryKey, setRetryKey] = useState(0);
 	const bufferRef = useRef<StreamResponse[]>([]);
 
 	useEffect(() => {
@@ -78,7 +79,7 @@ export function useOrderbook(symbol: string) {
 			active = false;
 			unsubscribe();
 		};
-	}, [symbol]);
+	}, [symbol, retryKey]);
 
 	const bestBid = useMemo(() => {
 		const prices = Object.keys(orderbook.bids).map(Number).filter(Number.isFinite);
@@ -90,5 +91,12 @@ export function useOrderbook(symbol: string) {
 		return prices.length ? String(Math.min(...prices)) : null;
 	}, [orderbook.asks]);
 
-	return { orderbook, loading, error, bestBid, bestAsk };
+	return {
+		orderbook,
+		loading,
+		error,
+		bestBid,
+		bestAsk,
+		refresh: () => setRetryKey((current) => current + 1),
+	};
 }

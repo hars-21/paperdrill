@@ -59,7 +59,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
   --background: #FFFFFF;
   --foreground: #09090B;
@@ -92,6 +92,9 @@
   --l1: var(--card);
   --l2: color-mix(in srgb, var(--muted) 30%, transparent);
   --l3: var(--muted);
+  --scrollbar-thumb: color-mix(in srgb, var(--medium-emphasis) 38%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--medium-emphasis) 58%, transparent);
+  --scrollbar-thumb-active: color-mix(in srgb, var(--medium-emphasis) 74%, transparent);
 
   --green-depth: color-mix(in srgb, var(--success) 35%, transparent);
   --red-depth: color-mix(in srgb, var(--destructive) 35%, transparent);
@@ -187,11 +190,62 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--scrollbar-thumb);
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
     @apply bg-background text-foreground;
+    min-width: 320px;
+    min-height: 100dvh;
+    overflow-x: hidden;
     font-variant-numeric: tabular-nums;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   input[type="number"]::-webkit-inner-spin-button,
@@ -205,15 +259,6 @@
     appearance: textfield;
   }
 
-  * {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  *::-webkit-scrollbar {
-    display: none;
-  }
-
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -222,39 +267,19 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-}
 
-@layer components {
-
-  .hljs-comment,
-  .hljs-quote {
-    color: var(--low-emphasis);
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 
-  .hljs-keyword,
-  .hljs-selector-tag,
-  .hljs-literal,
-  .hljs-name {
-    color: var(--primary);
-  }
-
-  .hljs-string,
-  .hljs-title,
-  .hljs-section,
-  .hljs-attribute {
-    color: var(--green-text);
-  }
-
-  .hljs-number,
-  .hljs-variable,
-  .hljs-template-variable,
-  .hljs-type {
-    color: var(--chart-4);
-  }
-
-  .hljs-built_in,
-  .hljs-symbol,
-  .hljs-bullet {
-    color: var(--chart-5);
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

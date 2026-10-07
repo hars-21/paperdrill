@@ -1,6 +1,6 @@
 <div align="center">
   <h1>PaperDrill</h1>
-  <p><strong>The exchange built for developers, not spectators.</strong></p>
+  <p><strong>Competitive trading, powered by a real matching engine.</strong></p>
 
   <p>
     <img alt="Release v1.0.0" src="https://img.shields.io/badge/release-v1.1.0-6d5dfc">
@@ -11,22 +11,22 @@
 
   <p>
     <a href="https://paperdrill.dev">Platform</a> ·
-    <a href="https://paperdrill.dev/docs">API documentation</a> ·
+    <a href="https://docs.paperdrill.dev">API documentation</a> ·
     <a href="https://api.paperdrill.dev">API</a>
   </p>
 </div>
 
-PaperDrill is a live paper-trading exchange simulator with a real matching engine and order book. Trade through the web interface or connect a bot through the API—no KYC and no real funds at risk.
+PaperDrill is a competitive trading platform built around credit markets, a real matching engine, and a public leaderboard. Trade through the web interface or connect a bot through the API, build a measurable record, and compete without risking capital.
 
 ## Features
 
 - **Live matching engine** — price-time priority matching rather than mocked fills.
 - **Real-time market data** — order book, trades, tickers, and updating candles over WebSocket.
-- **Persistent accounts** — simulated balances, open orders, order history, and trade history.
-- **Public leaderboard** — compare simulated portfolio performance with other traders.
+- **Persistent accounts** — credit balances, open orders, order history, and trade history.
+- **Public leaderboard** — compare portfolio performance with other traders.
 - **Scoped API keys** — programmable account access and order management.
 - **Bot-friendly API** — REST trading endpoints and public WebSocket feeds.
-- **Daily simulated credit** — idempotent recurring credit with an adjustable PnL baseline.
+- **Daily credit** — idempotent recurring credit with an adjustable PnL baseline.
 
 ## Architecture
 
@@ -34,7 +34,8 @@ PaperDrill is a live paper-trading exchange simulator with a real matching engin
 
 | Service    | Responsibility                                                              |
 | ---------- | --------------------------------------------------------------------------- |
-| `frontend` | React SPA for markets, trading, account management, docs, and leaderboard   |
+| `frontend` | React SPA for markets, trading, account management, and leaderboard         |
+| `docs`     | Mintlify site for product guides and API documentation                      |
 | `backend`  | Express REST/WebSocket API, authentication, validation, and market metadata |
 | `engine`   | In-memory balances, order books, matching, and periodic snapshots           |
 | `worker`   | Persists orders/fills and derives candles and tickers                       |

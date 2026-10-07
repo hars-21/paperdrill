@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
 	override render() {
 		if (this.state.hasError) {
 			return (
-				<div className="flex flex-col items-center justify-center min-h-screen gap-5 text-center px-6 bg-background">
+				<div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-background px-6 text-center">
 					<AlertTriangle className="size-10 text-primary" />
 					<div className="space-y-2">
 						<h1 className="text-2xl font-bold text-high-emphasis">Something went wrong</h1>
@@ -49,9 +49,9 @@ export class ErrorBoundary extends Component<Props, State> {
 						>
 							Try Again
 						</Button>
-						<Link to="/">
-							<Button>Go Home</Button>
-						</Link>
+						<Button asChild>
+							<Link to="/">Go home</Link>
+						</Button>
 					</div>
 				</div>
 			);

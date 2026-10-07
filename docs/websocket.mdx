@@ -1,0 +1,97 @@
+---
+title: "Subscribe to WebSocket streams"
+description: "Consume live public trades, depth changes, tickers, and one-minute candles."
+---
+
+PaperDrill's public WebSocket streams market updates without authentication.
+
+```text
+wss://api.paperdrill.dev
+```
+
+## Choose channels
+
+| Channel         | Message                                          |
+| --------------- | ------------------------------------------------ |
+| `trade:SYMBOL`  | Completed public trade                           |
+| `depth:SYMBOL`  | Changed order-book levels only                   |
+| `ticker:SYMBOL` | Updated rolling 24-hour statistics               |
+| `candle:SYMBOL` | Current one-minute candle, updated on each trade |
+
+Use the exact symbol returned by `GET /markets`.
+
+## Subscribe
+
+Send one `SUBSCRIBE` message after the connection opens. One message can contain multiple channels.
+
+```js
+const channels = ["trade:SOL_USD", "ticker:SOL_USD"];
+const socket = new WebSocket("wss://api.paperdrill.dev");
+
+socket.addEventListener("open", () => {
+	socket.send(JSON.stringify({ method: "SUBSCRIBE", params: channels }));
+});
+
+socket.addEventListener("message", ({ data }) => {
+	const message = JSON.parse(data);
+	console.log(message.event, message);
+});
+```
+
+The server does not send a subscription acknowledgement. Messages begin when the selected market changes. To stop receiving a channel, send the same params with `UNSUBSCRIBE`.
+
+## Interpret messages
+
+### Trades
+
+```json
+{
+	"event": "trade",
+	"symbol": "SOL_USD",
+	"id": "fill_123",
+	"price": "125.50",
+	"qty": "1.25",
+	"maker": false,
+	"timestamp": 1789812000000
+}
+```
+
+### Tickers and candles
+
+Ticker messages use the same shape as the REST ticker. Candle messages contain `time`, `symbol`, `open`, `high`, `low`, `close`, `volume`, and `event: "candle"`.
+
+### Depth
+
+Depth messages contain only changed levels. Follow the snapshot-and-buffer procedure in [Maintain a local order book](/orderbook); do not treat one depth message as a complete book.
+
+## Reconnect safely
+
+Connections can close during a deployment or network interruption. Reconnect with exponential backoff and jitter, then resubscribe to every desired channel.
+
+```js
+const channels = ["trade:SOL_USD", "ticker:SOL_USD"];
+let attempt = 0;
+
+function connect() {
+	const socket = new WebSocket("wss://api.paperdrill.dev");
+
+	socket.addEventListener("open", () => {
+		attempt = 0;
+		socket.send(JSON.stringify({ method: "SUBSCRIBE", params: channels }));
+	});
+
+	socket.addEventListener("message", ({ data }) => {
+		const message = JSON.parse(data);
+		console.log(message);
+	});
+
+	socket.addEventListener("close", () => {
+		const delay = Math.min(30_000, 1_000 * 2 ** attempt++);
+		setTimeout(connect, delay + Math.random() * 500);
+	});
+}
+
+connect();
+```
+
+Fetch a fresh REST snapshot after reconnecting before trusting a local order book.

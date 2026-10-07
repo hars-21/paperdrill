@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { useAnalytics } from "@/lib/analytics";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { getSafeReturnTo, type ReturnLocationState } from "@/lib/redirect";
 import { toast } from "sonner";
 
 type Status = "waiting" | "verifying" | "success" | "error";
@@ -18,12 +18,16 @@ export function VerifyEmailPage() {
 	const posthog = useAnalytics();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const emailWasJustSent = Boolean((location.state as { emailSent?: boolean } | null)?.emailSent);
+	const locationState = location.state as ReturnLocationState | null;
+	const emailWasJustSent = Boolean(locationState?.emailSent);
+	const returnTo = getSafeReturnTo(location.state);
 	const [status, setStatus] = useState<Status>(token ? "verifying" : "waiting");
+	const [verificationError, setVerificationError] = useState<string | null>(null);
 	const [resending, setResending] = useState(false);
 	const [editingEmail, setEditingEmail] = useState(false);
 	const [email, setEmail] = useState("");
 	const [updatingEmail, setUpdatingEmail] = useState(false);
+	const [emailError, setEmailError] = useState<string | null>(null);
 	const [resendAt, setResendAt] = useState<number | null>(() =>
 		emailWasJustSent ? Date.now() + 30_000 : null,
 	);
@@ -64,7 +68,9 @@ export function VerifyEmailPage() {
 			.catch((error) => {
 				if (!active) return;
 				setStatus("error");
-				toast.error(error instanceof Error ? error.message : "Email verification failed");
+				setVerificationError(
+					error instanceof Error ? error.message : "Email verification failed.",
+				);
 			});
 
 		return () => {
@@ -74,9 +80,9 @@ export function VerifyEmailPage() {
 
 	useEffect(() => {
 		if (!verified) return;
-		const timer = window.setTimeout(() => navigate("/dashboard", { replace: true }), 1000);
+		const timer = window.setTimeout(() => navigate(returnTo, { replace: true }), 1000);
 		return () => window.clearTimeout(timer);
-	}, [verified, navigate]);
+	}, [verified, navigate, returnTo]);
 
 	const handleResend = async () => {
 		if (!user || resending || resendAt) return;
@@ -86,7 +92,8 @@ export function VerifyEmailPage() {
 			setResendAt(Date.now() + 30_000);
 			setCountdown(30);
 			setStatus("waiting");
-			navigate("/verify-email", { replace: true });
+			setVerificationError(null);
+			navigate("/verify-email", { replace: true, state: { returnTo } });
 			toast.success(result.message);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to resend verification email");
@@ -98,6 +105,7 @@ export function VerifyEmailPage() {
 	const handleEmailUpdate = async (event: React.SubmitEvent) => {
 		event.preventDefault();
 		if (!user || updatingEmail) return;
+		setEmailError(null);
 		const nextEmail = email.trim();
 		if (nextEmail === user.email) {
 			setEditingEmail(false);
@@ -112,11 +120,12 @@ export function VerifyEmailPage() {
 			setResendAt(Date.now() + 30_000);
 			setCountdown(30);
 			setStatus("waiting");
-			navigate("/verify-email", { replace: true });
+			setVerificationError(null);
+			navigate("/verify-email", { replace: true, state: { returnTo } });
 			posthog.capture("verification_email_updated");
 			toast.success(message);
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Failed to update email");
+			setEmailError(error instanceof Error ? error.message : "Failed to update email.");
 		} finally {
 			setUpdatingEmail(false);
 		}
@@ -124,105 +133,148 @@ export function VerifyEmailPage() {
 
 	if (loading || status === "verifying") {
 		return (
-			<div className="flex w-full flex-1 items-center justify-center gap-2 text-sm text-medium-emphasis">
-				<Loader2 className="size-4 animate-spin" />
-				Verifying your email...
-			</div>
+			<AuthShell>
+				<div role="status" aria-live="polite">
+					<div className="h-px overflow-hidden bg-border" aria-hidden="true">
+						<div className="h-full w-1/2 animate-pulse bg-primary" />
+					</div>
+					<h1 className="mt-8 text-3xl font-semibold tracking-tight text-high-emphasis">
+						Verifying your email
+					</h1>
+					<p className="mt-2 text-sm leading-6 text-medium-emphasis">
+						Checking your verification link. This should only take a moment.
+					</p>
+				</div>
+			</AuthShell>
 		);
 	}
 
+	const heading = verificationComplete
+		? "Email verified"
+		: status === "error"
+			? "Verification failed"
+			: "Check your inbox";
+	const description = verificationComplete
+		? user
+			? "Your email is verified. Returning you to PaperDrill."
+			: "Your email is verified. Sign in to continue."
+		: status === "error"
+			? verificationError ?? "This verification link is invalid or has expired."
+			: user
+				? "Open the verification email we sent and confirm your address to continue."
+				: "Sign in to request a new verification email.";
+
 	return (
-		<div className="flex w-full flex-1 items-center justify-center px-4 py-6 sm:px-6">
-			<Card className="w-full max-w-sm px-2 py-8 sm:px-4 sm:py-10">
-				<CardHeader className="text-left">
-					<CardTitle className="text-xl pb-4">
-						{verificationComplete
-							? "Email verified"
-							: status === "error"
-								? "Verification failed"
-								: "Check your inbox"}
-					</CardTitle>
-					<CardDescription>
-						{verificationComplete ? (
-							user
-								? "Your email has been successfully verified. Redirecting to your dashboard..."
-								: "Your email has been successfully verified. Sign in to continue."
-						) : user ? (
-							<>
-								To create your PaperDrill account, click the verification button in the email we
-								sent to: <span className="font-medium text-foreground">{user.email}</span>.
-							</>
-						) : (
-							"Sign in to request a new verification email."
-						)}
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{user && !verificationComplete && (
-						<>
-							{editingEmail ? (
-								<form onSubmit={handleEmailUpdate} className="space-y-3">
-									<label htmlFor="verification-email" className="text-sm font-medium">
+		<AuthShell>
+			<div aria-live="polite">
+				<header>
+					<h1 className="text-3xl font-semibold tracking-tight text-high-emphasis">{heading}</h1>
+					<p
+						className={`mt-2 text-sm leading-6 ${status === "error" ? "text-red-text" : "text-medium-emphasis"}`}
+					>
+						{description}
+					</p>
+				</header>
+
+				{user && !verificationComplete ? (
+					<div className="mt-8">
+						<div className="flex items-center justify-between gap-4 border-y border-border/50 py-4">
+							<div className="min-w-0">
+								<p className="text-xs text-medium-emphasis">Verification email</p>
+								<p className="mt-1 truncate text-sm font-medium text-high-emphasis">{user.email}</p>
+							</div>
+							{!editingEmail ? (
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									className="shrink-0"
+									onClick={() => setEditingEmail(true)}
+								>
+									Change
+								</Button>
+							) : null}
+						</div>
+
+						{editingEmail ? (
+							<form onSubmit={handleEmailUpdate} className="mt-6 space-y-4">
+								<div className="space-y-2">
+									<label htmlFor="verification-email" className="text-sm font-medium text-high-emphasis">
 										Email address
 									</label>
 									<Input
 										id="verification-email"
 										type="email"
+										name="email"
 										value={email}
-										onChange={(event) => setEmail(event.target.value)}
+										onChange={(event) => {
+											setEmail(event.target.value);
+											setEmailError(null);
+										}}
 										autoComplete="email"
-										autoFocus
+										spellCheck={false}
+										aria-invalid={Boolean(emailError)}
+										aria-describedby={emailError ? "verification-email-error" : undefined}
+										className="h-11 rounded-lg bg-l1 px-3.5 shadow-none"
 										required
 									/>
-									<div className="flex gap-2">
-										<Button type="submit" className="flex-1" disabled={updatingEmail}>
-											{updatingEmail ? "Updating..." : "Update and resend"}
-										</Button>
-										<Button
-											type="button"
-											variant="ghost"
-											disabled={updatingEmail}
-											onClick={() => {
-												setEmail(user.email);
-												setEditingEmail(false);
-											}}
-										>
-											Cancel
-										</Button>
-									</div>
-								</form>
-							) : (
+								</div>
+
+								{emailError ? (
+									<p
+										id="verification-email-error"
+										role="alert"
+										className="rounded-lg border border-red-text/20 bg-red-bg/20 px-3 py-2.5 text-sm text-red-text"
+									>
+										{emailError}
+									</p>
+								) : null}
+
+								<div className="flex flex-col-reverse gap-2 sm:flex-row">
+									<Button
+										type="button"
+										variant="outline"
+										className="h-10 sm:flex-1"
+										disabled={updatingEmail}
+										onClick={() => {
+											setEmail(user.email);
+											setEditingEmail(false);
+										}}
+									>
+										Cancel
+									</Button>
+									<Button type="submit" className="h-10 sm:flex-1" disabled={updatingEmail}>
+										{updatingEmail ? "Updating…" : "Update and resend"}
+									</Button>
+								</div>
+							</form>
+						) : (
+							<div className="mt-6">
+								<p className="text-sm text-medium-emphasis">
+									Didn&apos;t receive it? Check your spam folder or send another email.
+								</p>
 								<Button
-									type="button"
-									variant="ghost"
-									className="h-auto w-fit px-0 text-sm text-medium-emphasis hover:bg-transparent hover:text-high-emphasis"
-									onClick={() => setEditingEmail(true)}
+									className="mt-4 h-11 w-full"
+									onClick={handleResend}
+									disabled={resending || resendAt !== null}
 								>
-									Wrong email? Change it
+									{resending
+										? "Sending…"
+										: countdown > 0
+											? `Resend in ${countdown}s`
+											: "Resend email"}
 								</Button>
-							)}
-							<CardDescription>Don't see the email in your inbox or spam folder?</CardDescription>
-							<Button
-								className="w-full"
-								variant="inverted"
-								onClick={handleResend}
-								disabled={resending || resendAt !== null}
-							>
-								{resending
-									? "Sending..."
-									: countdown > 0
-										? `Resend in ${countdown}s`
-										: "Click here to resend"}
-							</Button>
-						</>
-					)}
-					{!user && !verified && (
-						<Button asChild className="w-full">
-							<Link to="/login">Sign in</Link>
-						</Button>
-					)}
-				</CardContent>
-			</Card>
-		</div>
+							</div>
+						)}
+					</div>
+				) : null}
+
+				{!user && !verified ? (
+					<Button asChild size="lg" className="mt-8 h-11 w-full">
+						<Link to="/login" state={{ returnTo }}>Sign in</Link>
+					</Button>
+				) : null}
+			</div>
+		</AuthShell>
 	);
 }

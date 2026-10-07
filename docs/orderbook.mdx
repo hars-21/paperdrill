@@ -1,0 +1,70 @@
+---
+title: "Maintain a local order book"
+description: "Read an aggregated snapshot and apply live depth updates safely."
+---
+
+Use the REST snapshot when you need the current book once. Combine it with the `depth:SYMBOL` WebSocket stream when your application must maintain a live local copy.
+
+## Read a snapshot
+
+```bash
+curl https://api.paperdrill.dev/v1/markets/SOL_USD/orderbook
+```
+
+```json
+{
+	"symbol": "SOL_USD",
+	"bids": [
+		{ "price": "125.40", "qty": "8.50" },
+		{ "price": "125.20", "qty": "4.00" }
+	],
+	"asks": [
+		{ "price": "125.60", "qty": "3.25" },
+		{ "price": "125.80", "qty": "6.00" }
+	],
+	"lastUpdateId": 1842,
+	"timestamp": 1789812000000
+}
+```
+
+Bids are sorted from highest to lowest price. Asks are sorted from lowest to highest. Each level contains the total remaining quantity at that price; individual orders are not exposed.
+
+## Combine the snapshot and stream
+
+The depth stream contains only levels that changed, so it cannot initialize a complete book by itself.
+
+<Steps>
+	<Step title="Subscribe and buffer">
+		Connect to [WebSocket streams](/websocket), subscribe to `depth:SYMBOL`, and buffer every
+		message without applying it yet.
+	</Step>
+	<Step title="Fetch a snapshot">
+		Request `GET /markets/:symbol/orderbook` while buffering continues.
+	</Step>
+	<Step title="Discard covered updates">
+		Discard buffered messages whose `lastUpdateId` is less than or equal to the snapshot's
+		`lastUpdateId`.
+	</Step>
+	<Step title="Apply the remainder">
+		Apply the remaining buffered messages in arrival order, then apply new messages as they arrive.
+	</Step>
+</Steps>
+
+A depth update replaces the quantity at a price level; it is not a delta to add. Remove the level when the received quantity represents zero.
+
+```json
+{
+	"event": "depth",
+	"symbol": "SOL_USD",
+	"bids": [{ "price": "125.40", "qty": "0.00" }],
+	"asks": [],
+	"lastUpdateId": 1843,
+	"timestamp": 1789812000100
+}
+```
+
+Store prices as strings or scaled integers rather than JavaScript numbers. A simple implementation can use one map for bids and another for asks, keyed by the exact price string.
+
+## Recover after a disconnect
+
+Do not continue from the old local book after reconnecting. Resubscribe, start buffering again, fetch a fresh snapshot, and repeat the synchronization procedure.

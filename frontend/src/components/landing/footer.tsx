@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/brand-logo";
+import { getLastTradePath } from "@/lib/ux-preferences";
 
 export function Footer() {
 	return (
-		<footer className="border-t border-border/40 bg-card/20">
-			<div className="mx-auto max-w-6xl px-6 py-12">
+		<footer className="border-t border-border/50 bg-background">
+			<div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
 				<div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5">
 					<div className="sm:col-span-2">
 						<BrandLogo href="/" />
-						<p className="mt-2 text-sm text-medium-emphasis max-w-xs leading-relaxed">
-							The exchange built for developers, not spectators. Real matching engine, real order
-							book, no real funds at risk.
+						<p className="mt-3 max-w-xs text-sm leading-6 text-medium-emphasis">
+							Competitive credit trading with live markets, API access, and global rankings.
 						</p>
 					</div>
 
@@ -28,8 +28,16 @@ export function Footer() {
 								</Link>
 							</li>
 							<li>
-								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
-									Trading
+								<Link
+									to={getLastTradePath()}
+									className="transition-colors hover:text-high-emphasis"
+								>
+									Trade
+								</Link>
+							</li>
+							<li>
+								<Link to="/leaderboard" className="transition-colors hover:text-high-emphasis">
+									Leaderboard
 								</Link>
 							</li>
 						</ul>
@@ -39,9 +47,12 @@ export function Footer() {
 						<h4 className="text-xs font-semibold text-low-emphasis mb-3">Developers</h4>
 						<ul className="space-y-2 text-sm text-medium-emphasis">
 							<li>
-								<Link to="/docs" className="transition-colors hover:text-high-emphasis">
+								<a
+									href="https://docs.paperdrill.dev"
+									className="transition-colors hover:text-high-emphasis"
+								>
 									Documentation
-								</Link>
+								</a>
 							</li>
 						</ul>
 					</div>
@@ -63,12 +74,12 @@ export function Footer() {
 					</div>
 				</div>
 
-				<div className="mt-10 border-t border-border/40 pt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+				<div className="mt-12 flex flex-col justify-between gap-3 border-t border-border/50 pt-6 sm:flex-row sm:items-center">
 					<p className="text-xs text-low-emphasis">
 						&copy; {new Date().getFullYear()} PaperDrill. All rights reserved.
 					</p>
 					<p className="text-xs text-low-emphasis">
-						Simulated trading only. No real funds or assets are involved.
+						Credits have no monetary value. No real funds or assets are involved.
 					</p>
 				</div>
 			</div>

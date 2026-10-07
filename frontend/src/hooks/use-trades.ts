@@ -7,6 +7,7 @@ export function useTrades(symbol: string, limit = 50) {
 	const [trades, setTrades] = useState<Trade[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [retryKey, setRetryKey] = useState(0);
 
 	useEffect(() => {
 		let active = true;
@@ -55,7 +56,7 @@ export function useTrades(symbol: string, limit = 50) {
 			active = false;
 			unsubscribe();
 		};
-	}, [symbol, limit]);
+	}, [symbol, limit, retryKey]);
 
-	return { trades, loading, error };
+	return { trades, loading, error, refresh: () => setRetryKey((current) => current + 1) };
 }

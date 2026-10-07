@@ -51,6 +51,7 @@ export interface LeaderboardEntry {
 	position: number;
 	rank: number;
 	name: string;
+	avatarUrl?: string | null;
 	equity: string;
 	pnl: string;
 	pnlPercent: string;

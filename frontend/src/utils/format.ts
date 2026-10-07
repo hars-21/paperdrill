@@ -1,5 +1,5 @@
 export function formatPrice(n?: string | number | null, pricePrecision: number = 2) {
-	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
+	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "-";
 
 	return Number(n).toLocaleString(undefined, {
 		minimumFractionDigits: pricePrecision,
@@ -8,7 +8,7 @@ export function formatPrice(n?: string | number | null, pricePrecision: number =
 }
 
 export function formatQty(n?: string | number | null, qtyPrecision: number = 4) {
-	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "—";
+	if (n === undefined || n === null || n === "" || !Number.isFinite(Number(n))) return "-";
 
 	return Number(n).toLocaleString(undefined, {
 		minimumFractionDigits: qtyPrecision,
@@ -17,10 +17,10 @@ export function formatQty(n?: string | number | null, qtyPrecision: number = 4) 
 }
 
 export function formatVolume(vol?: string | number) {
-	if (!vol) return "—";
+	if (!vol) return "-";
 
 	const n = Number(vol);
-	if (!Number.isFinite(n)) return "—";
+	if (!Number.isFinite(n)) return "-";
 
 	if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
 	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -43,7 +43,7 @@ export function formatTime(ts: string | number) {
 
 export function formatDateTime(ts: string | number) {
 	const date = new Date(ts);
-	if (!Number.isFinite(date.getTime())) return "—";
+	if (!Number.isFinite(date.getTime())) return "-";
 	return date.toLocaleString(undefined, {
 		month: "short",
 		day: "numeric",
