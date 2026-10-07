@@ -1,3 +1,5 @@
+import { getLastTradePath } from "@/lib/ux-preferences";
+
 export type NavigationId =
 	| "home"
 	| "portfolio"
@@ -18,12 +20,14 @@ export type NavigationItem = {
 	external?: boolean;
 };
 
-export const primaryNavigation = [
-	{ id: "trading", label: "Trade", href: "/trade/BTC_USD", activePath: "/trade" },
-	{ id: "markets", label: "Markets", href: "/markets", end: true },
-	{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard", end: true },
-	{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev", external: true },
-] satisfies NavigationItem[];
+export function getPrimaryNavigation(tradePath = getLastTradePath()) {
+	return [
+		{ id: "trading", label: "Trade", href: tradePath, activePath: "/trade" },
+		{ id: "markets", label: "Markets", href: "/markets", end: true },
+		{ id: "leaderboard", label: "Leaderboard", href: "/leaderboard", end: true },
+		{ id: "docs", label: "Docs", href: "https://docs.paperdrill.dev", external: true },
+	] satisfies NavigationItem[];
+}
 
 export const accountNavigation = [
 	{ id: "home", label: "Home", href: "/home", end: true },

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/brand-logo";
+import { getLastTradePath } from "@/lib/ux-preferences";
 
 export function Footer() {
 	return (
@@ -27,7 +28,7 @@ export function Footer() {
 								</Link>
 							</li>
 							<li>
-								<Link to="/trade/BTC_USD" className="transition-colors hover:text-high-emphasis">
+								<Link to={getLastTradePath()} className="transition-colors hover:text-high-emphasis">
 									Trade
 								</Link>
 							</li>

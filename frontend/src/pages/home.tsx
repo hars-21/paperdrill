@@ -13,6 +13,7 @@ import { useOpenOrders, useTradeHistory } from "@/hooks/use-account";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { useTickers } from "@/hooks/use-tickers";
 import { getAssetColor } from "@/lib/asset-colors";
+import { getLastTradeSymbol } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
 import type { Market, OrderRecord, Portfolio, Ticker, UserTrade } from "@/types";
 import { formatChange, formatDateTime, formatPrice, formatQty, formatVolume } from "@/utils/format";
@@ -538,7 +539,7 @@ export function HomePage() {
 	const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolio();
 	const { openOrders, loading: openOrdersLoading, error: openOrdersError } = useOpenOrders();
 	const { trades, loading: tradesLoading, error: tradesError } = useTradeHistory(6);
-	const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+	const [selectedSymbol, setSelectedSymbol] = useState<string | null>(getLastTradeSymbol);
 	const featuredMarkets = useMemo(() => markets.slice(0, 3), [markets]);
 	const focusMarket =
 		markets.find((market) => market.symbol === selectedSymbol) ?? featuredMarkets[0] ?? markets[0];

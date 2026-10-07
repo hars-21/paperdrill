@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Surface } from "@/components/ui/surface";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { getLastTradePath } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry, LeaderboardResponse, MyLeaderboardResponse } from "@/types";
 import { formatChange, formatDateTime, formatPrice } from "@/utils/format";
@@ -345,7 +346,7 @@ function RankingsPanel({
 				</div>
 
 				{entries.length > 0 ? (
-					<ol className="divide-y divide-border/30">
+					<ol>
 						{entries.map((entry) => (
 							<RankingRow
 								key={entry.position}
@@ -560,7 +561,7 @@ function EligibilityMessage({
 			: reason === "NO_TRADES"
 				? {
 						text: "Complete your first trade to join the leaderboard.",
-						to: "/trade/BTC_USD",
+						to: getLastTradePath(),
 						action: "Start trading",
 					}
 				: null;
@@ -604,7 +605,7 @@ function EmptyState() {
 			description="Verify your account and complete a trade to enter the standings."
 			action={
 				<Button asChild variant="secondary" size="sm">
-					<Link to="/trade/BTC_USD">Start trading</Link>
+					<Link to={getLastTradePath()}>Start trading</Link>
 				</Button>
 			}
 		/>

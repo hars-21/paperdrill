@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
@@ -11,7 +9,7 @@ import { useAnalytics } from "@/lib/analytics";
 import { getSafeReturnTo } from "@/lib/redirect";
 import { toast } from "sonner";
 
-export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
+export function LoginForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -48,64 +46,78 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 	};
 
 	return (
-		<div className={cn("flex flex-col gap-6", className)} {...props}>
-			<Card>
-				<CardHeader className="text-center">
-					<CardTitle className="text-xl">Welcome back</CardTitle>
-					<CardDescription>Sign in to your PaperDrill account</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleSubmit}>
-						<FieldGroup>
-							<Field>
-								<FieldLabel htmlFor="email">Email</FieldLabel>
-								<Input
-									id="email"
-									type="email"
-									placeholder="you@example.com"
-									name="email"
-									value={email}
-									onChange={(e) => {
-										setEmail(e.target.value);
-										setFormError(null);
-									}}
-									autoComplete="email"
-									spellCheck={false}
-									aria-invalid={Boolean(formError)}
-									required
-								/>
-							</Field>
-							<Field>
-								<FieldLabel htmlFor="password">Password</FieldLabel>
-								<Input
-									id="password"
-									type="password"
-									placeholder="••••••••"
-									name="password"
-									value={password}
-									onChange={(e) => {
-										setPassword(e.target.value);
-										setFormError(null);
-									}}
-									autoComplete="current-password"
-									aria-invalid={Boolean(formError)}
-									required
-								/>
-							</Field>
-							<FieldError>{formError}</FieldError>
-							<Field>
-								<Button type="submit" disabled={isLoading}>
-									{isLoading ? "Signing in…" : "Sign in"}
-								</Button>
-								<FieldDescription className="text-center">
-									Don&apos;t have an account? <Link to="/signup" state={{ returnTo }}>Sign up</Link>
-								</FieldDescription>
-							</Field>
-						</FieldGroup>
-					</form>
-				</CardContent>
-			</Card>
-			<FieldDescription className="px-6 text-center">
+		<div>
+			<header>
+				<h1 className="text-3xl font-semibold tracking-tight text-high-emphasis">Welcome back</h1>
+				<p className="mt-2 text-sm leading-6 text-medium-emphasis">
+					Continue to your portfolio and trading workspace.
+				</p>
+			</header>
+
+			<form onSubmit={handleSubmit} className="mt-8">
+				<FieldGroup className="gap-5">
+					<Field className="gap-2">
+						<FieldLabel htmlFor="email">Email address</FieldLabel>
+						<Input
+							id="email"
+							type="email"
+							placeholder="you@example.com"
+							name="email"
+							value={email}
+							onChange={(event) => {
+								setEmail(event.target.value);
+								setFormError(null);
+							}}
+							autoComplete="email"
+							spellCheck={false}
+							aria-invalid={Boolean(formError)}
+							aria-describedby={formError ? "login-error" : undefined}
+							className="h-11 rounded-lg bg-l1 px-3.5 shadow-none"
+							required
+						/>
+					</Field>
+
+					<Field className="gap-2">
+						<FieldLabel htmlFor="password">Password</FieldLabel>
+						<Input
+							id="password"
+							type="password"
+							placeholder="Enter your password"
+							name="password"
+							value={password}
+							onChange={(event) => {
+								setPassword(event.target.value);
+								setFormError(null);
+							}}
+							autoComplete="current-password"
+							aria-invalid={Boolean(formError)}
+							aria-describedby={formError ? "login-error" : undefined}
+							className="h-11 rounded-lg bg-l1 px-3.5 shadow-none"
+							required
+						/>
+					</Field>
+
+					<FieldError
+						id="login-error"
+						className="rounded-lg border border-red-text/20 bg-red-bg/20 px-3 py-2.5"
+					>
+						{formError}
+					</FieldError>
+
+					<Button type="submit" size="lg" className="h-11 w-full" disabled={isLoading}>
+						{isLoading ? "Signing in…" : "Sign in"}
+					</Button>
+				</FieldGroup>
+			</form>
+
+			<p className="mt-7 border-t border-border/50 pt-6 text-sm text-medium-emphasis">
+				Don&apos;t have an account?{" "}
+				<Link to="/signup" state={{ returnTo }} className="font-medium text-high-emphasis underline-offset-4 hover:underline">
+					Create one
+				</Link>
+			</p>
+
+			<FieldDescription className="mt-8 text-xs leading-5">
 				By continuing, you agree to our <Link to="/terms">Terms of Service</Link> and{" "}
 				<Link to="/privacy">Privacy Policy</Link>.
 			</FieldDescription>

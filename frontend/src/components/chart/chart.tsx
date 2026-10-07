@@ -4,6 +4,7 @@ import type { Candle, OrderBook, Ticker } from "@/types";
 import { type CandleInterval, useCandles } from "../../hooks/use-candles";
 import { useMarket } from "@/context/MarketContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getChartPreferences, saveChartPreferences } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
 import { ChartToolbar } from "./chart-toolbar";
 import { CHART_RANGES, type ChartRange, type ChartStyle } from "./chart-utils";
@@ -76,10 +77,14 @@ export function Chart({ symbol, orderbook, ticker, mobileOrderbook, mobileTrades
 	const panelRef = useRef<HTMLDivElement>(null);
 	const isMobile = useIsMobile();
 	const [tab, setTab] = useState<ChartTab>("chart");
-	const [interval, setInterval] = useState<CandleInterval>("1H");
-	const [chartStyle, setChartStyle] = useState<ChartStyle>("candlestick");
+	const [interval, setInterval] = useState<CandleInterval>(
+		() => getChartPreferences().interval,
+	);
+	const [chartStyle, setChartStyle] = useState<ChartStyle>(
+		() => getChartPreferences().style,
+	);
 	const [range, setRange] = useState<ChartRange>("All");
-	const [showVolume, setShowVolume] = useState(true);
+	const [showVolume, setShowVolume] = useState(() => getChartPreferences().showVolume);
 	const [hoveredCandle, setHoveredCandle] = useState<Candle | null>(null);
 	const [resetKey, setResetKey] = useState(0);
 	const [goLiveKey, setGoLiveKey] = useState(0);
@@ -109,6 +114,24 @@ export function Chart({ symbol, orderbook, ticker, mobileOrderbook, mobileTrades
 	const resetChart = () => {
 		setRange("All");
 		setResetKey((key) => key + 1);
+	};
+
+	const handleIntervalChange = (nextInterval: CandleInterval) => {
+		setInterval(nextInterval);
+		saveChartPreferences({ interval: nextInterval });
+	};
+
+	const handleChartStyleChange = (nextStyle: ChartStyle) => {
+		setChartStyle(nextStyle);
+		saveChartPreferences({ style: nextStyle });
+	};
+
+	const toggleVolume = () => {
+		setShowVolume((visible) => {
+			const nextVisible = !visible;
+			saveChartPreferences({ showVolume: nextVisible });
+			return nextVisible;
+		});
 	};
 
 	const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -159,9 +182,9 @@ export function Chart({ symbol, orderbook, ticker, mobileOrderbook, mobileTrades
 						interval={interval}
 						chartStyle={chartStyle}
 						showVolume={showVolume}
-						onIntervalChange={setInterval}
-						onChartStyleChange={setChartStyle}
-						onToggleVolume={() => setShowVolume((visible) => !visible)}
+						onIntervalChange={handleIntervalChange}
+						onChartStyleChange={handleChartStyleChange}
+						onToggleVolume={toggleVolume}
 						onGoLive={() => setGoLiveKey((key) => key + 1)}
 						onReset={resetChart}
 						onFullscreen={toggleFullscreen}

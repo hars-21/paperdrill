@@ -1,4 +1,5 @@
 import { CircleAlert } from "lucide-react";
+import { useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Chart } from "../components/chart";
 import { DataPanel } from "../components/market/data-panel";
@@ -17,6 +18,7 @@ import { useOrderbook } from "@/hooks/use-orderbook";
 import { useTickers } from "@/hooks/use-tickers";
 import { useTrades } from "@/hooks/use-trades";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { saveLastTradeSymbol } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
 
 const PANEL_CLASS_NAME = "overflow-hidden rounded-xl border border-border/60 bg-l1 shadow-sm";
@@ -50,6 +52,10 @@ export function TradePage() {
 	const isMobile = useIsMobile();
 	const ticker = tickers[symbol] ?? null;
 	const marketExists = markets.some((market) => market.symbol === symbol);
+
+	useEffect(() => {
+		if (marketExists) saveLastTradeSymbol(symbol);
+	}, [marketExists, symbol]);
 
 	const setLeftTab = (tab: "book" | "trades") => {
 		setSearchParams((current) => {

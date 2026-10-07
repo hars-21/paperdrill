@@ -37,8 +37,9 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { usePortfolio } from "@/hooks/use-portfolio";
+import { useLastTradePath } from "@/hooks/use-ux-preferences";
 import { api } from "@/lib/api";
-import { accountNavigation, primaryNavigation } from "@/lib/navigation";
+import { accountNavigation, getPrimaryNavigation } from "@/lib/navigation";
 import { useTheme } from "@/lib/theme-provider";
 import type { Portfolio } from "@/types";
 import { formatPrice } from "@/utils/format";
@@ -100,6 +101,8 @@ export function Navbar() {
 	const [loggingOut, setLoggingOut] = useState(false);
 	const location = useLocation();
 	const navigate = useNavigate();
+	const lastTradePath = useLastTradePath();
+	const primaryNavigation = getPrimaryNavigation(lastTradePath);
 	const returnTo = `${location.pathname}${location.search}${location.hash}`;
 	const balance = getBalanceSnapshot(portfolio);
 
@@ -181,6 +184,7 @@ export function Navbar() {
 					{user ? <MobileBalance balance={balance.balance} loading={portfolioLoading} /> : null}
 
 					<MobileNavigation
+						primaryNavigation={primaryNavigation}
 						user={user}
 						verified={verified}
 						authLoading={authLoading}
@@ -401,6 +405,7 @@ function AccountMenu({
 }
 
 function MobileNavigation({
+	primaryNavigation,
 	user,
 	verified,
 	authLoading,
@@ -412,6 +417,7 @@ function MobileNavigation({
 	loggingOut,
 	onLogout,
 }: {
+	primaryNavigation: ReturnType<typeof getPrimaryNavigation>;
 	user: AuthUser | null;
 	verified: boolean;
 	authLoading: boolean;

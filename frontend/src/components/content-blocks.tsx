@@ -35,28 +35,27 @@ function renderInline(text: string): ReactNode[] {
 
 export function ContentBlocks({ blocks, className }: { blocks: Block[]; className?: string }) {
 	return (
-		<div className={cn("space-y-2.5", className)}>
+		<div className={cn("space-y-3", className)}>
 			{blocks.map((block, i) => {
 				switch (block.type) {
 					case "heading":
 						return (
-							<h3 key={i} className="pt-1 text-sm font-semibold tracking-tight text-high-emphasis">
+							<h3 key={i} className="pt-2 text-base font-semibold tracking-tight text-high-emphasis">
 								{block.text}
 							</h3>
 						);
 					case "paragraph":
 						return (
-							<p key={i} className="text-sm leading-relaxed text-medium-emphasis">
+							<p key={i} className="text-[15px] leading-7 text-medium-emphasis">
 								{renderInline(block.text)}
 							</p>
 						);
 					case "list":
 						return (
-							<ul key={i} className="space-y-2">
+							<ul key={i} className="list-disc space-y-2.5 pl-5 marker:text-low-emphasis">
 								{block.items.map((item) => (
-									<li key={item} className="flex items-start gap-2.5 text-sm text-medium-emphasis">
-										<span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-										<span>{item}</span>
+									<li key={item} className="pl-1 text-[15px] leading-7 text-medium-emphasis">
+										{item}
 									</li>
 								))}
 							</ul>
@@ -66,7 +65,7 @@ export function ContentBlocks({ blocks, className }: { blocks: Block[]; classNam
 							<a
 								key={i}
 								href={block.href}
-								className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+								className="text-[15px] font-medium text-primary underline-offset-4 hover:underline"
 							>
 								{block.text}
 							</a>

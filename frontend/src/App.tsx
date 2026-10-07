@@ -1,5 +1,5 @@
 import "./index.css";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { SignupPage } from "./pages/signup";
@@ -17,18 +17,12 @@ import { ApiKeysPage } from "./pages/api-keys";
 import { PortfolioPage } from "./pages/portfolio";
 import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
+import { NotFoundPage } from "./pages/not-found";
 import { RouteBehavior } from "./components/route-behavior";
+import { getLastTradePath } from "./lib/ux-preferences";
 
-function NotFound() {
-	return (
-		<div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4 text-center px-4">
-			<h1 className="text-6xl font-bold text-medium-emphasis">404</h1>
-			<p className="text-lg text-medium-emphasis">This page doesn't exist on PaperDrill yet.</p>
-			<Link to="/" className="text-primary hover:underline text-sm">
-				Go home
-			</Link>
-		</div>
-	);
+function TradeRedirect() {
+	return <Navigate to={getLastTradePath()} replace />;
 }
 
 export function App() {
@@ -87,6 +81,7 @@ export function App() {
 					<Route path="profile" element={<Navigate to="/settings/profile" replace />} />
 					<Route path="markets" element={<MarketsPage />} />
 					<Route path="leaderboard" element={<LeaderboardPage />} />
+					<Route path="trade" element={<TradeRedirect />} />
 					<Route path="trade/:symbol" element={<TradePage />} />
 					<Route
 						path="login"
@@ -105,7 +100,7 @@ export function App() {
 						}
 					/>
 					<Route path="verify-email" element={<VerifyEmailPage />} />
-					<Route path="*" element={<NotFound />} />
+					<Route path="*" element={<NotFoundPage />} />
 				</Route>
 			</Routes>
 		</>
