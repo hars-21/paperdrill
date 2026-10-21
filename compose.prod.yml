@@ -23,16 +23,41 @@ services:
   backend:
     <<: *prod-app
     image: "ghcr.io/hars-21/paperdrill-backend:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   engine:
     <<: *prod-app
     image: "ghcr.io/hars-21/paperdrill-engine:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
     volumes:
       - engine-snapshots:/usr/src/app/snapshots
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   worker:
     <<: *prod-app
     image: "ghcr.io/hars-21/paperdrill-worker:${PAPERDRILL_IMAGE_TAG:?Set PAPERDRILL_IMAGE_TAG in .env.prod}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    <<: *prod-runtime
+    image: timescale/timescaledb:2.28.2-pg17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-paperdrill}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
   redis:
     <<: *prod-runtime
@@ -77,4 +102,5 @@ services:
 
 volumes:
   engine-snapshots:
+  postgres-data:
   redis-data:

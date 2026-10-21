@@ -8,7 +8,7 @@ PROD_COMPOSE := ./scripts/compose.sh prod
 	db-prepare db-seed migrate-dev migrate-reset \
 	test-unit test-integration bench \
 	images-build images-push prod-config deploy prod-status prod-logs \
-	prod-bots-up prod-bots-stop clean
+	prod-bots-up prod-bots-stop prod-db-migrate clean
 
 # Development
 up:
@@ -84,6 +84,9 @@ prod-status:
 
 prod-logs:
 	$(PROD_COMPOSE) logs -f $(SERVICE)
+
+prod-db-migrate:
+	./scripts/migrate-neon-to-self-hosted.sh
 
 prod-bots-up:
 	$(PROD_COMPOSE) --profile bots pull btc-bot sol-bot eth-bot
