@@ -56,6 +56,27 @@ export const balanceQuerySchema = z.object({
 	asset: z.string().trim().optional(),
 });
 
+export const balanceChangeReasonSchema = z.enum([
+	"initialized",
+	"deposited",
+	"credited",
+	"order.locked",
+	"order.released",
+	"fill.settled",
+]);
+
+export const balanceHistoryQuerySchema = z.object({
+	asset: z.string().trim().min(1).optional(),
+	reason: balanceChangeReasonSchema.optional(),
+	page: z.coerce.number().int().positive().optional(),
+	limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const balanceHistorySeriesQuerySchema = z.object({
+	asset: z.string().trim().min(1).optional(),
+	range: z.enum(["24h", "7d", "30d", "90d", "all"]).optional(),
+});
+
 export const depositBodySchema = z.object({
 	amount: decimalString,
 	asset: z.string().trim().min(1, "asset is required"),

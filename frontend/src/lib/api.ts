@@ -3,6 +3,9 @@ import { config } from "./env";
 import type {
 	ApiKeyRecord,
 	ApiKeyScope,
+	BalanceHistoryRange,
+	BalanceHistoryResponse,
+	BalanceSeriesResponse,
 	Candle,
 	CreatedApiKey,
 	DailyCredit,
@@ -161,6 +164,32 @@ export const api = {
 	getBalance(asset?: string) {
 		const params = asset ? `?asset=${encodeURIComponent(asset)}` : "";
 		return request<UserBalance>(`/balances${params}`);
+	},
+
+	getBalanceHistory(params?: {
+		asset?: string | null;
+		reason?: string | null;
+		page?: number;
+		limit?: number;
+	}) {
+		const query = new URLSearchParams();
+		if (params?.asset) query.set("asset", params.asset);
+		if (params?.reason) query.set("reason", params.reason);
+		if (params?.page) query.set("page", String(params.page));
+		if (params?.limit) query.set("limit", String(params.limit));
+		const qs = query.toString();
+		return request<BalanceHistoryResponse>(`/balances/history${qs ? `?${qs}` : ""}`);
+	},
+
+	getBalanceSeries(params?: {
+		asset?: string | null;
+		range?: BalanceHistoryRange;
+	}) {
+		const query = new URLSearchParams();
+		if (params?.asset) query.set("asset", params.asset);
+		if (params?.range) query.set("range", params.range);
+		const qs = query.toString();
+		return request<BalanceSeriesResponse>(`/balances/history/series${qs ? `?${qs}` : ""}`);
 	},
 
 	getPortfolio() {

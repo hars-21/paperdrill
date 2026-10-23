@@ -29,12 +29,28 @@ export const accountQueryKeys = {
 	],
 	tradesPrefix: (userId: string) => ["account", userId, "trades"],
 	trades: (userId: string, limit: number) => ["account", userId, "trades", { limit }],
+	balanceHistoryPrefix: (userId: string) => ["account", userId, "balance-history"],
+	balanceHistory: (userId: string, params: Record<string, unknown>) => [
+		"account",
+		userId,
+		"balance-history",
+		"list",
+		params,
+	],
+	balanceSeries: (userId: string, params: Record<string, unknown>) => [
+		"account",
+		userId,
+		"balance-history",
+		"series",
+		params,
+	],
 };
 
 export function invalidateAccountQueries(client: QueryClient, userId: string) {
 	return Promise.all([
 		client.invalidateQueries({ queryKey: accountQueryKeys.balancesPrefix(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.portfolio(userId) }),
+		client.invalidateQueries({ queryKey: accountQueryKeys.balanceHistoryPrefix(userId) }),
 	]);
 }
 
@@ -45,5 +61,6 @@ export function invalidateTradingQueries(client: QueryClient, userId: string) {
 		client.invalidateQueries({ queryKey: accountQueryKeys.openOrders(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.ordersPrefix(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.tradesPrefix(userId) }),
+		client.invalidateQueries({ queryKey: accountQueryKeys.balanceHistoryPrefix(userId) }),
 	]);
 }

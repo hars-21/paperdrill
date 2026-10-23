@@ -4,7 +4,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import {
 	claimDailyReward,
 	createDeposit,
-	getBalance,
 	getPortfolio,
 	getUserData,
 	updateUserEmail,
@@ -29,11 +28,6 @@ userRouter.get(
 	"/trades",
 	requireAccess({ scopes: ["ORDER_READ"], allowUnverified: true }),
 	asyncHandler(getTradeHistory),
-);
-userRouter.get(
-	"/balances",
-	requireAccess({ scopes: ["ACCOUNT_READ"], allowUnverified: true }),
-	asyncHandler(getBalance),
 );
 userRouter.get(
 	"/portfolio",

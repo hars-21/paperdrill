@@ -55,6 +55,69 @@ export interface PortfolioResponse {
 	pnlPercent: string;
 }
 
+export interface BalanceHistoryEntry {
+	id: string;
+	asset: string;
+	available: string;
+	locked: string;
+	total: string;
+	deltaAvailable: string;
+	deltaLocked: string;
+	deltaTotal: string;
+	reason: string;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: string;
+}
+
+export interface BalanceHistoryResponse {
+	entries: BalanceHistoryEntry[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+	assets: Array<{
+		asset: string;
+		available: string;
+		locked: string;
+		total: string;
+		netChange: string;
+		entryCount: number;
+		lastChangedAt: string | null;
+	}>;
+	filtered: {
+		entryCount: number;
+		netChange: string | null;
+	};
+}
+
+export interface BalanceSeriesResponse {
+	mode: "asset" | "total";
+	asset: string | null;
+	unit: string;
+	precision: number;
+	partial: boolean;
+	range: string;
+	from: string;
+	to: string;
+	points: Array<{
+		at: string;
+		available: string;
+		locked: string;
+		total: string;
+	}>;
+	current: {
+		available: string;
+		locked: string;
+		total: string;
+	} | null;
+	change: string;
+}
+
 export class ApiClient {
 	private cookie: string | undefined;
 
@@ -82,6 +145,14 @@ export class ApiClient {
 
 	getBalances() {
 		return this.request<Balances>("/v1/balances");
+	}
+
+	getBalanceHistory(query = "") {
+		return this.request<BalanceHistoryResponse>(`/v1/balances/history${query}`);
+	}
+
+	getBalanceSeries(query = "") {
+		return this.request<BalanceSeriesResponse>(`/v1/balances/history/series${query}`);
 	}
 
 	getPortfolio() {

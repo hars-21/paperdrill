@@ -10,6 +10,7 @@ import {
 	Database,
 	House,
 	KeyRound,
+	Landmark,
 	LogOut,
 	MailCheck,
 	Menu,
@@ -47,6 +48,7 @@ import { formatPrice } from "@/utils/format";
 const accountIcons = {
 	home: House,
 	portfolio: WalletCards,
+	"balance-history": Landmark,
 	activity: Database,
 	"api-keys": KeyRound,
 	profile: UserRound,
@@ -55,6 +57,7 @@ const accountIcons = {
 const accountDescriptions = {
 	home: "Account overview",
 	portfolio: "Balances and performance",
+	"balance-history": "Every balance movement",
 	activity: "Open orders and trade history",
 	"api-keys": "Connect your trading bot",
 	profile: "Profile and account settings",

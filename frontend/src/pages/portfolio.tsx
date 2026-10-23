@@ -268,6 +268,9 @@ export function PortfolioPage() {
 					</div>
 					<div className="flex items-center gap-2">
 						<Button asChild variant="outline" size="sm">
+							<Link to="/balance-history">Balance history</Link>
+						</Button>
+						<Button asChild variant="outline" size="sm">
 							<Link to="/activity">View activity</Link>
 						</Button>
 						<Button asChild size="sm">

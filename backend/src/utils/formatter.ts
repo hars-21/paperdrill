@@ -158,6 +158,36 @@ export function formatBalance(balance: Record<string, Record<string, unknown>>) 
 	return formatted;
 }
 
+export function formatBalanceHistoryEntry(entry: {
+	id: string;
+	asset: string;
+	available: bigint;
+	locked: bigint;
+	deltaAvailable: bigint;
+	deltaLocked: bigint;
+	reason: string;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: Date;
+}) {
+	const precision = assetPrecision.get(entry.asset) ?? 0;
+
+	return {
+		id: entry.id,
+		asset: entry.asset,
+		available: fmt(entry.available, precision),
+		locked: fmt(entry.locked, precision),
+		total: fmt(entry.available + entry.locked, precision),
+		deltaAvailable: fmt(entry.deltaAvailable, precision),
+		deltaLocked: fmt(entry.deltaLocked, precision),
+		deltaTotal: fmt(entry.deltaAvailable + entry.deltaLocked, precision),
+		reason: entry.reason,
+		referenceId: entry.referenceId,
+		symbol: entry.symbol,
+		occurredAt: entry.occurredAt.toISOString(),
+	};
+}
+
 export function formatPortfolio(
 	portfolio: {
 		quoteAsset: string;

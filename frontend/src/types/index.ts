@@ -18,6 +18,83 @@ export interface UserBalance {
 	[asset: string]: Balance;
 }
 
+export type BalanceChangeReason =
+	| "initialized"
+	| "deposited"
+	| "credited"
+	| "order.locked"
+	| "order.released"
+	| "fill.settled";
+
+export interface BalanceHistoryEntry {
+	id: string;
+	asset: string;
+	available: string;
+	locked: string;
+	total: string;
+	deltaAvailable: string;
+	deltaLocked: string;
+	deltaTotal: string;
+	reason: BalanceChangeReason;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: string;
+}
+
+export interface BalanceHistoryAsset {
+	asset: string;
+	available: string;
+	locked: string;
+	total: string;
+	netChange: string;
+	entryCount: number;
+	lastChangedAt: string | null;
+}
+
+export interface BalanceHistoryResponse {
+	entries: BalanceHistoryEntry[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+	assets: BalanceHistoryAsset[];
+	filtered: {
+		entryCount: number;
+		netChange: string | null;
+	};
+}
+
+export type BalanceHistoryRange = "24h" | "7d" | "30d" | "90d" | "all";
+
+export interface BalanceSeriesPoint {
+	at: string;
+	available: string;
+	locked: string;
+	total: string;
+}
+
+export interface BalanceSeriesResponse {
+	mode: "asset" | "total";
+	asset: string | null;
+	unit: string;
+	precision: number;
+	partial: boolean;
+	range: BalanceHistoryRange;
+	from: string;
+	to: string;
+	points: BalanceSeriesPoint[];
+	current: {
+		available: string;
+		locked: string;
+		total: string;
+	} | null;
+	change: string;
+}
+
 export interface DailyCredit {
 	credited: boolean;
 	asset: string;

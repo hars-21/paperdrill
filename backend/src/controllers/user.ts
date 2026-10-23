@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { sendToEngine } from "../utils/engineClient";
 import { formatBalance, formatPortfolio, formatUserTrade } from "../utils/formatter";
 import { logger } from "../utils/logger";
-import { balanceQuerySchema, depositBodySchema, tradeHistoryQuerySchema } from "../schema/exchange";
+import { depositBodySchema, tradeHistoryQuerySchema } from "../schema/exchange";
 import { sendValidationError } from "../utils/validation";
 import { marketStore } from "../store/market";
 import { calculatePortfolio, type Balance } from "../utils/portfolio";
@@ -156,30 +156,6 @@ export async function getTradeHistory(req: Request, res: Response) {
 		logger.error("Failed to fetch trade history", err);
 		sendApiError(res, 500, "INTERNAL_ERROR", "Trade history could not be loaded");
 	}
-}
-
-// Balances
-export async function getBalance(req: Request, res: Response) {
-	const userId = getUserId(req);
-	const parsedQuery = balanceQuerySchema.safeParse(req.query);
-
-	if (!parsedQuery.success) {
-		sendValidationError(res, parsedQuery.error);
-		return;
-	}
-
-	const { asset } = parsedQuery.data;
-
-	const engineResponse = await sendToEngine("get_user_balance", { userId, asset });
-
-	if (!engineResponse.success) {
-		sendEngineError(res, engineResponse.error);
-		return;
-	}
-
-	res
-		.status(200)
-		.json(formatBalance(engineResponse.data as Record<string, Record<string, unknown>>));
 }
 
 export async function getPortfolio(req: Request, res: Response) {

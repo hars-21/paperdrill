@@ -179,6 +179,7 @@ model BalanceHistory {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, asset, occurredAt])
+  @@index([userId, occurredAt])
   @@index([referenceId])
 }
 

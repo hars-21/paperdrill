@@ -28,6 +28,35 @@ curl https://api.paperdrill.dev/v1/balances \
 
 Always refresh balances after order activity instead of calculating the authoritative balance only on the client.
 
+## Review balance history
+
+`GET /balances/history` returns every recorded balance movement newest first. Each entry includes the resulting `available`, `locked`, and `total` balances plus the signed `deltaAvailable`, `deltaLocked`, and `deltaTotal` that produced them.
+
+```bash
+curl "https://api.paperdrill.dev/v1/balances/history?asset=USD&reason=fill.settled&page=1&limit=20" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+| Parameter | Meaning                                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `asset`   | Optional asset filter.                                                                                               |
+| `reason`  | Optional reason filter: `initialized`, `deposited`, `credited`, `order.locked`, `order.released`, or `fill.settled`. |
+| `page`    | Page number, starting at 1.                                                                                          |
+| `limit`   | Entries per page, up to 100.                                                                                         |
+
+The response also returns `assets`, a per-asset summary, and `filtered`, which reports the filtered entry count and net change for the selected asset.
+
+## Chart balance history
+
+`GET /balances/history/series` returns a chart-ready trajectory. Pass `asset` for a single asset or omit it to value the whole account at current market prices. Supported ranges are `24h`, `7d`, `30d`, `90d`, and `all`; the default is `30d`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/balances/history/series?range=30d" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+When the total series includes a funded asset without a usable mark price, `partial` is `true` and the series excludes that asset from its valuation.
+
 ## Track portfolio performance
 
 `GET /portfolio` requires `ACCOUNT_READ`. It values positions in the platform quote asset and compares current equity with the account's PnL baseline.

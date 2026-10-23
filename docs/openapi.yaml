@@ -420,6 +420,85 @@ paths:
           $ref: "#/components/responses/AssetNotFound"
         default:
           $ref: "#/components/responses/RequestError"
+  /balances/history:
+    get:
+      operationId: listBalanceHistory
+      summary: List balance history
+      description: |
+        Returns recorded balance movements newest first. Use `asset` and `reason`
+        to narrow the ledger. Requires the `ACCOUNT_READ` scope.
+      tags: [Account]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: asset
+          in: query
+          description: Return movements for this asset only.
+          schema:
+            type: string
+          example: USD
+        - name: reason
+          in: query
+          description: Return movements with this reason only.
+          schema:
+            $ref: "#/components/schemas/BalanceChangeReason"
+        - name: page
+          in: query
+          description: Page number, starting at 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of entries per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Balance history returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceHistoryPage"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /balances/history/series:
+    get:
+      operationId: getBalanceHistorySeries
+      summary: Get balance history series
+      description: |
+        Returns a chart-ready balance trajectory for one asset or for the whole
+        account valued at current market prices. Requires the `ACCOUNT_READ` scope.
+      tags: [Account]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: asset
+          in: query
+          description: Chart this asset only instead of the total account value.
+          schema:
+            type: string
+          example: USD
+        - name: range
+          in: query
+          description: Time window for the series.
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d, all]
+            default: 30d
+      responses:
+        "200":
+          description: Balance series returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceSeries"
+        default:
+          $ref: "#/components/responses/RequestError"
   /portfolio:
     get:
       operationId: getPortfolio
@@ -780,6 +859,174 @@ components:
       type: object
       additionalProperties:
         $ref: "#/components/schemas/Balance"
+    BalanceChangeReason:
+      type: string
+      enum:
+        - initialized
+        - deposited
+        - credited
+        - order.locked
+        - order.released
+        - fill.settled
+    BalanceHistoryEntry:
+      type: object
+      required:
+        - id
+        - asset
+        - available
+        - locked
+        - total
+        - deltaAvailable
+        - deltaLocked
+        - deltaTotal
+        - reason
+        - occurredAt
+      properties:
+        id:
+          type: string
+        asset:
+          type: string
+        available:
+          $ref: "#/components/schemas/DecimalString"
+        locked:
+          $ref: "#/components/schemas/DecimalString"
+        total:
+          $ref: "#/components/schemas/DecimalString"
+        deltaAvailable:
+          $ref: "#/components/schemas/SignedDecimalString"
+        deltaLocked:
+          $ref: "#/components/schemas/SignedDecimalString"
+        deltaTotal:
+          $ref: "#/components/schemas/SignedDecimalString"
+        reason:
+          $ref: "#/components/schemas/BalanceChangeReason"
+        referenceId:
+          oneOf:
+            - type: string
+            - type: "null"
+        symbol:
+          oneOf:
+            - type: string
+            - type: "null"
+        occurredAt:
+          type: string
+          format: date-time
+    BalanceHistoryAsset:
+      type: object
+      required: [asset, available, locked, total, netChange, entryCount, lastChangedAt]
+      properties:
+        asset:
+          type: string
+        available:
+          $ref: "#/components/schemas/DecimalString"
+        locked:
+          $ref: "#/components/schemas/DecimalString"
+        total:
+          $ref: "#/components/schemas/DecimalString"
+        netChange:
+          $ref: "#/components/schemas/SignedDecimalString"
+        entryCount:
+          type: integer
+        lastChangedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    BalanceHistoryPage:
+      type: object
+      required: [entries, pagination, assets, filtered]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/BalanceHistoryEntry"
+        pagination:
+          type: object
+          required: [page, limit, total, totalPages, hasNextPage, hasPreviousPage]
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNextPage:
+              type: boolean
+            hasPreviousPage:
+              type: boolean
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BalanceHistoryAsset"
+        filtered:
+          type: object
+          required: [entryCount, netChange]
+          properties:
+            entryCount:
+              type: integer
+            netChange:
+              oneOf:
+                - $ref: "#/components/schemas/SignedDecimalString"
+                - type: "null"
+    BalanceSeriesPoint:
+      type: object
+      required: [at, available, locked, total]
+      properties:
+        at:
+          type: string
+          format: date-time
+        available:
+          $ref: "#/components/schemas/DecimalString"
+        locked:
+          $ref: "#/components/schemas/DecimalString"
+        total:
+          $ref: "#/components/schemas/DecimalString"
+    BalanceSeries:
+      type: object
+      required: [mode, asset, unit, precision, partial, range, from, to, points, current, change]
+      properties:
+        mode:
+          type: string
+          enum: [asset, total]
+        asset:
+          oneOf:
+            - type: string
+            - type: "null"
+        unit:
+          type: string
+        precision:
+          type: integer
+        partial:
+          type: boolean
+        range:
+          type: string
+          enum: [24h, 7d, 30d, 90d, all]
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/BalanceSeriesPoint"
+        current:
+          oneOf:
+            - type: object
+              required: [available, locked, total]
+              properties:
+                available:
+                  $ref: "#/components/schemas/DecimalString"
+                locked:
+                  $ref: "#/components/schemas/DecimalString"
+                total:
+                  $ref: "#/components/schemas/DecimalString"
+            - type: "null"
+        change:
+          $ref: "#/components/schemas/SignedDecimalString"
     PortfolioPosition:
       type: object
       required: [asset, available, locked, total, markPrice, value]
