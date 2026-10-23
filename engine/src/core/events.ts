@@ -1,8 +1,14 @@
-import { onEvent } from "./eventBus";
+import { onAnyEvent, onEvent } from "./eventBus";
+import { appendEvent } from "./eventLog";
 import { publishDepth, publishFill, streamEvent } from "../redis/publish";
 import type { EngineEvent } from "../types/event";
 
 export function registerEventHandlers() {
+	onAnyEvent((event: EngineEvent) => {
+		if (event.type === "depth.changed") return;
+		appendEvent(event);
+	});
+
 	onEvent("order.created", (event: EngineEvent) => {
 		if (event.type !== "order.created") return;
 		streamEvent({ event: "order", order: event.order });

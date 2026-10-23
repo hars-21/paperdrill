@@ -1,4 +1,6 @@
 import { APPLIED_CREDITS, ASSETS, BALANCES } from "../store";
+import { emitEvent } from "../core/eventBus";
+import type { BalanceChangeReason } from "../types/event";
 import type { CreateOrderInput, InternalOrder, Fill, UserBalance } from "../types/domain";
 import { getMarket } from "./market";
 
@@ -33,6 +35,34 @@ function ensureAssetBalance(balance: UserBalance, asset: string) {
 	return (balance[asset] ??= { available: 0n, locked: 0n });
 }
 
+function emitBalanceChanged(
+	userId: string,
+	asset: string,
+	deltaAvailable: bigint,
+	deltaLocked: bigint,
+	reason: BalanceChangeReason,
+	referenceId: string | null = null,
+	symbol: string | null = null,
+) {
+	const balance = BALANCES[userId]?.[asset];
+	if (!balance) return;
+	if (deltaAvailable === 0n && deltaLocked === 0n) return;
+
+	emitEvent({
+		type: "balance.changed",
+		userId,
+		asset,
+		available: balance.available,
+		locked: balance.locked,
+		deltaAvailable,
+		deltaLocked,
+		reason,
+		referenceId,
+		symbol,
+		occurredAt: Date.now(),
+	});
+}
+
 export function initializeUserBalance(userId: string, asset: string, amount: bigint) {
 	if (!ASSETS.has(asset)) {
 		throw new Error(`Unknown asset: ${asset}`);
@@ -42,12 +72,19 @@ export function initializeUserBalance(userId: string, asset: string, amount: big
 		BALANCES[userId] = {
 			[asset]: { available: amount, locked: 0n },
 		};
+
+		emitBalanceChanged(userId, asset, amount, 0n, "initialized");
 	}
 
 	return BALANCES[userId];
 }
 
-export function addBalance(userId: string, asset: string, amount: bigint) {
+export function addBalance(
+	userId: string,
+	asset: string,
+	amount: bigint,
+	meta?: { reason?: BalanceChangeReason; referenceId?: string | null },
+) {
 	if (!ASSETS.has(asset)) {
 		throw new Error(`Unknown asset: ${asset}`);
 	}
@@ -55,6 +92,15 @@ export function addBalance(userId: string, asset: string, amount: bigint) {
 	const userBalance = (BALANCES[userId] ??= {});
 	const assetBalance = ensureAssetBalance(userBalance, asset);
 	assetBalance.available += amount;
+
+	emitBalanceChanged(
+		userId,
+		asset,
+		amount,
+		0n,
+		meta?.reason ?? "deposited",
+		meta?.referenceId ?? null,
+	);
 
 	return { [asset]: assetBalance };
 }
@@ -64,7 +110,10 @@ export function applyCredit(creditId: string, userId: string, asset: string, amo
 		return { applied: false, balance: getUserBalance(userId, asset) };
 	}
 
-	const balance = addBalance(userId, asset, amount);
+	const balance = addBalance(userId, asset, amount, {
+		reason: "credited",
+		referenceId: creditId,
+	});
 	APPLIED_CREDITS.add(creditId);
 
 	return { applied: true, balance };
@@ -82,7 +131,7 @@ export function getUserBalance(userId: string, asset?: string): UserBalance {
 }
 
 export function lockBalance(order: CreateOrderInput): LockResult {
-	const { userId, side, type, symbol, price, qty } = order;
+	const { id, userId, side, type, symbol, price, qty } = order;
 
 	const market = getMarket(symbol);
 	const userBalance = getUserBalance(userId);
@@ -127,6 +176,16 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 		quote.available -= lockAmount;
 		quote.locked += lockAmount;
 
+		emitBalanceChanged(
+			userId,
+			market.quoteAsset,
+			-lockAmount,
+			lockAmount,
+			"order.locked",
+			id,
+			symbol,
+		);
+
 		return {
 			asset: market.quoteAsset,
 			locked: lockAmount,
@@ -143,6 +202,8 @@ export function lockBalance(order: CreateOrderInput): LockResult {
 
 		base.available -= qty;
 		base.locked += qty;
+
+		emitBalanceChanged(userId, market.baseAsset, -qty, qty, "order.locked", id, symbol);
 
 		return { asset: market.baseAsset, locked: qty };
 	}
@@ -174,6 +235,11 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 		sellerBase.locked -= qty;
 		buyerBase.available += qty;
 
+		emitBalanceChanged(buyerId, market.quoteAsset, 0n, -cost, "fill.settled", fill.id, symbol);
+		emitBalanceChanged(buyerId, market.baseAsset, qty, 0n, "fill.settled", fill.id, symbol);
+		emitBalanceChanged(sellerId, market.quoteAsset, cost, 0n, "fill.settled", fill.id, symbol);
+		emitBalanceChanged(sellerId, market.baseAsset, 0n, -qty, "fill.settled", fill.id, symbol);
+
 		results.push({
 			id: fill.id,
 			cost,
@@ -186,7 +252,7 @@ export function settleFills(fills: Fill[]): SettleResult[] {
 }
 
 export function releaseBalance(order: InternalOrder): ReleaseResult {
-	const { side, symbol, qty, filledQty, lockedAmount, spentAmount } = order;
+	const { id, side, symbol, qty, filledQty, lockedAmount, spentAmount } = order;
 
 	const market = getMarket(symbol);
 	const userBalance = getUserBalance(order.userId);
@@ -197,9 +263,20 @@ export function releaseBalance(order: InternalOrder): ReleaseResult {
 
 		if (remaining < 0) throw new Error("Invalid remaining amount");
 		if (quote.locked < remaining) throw new Error("Insufficient Locked Balance");
+		if (remaining === 0n) return { asset: market.quoteAsset, released: 0n };
 
 		quote.locked -= remaining;
 		quote.available += remaining;
+
+		emitBalanceChanged(
+			order.userId,
+			market.quoteAsset,
+			remaining,
+			-remaining,
+			"order.released",
+			id,
+			symbol,
+		);
 
 		return { asset: market.quoteAsset, released: remaining };
 	} else {
@@ -207,9 +284,20 @@ export function releaseBalance(order: InternalOrder): ReleaseResult {
 		const remainingQty = qty - filledQty;
 
 		if (base.locked < remainingQty) throw new Error("Insufficient Locked Balance");
+		if (remainingQty === 0n) return { asset: market.baseAsset, released: 0n };
 
 		base.locked -= remainingQty;
 		base.available += remainingQty;
+
+		emitBalanceChanged(
+			order.userId,
+			market.baseAsset,
+			remainingQty,
+			-remainingQty,
+			"order.released",
+			id,
+			symbol,
+		);
 
 		return { asset: market.baseAsset, released: remainingQty };
 	}

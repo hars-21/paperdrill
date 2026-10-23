@@ -15,6 +15,7 @@ import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer } from "./util";
 import { initMarkets } from "./modules/market";
 import { registerEventHandlers } from "./core/events";
+import { flushEvents } from "./core/eventLog";
 import { startHealth, stopHealth } from "./health";
 
 const abortController = new AbortController();
@@ -159,6 +160,7 @@ async function gracefulShutdown(signal: string) {
 
 	abortController.abort();
 	await stopHealth();
+	await flushEvents();
 	await disconnectRedis();
 	await disconnectDB();
 	await flushSentry();
