@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { waitForSystemReady } from "../helpers/api";
-import { EngineClient } from "../helpers/engine";
+import { EngineClient, streamIdAtLeast } from "../helpers/engine";
 import { createTestUser } from "../helpers/users";
 import { waitFor } from "../helpers/wait-for";
 import { TestDatabase } from "../setup/database";
@@ -32,13 +32,27 @@ test("worker persists a duplicate fill event only once", async () => {
 		isBuyerMaker: false,
 		createdAt: Date.now(),
 	};
+	const record = {
+		id: crypto.randomUUID(),
+		type: "fill.created",
+		version: 1,
+		occurredAt: fill.createdAt,
+		event: { type: "fill.created", fill },
+	};
 
-	await engine.addStreamEvent("stream:fill", { event: "fill", fill });
-	const secondEventId = await engine.addStreamEvent("stream:fill", { event: "fill", fill });
+	const firstEventId = await engine.addEngineEvent(record);
 
 	await waitFor(
-		() => engine.redis.get("worker:fill:last_id"),
-		(cursor) => cursor === secondEventId,
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, firstEventId),
+		{ description: "worker first-fill checkpoint" },
+	);
+
+	const secondEventId = await engine.addEngineEvent(record);
+
+	await waitFor(
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, secondEventId),
 		{ description: "worker duplicate-fill checkpoint" },
 	);
 
@@ -52,5 +66,71 @@ test("worker persists a duplicate fill event only once", async () => {
 		sellOrderId: fill.sellOrderId,
 		buyerId: buyer.id,
 		sellerId: seller.id,
+	});
+});
+
+test("worker projects balance events into current state and history", async () => {
+	const user = await createTestUser("balance-projection");
+	const occurredAt = Date.now();
+	const eventId = crypto.randomUUID();
+	const record = {
+		id: eventId,
+		type: "balance.changed",
+		version: 1,
+		occurredAt,
+		event: {
+			type: "balance.changed",
+			userId: user.id,
+			asset: "TEST",
+			available: "12345",
+			locked: "67",
+			deltaAvailable: "12345",
+			deltaLocked: "67",
+			reason: "credited",
+			referenceId: "credit-test",
+			symbol: null,
+			occurredAt,
+		},
+	};
+
+	const firstEventId = await engine.addEngineEvent(record);
+	await waitFor(
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, firstEventId),
+		{ description: "worker first-balance checkpoint" },
+	);
+
+	expect(await database.balance(user.id, "TEST")).toEqual({
+		userId: user.id,
+		asset: "TEST",
+		available: "12345",
+		locked: "67",
+	});
+	expect(await database.balanceHistory(eventId)).toEqual({
+		id: eventId,
+		userId: user.id,
+		asset: "TEST",
+		available: "12345",
+		locked: "67",
+		deltaAvailable: "12345",
+		deltaLocked: "67",
+		reason: "credited",
+		referenceId: "credit-test",
+		symbol: null,
+	});
+
+	const secondEventId = await engine.addEngineEvent(record);
+	await waitFor(
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, secondEventId),
+		{ description: "worker duplicate-balance checkpoint" },
+	);
+
+	expect(await database.balanceHistoryCount(eventId)).toBe(1);
+	expect(await database.balance(user.id, "TEST")).toEqual({
+		userId: user.id,
+		asset: "TEST",
+		available: "12345",
+		locked: "67",
 	});
 });

@@ -33,6 +33,26 @@ export interface PersistedDailyCredit {
 	status: "PENDING" | "APPLIED";
 }
 
+export interface PersistedBalance {
+	userId: string;
+	asset: string;
+	available: string;
+	locked: string;
+}
+
+export interface PersistedBalanceHistory {
+	id: string;
+	userId: string;
+	asset: string;
+	available: string;
+	locked: string;
+	deltaAvailable: string;
+	deltaLocked: string;
+	reason: string;
+	referenceId: string | null;
+	symbol: string | null;
+}
+
 export class TestDatabase {
 	private readonly pool = new Pool({ connectionString: env.databaseUrl });
 
@@ -83,5 +103,42 @@ export class TestDatabase {
 			[userId],
 		);
 		return result.rows[0]?.pnlBaseline;
+	}
+
+	async balance(userId: string, asset: string): Promise<PersistedBalance | undefined> {
+		const result = await this.pool.query<PersistedBalance>(
+			`SELECT "userId", asset, available::text, locked::text
+			 FROM "Balance" WHERE "userId" = $1 AND asset = $2`,
+			[userId, asset],
+		);
+		return result.rows[0];
+	}
+
+	async balanceHistory(id: string): Promise<PersistedBalanceHistory | undefined> {
+		const result = await this.pool.query<PersistedBalanceHistory>(
+			`SELECT id, "userId", asset, available::text, locked::text,
+			        "deltaAvailable"::text, "deltaLocked"::text, reason, "referenceId", symbol
+			 FROM "BalanceHistory" WHERE id = $1`,
+			[id],
+		);
+		return result.rows[0];
+	}
+
+	async balanceHistoryCount(id: string): Promise<number> {
+		const result = await this.pool.query<{ count: string }>(
+			`SELECT COUNT(*)::text AS count FROM "BalanceHistory" WHERE id = $1`,
+			[id],
+		);
+		return Number(result.rows[0]?.count ?? 0);
+	}
+
+	async balanceHistoryByReference(referenceId: string): Promise<PersistedBalanceHistory[]> {
+		const result = await this.pool.query<PersistedBalanceHistory>(
+			`SELECT id, "userId", asset, available::text, locked::text,
+			        "deltaAvailable"::text, "deltaLocked"::text, reason, "referenceId", symbol
+			 FROM "BalanceHistory" WHERE "referenceId" = $1 ORDER BY "occurredAt"`,
+			[referenceId],
+		);
+		return result.rows;
 	}
 }

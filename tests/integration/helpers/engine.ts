@@ -94,7 +94,21 @@ export class EngineClient {
 		return command;
 	}
 
-	addStreamEvent(stream: "stream:order" | "stream:fill", event: Record<string, unknown>) {
-		return this.redis.xAdd(stream, "*", { data: JSON.stringify(event) });
+	addEngineEvent(record: Record<string, unknown>) {
+		return this.redis.xAdd(env.eventStream, "*", { data: JSON.stringify(record) });
 	}
+}
+
+function parseStreamId(id: string) {
+	const [ms, seq] = id.split("-");
+	return [Number(ms), Number(seq)] as const;
+}
+
+export function streamIdAtLeast(cursor: string | null | undefined, target: string) {
+	if (!cursor) return false;
+
+	const [cursorMs, cursorSeq] = parseStreamId(cursor);
+	const [targetMs, targetSeq] = parseStreamId(target);
+
+	return cursorMs > targetMs || (cursorMs === targetMs && cursorSeq >= targetSeq);
 }

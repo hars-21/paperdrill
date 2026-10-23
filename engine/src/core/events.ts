@@ -1,32 +1,12 @@
 import { onAnyEvent, onEvent } from "./eventBus";
 import { appendEvent } from "./eventLog";
-import { publishDepth, publishFill, streamEvent } from "../redis/publish";
+import { publishDepth, publishFill } from "../redis/publish";
 import type { EngineEvent } from "../types/event";
 
 export function registerEventHandlers() {
 	onAnyEvent((event: EngineEvent) => {
 		if (event.type === "depth.changed") return;
 		appendEvent(event);
-	});
-
-	onEvent("order.created", (event: EngineEvent) => {
-		if (event.type !== "order.created") return;
-		streamEvent({ event: "order", order: event.order });
-	});
-
-	onEvent("order.filled", (event: EngineEvent) => {
-		if (event.type !== "order.filled") return;
-		streamEvent({ event: "order", order: event.order });
-	});
-
-	onEvent("order.partially_filled", (event: EngineEvent) => {
-		if (event.type !== "order.partially_filled") return;
-		streamEvent({ event: "order", order: event.order });
-	});
-
-	onEvent("order.cancelled", (event: EngineEvent) => {
-		if (event.type !== "order.cancelled") return;
-		streamEvent({ event: "order", order: event.order });
 	});
 
 	onEvent("fill.created", (event: EngineEvent) => {

@@ -19,16 +19,6 @@ export type PublishEventMessage =
 			timestamp: number;
 	  };
 
-export type StreamEventMessage =
-	| {
-			event: "order";
-			order: OrderRecord;
-	  }
-	| {
-			event: "fill";
-			fill: Fill;
-	  };
-
 export interface OrderEvent {
 	type: "order.created" | "order.filled" | "order.partially_filled" | "order.cancelled";
 	order: OrderRecord;

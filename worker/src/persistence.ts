@@ -2,10 +2,17 @@ import { deriveData } from "./candle";
 import { deriveTicker } from "./ticker";
 import { pool } from "./db";
 import { logger } from "./logger";
-import type { StreamFill, StreamOrder } from "./types";
+import type { StreamBalanceEvent, StreamFill, StreamOrder } from "./types";
+
+interface BalanceEntry {
+	id: string;
+	event: StreamBalanceEvent;
+}
 
 const orderBucket = new Map<string, StreamOrder>();
 const fillBucket = new Map<string, StreamFill>();
+const balanceHistoryBucket = new Map<string, BalanceEntry>();
+const balanceBucket = new Map<string, BalanceEntry>();
 
 let serviceUserIds = new Set<string>();
 
@@ -38,17 +45,37 @@ export function queueFill(fill: StreamFill) {
 	fillBucket.set(fill.id, fill);
 }
 
+export function queueBalance(id: string, event: StreamBalanceEvent) {
+	const entry = { id, event };
+
+	balanceHistoryBucket.set(id, entry);
+	balanceBucket.set(`${event.userId}:${event.asset}`, entry);
+}
+
 export async function flushBatch() {
-	if (orderBucket.size === 0 && fillBucket.size === 0) return;
+	if (
+		orderBucket.size === 0 &&
+		fillBucket.size === 0 &&
+		balanceHistoryBucket.size === 0
+	)
+		return;
 
 	const orders = [...orderBucket.entries()];
 	const fills = [...fillBucket.entries()];
+	const balanceHistory = [...balanceHistoryBucket.entries()];
+	const latestBalances = [...balanceBucket.values()];
+
 	orderBucket.clear();
 	fillBucket.clear();
+	balanceHistoryBucket.clear();
+	balanceBucket.clear();
 
 	try {
 		if (orders.length > 0) await insertOrders(orders.map(([, order]) => order));
 		if (fills.length > 0) await insertFills(fills.map(([, fill]) => fill));
+		if (balanceHistory.length > 0)
+			await insertBalanceHistory(balanceHistory.map(([, entry]) => entry));
+		if (latestBalances.length > 0) await upsertBalances(latestBalances);
 	} catch (err) {
 		logger.error("Failed to flush batch", err);
 
@@ -57,6 +84,13 @@ export async function flushBatch() {
 		}
 		for (const [id, fill] of fills) {
 			if (!fillBucket.has(id)) fillBucket.set(id, fill);
+		}
+		for (const [id, entry] of balanceHistory) {
+			if (!balanceHistoryBucket.has(id)) balanceHistoryBucket.set(id, entry);
+		}
+		for (const entry of latestBalances) {
+			const key = `${entry.event.userId}:${entry.event.asset}`;
+			if (!balanceBucket.has(key)) balanceBucket.set(key, entry);
 		}
 		throw err;
 	}
@@ -122,6 +156,61 @@ async function insertFills(fills: StreamFill[]) {
 		`INSERT INTO "Fill" (id, symbol, price, qty, "isBuyerMaker", "buyOrderId", "sellOrderId", "buyerId", "sellerId", "createdAt")
          VALUES ${rows.join(", ")}
          ON CONFLICT (id) DO NOTHING`,
+		values,
+	);
+}
+
+async function insertBalanceHistory(entries: BalanceEntry[]) {
+	const values: unknown[] = [];
+	const rows = entries.map(({ id, event }, i) => {
+		const b = i * 11;
+		values.push(
+			id,
+			event.userId,
+			event.asset,
+			BigInt(event.available),
+			BigInt(event.locked),
+			BigInt(event.deltaAvailable),
+			BigInt(event.deltaLocked),
+			event.reason,
+			event.referenceId,
+			event.symbol,
+			new Date(event.occurredAt),
+		);
+		const p = (n: number) => `$${b + n}`;
+		return `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ${p(7)}, ${p(8)}, ${p(9)}, ${p(10)}, ${p(11)})`;
+	});
+
+	await pool.query(
+		`INSERT INTO "BalanceHistory" (id, "userId", asset, available, locked, "deltaAvailable", "deltaLocked", reason, "referenceId", symbol, "occurredAt")
+         VALUES ${rows.join(", ")}
+         ON CONFLICT (id) DO NOTHING`,
+		values,
+	);
+}
+
+async function upsertBalances(entries: BalanceEntry[]) {
+	const values: unknown[] = [];
+	const rows = entries.map(({ event }, i) => {
+		const b = i * 5;
+		values.push(
+			event.userId,
+			event.asset,
+			BigInt(event.available),
+			BigInt(event.locked),
+			new Date(event.occurredAt),
+		);
+		const p = (n: number) => `$${b + n}`;
+		return `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)})`;
+	});
+
+	await pool.query(
+		`INSERT INTO "Balance" ("userId", asset, available, locked, "updatedAt")
+         VALUES ${rows.join(", ")}
+         ON CONFLICT ("userId", asset) DO UPDATE SET
+           available = EXCLUDED.available,
+           locked = EXCLUDED.locked,
+           "updatedAt" = EXCLUDED."updatedAt"`,
 		values,
 	);
 }

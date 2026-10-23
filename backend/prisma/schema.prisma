@@ -59,6 +59,8 @@ model User {
   sellFills     Fill[]    @relation("FillSeller")
   leaderboardEntry LeaderboardEntry?
   dailyCredits  DailyCredit[]
+  balances      Balance[]
+  balanceHistory BalanceHistory[]
 }
 
 model DailyCredit {
@@ -146,6 +148,38 @@ model Fill {
 
   @@index([buyerId])
   @@index([sellerId])
+}
+
+model Balance {
+  userId        String
+  asset         String
+  available     BigInt
+  locked        BigInt
+  updatedAt     DateTime
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, asset])
+  @@index([asset])
+}
+
+model BalanceHistory {
+  id             String   @id
+  userId         String
+  asset          String
+  available      BigInt
+  locked         BigInt
+  deltaAvailable BigInt
+  deltaLocked    BigInt
+  reason         String
+  referenceId    String?
+  symbol         String?
+  occurredAt     DateTime
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, asset, occurredAt])
+  @@index([referenceId])
 }
 
 model Market {
