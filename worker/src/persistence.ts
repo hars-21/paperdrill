@@ -22,6 +22,18 @@ export async function loadServiceUserIds() {
 	logger.info(`Loaded ${serviceUserIds.size} service accounts for order filtering`);
 }
 
+async function loadKnownUsers(ids: string[]) {
+	const uniqueIds = [...new Set(ids)];
+	if (uniqueIds.length === 0) return new Set<string>();
+
+	const result = await pool.query<{ id: string }>(
+		'SELECT id FROM "User" WHERE id = ANY($1::text[])',
+		[uniqueIds],
+	);
+
+	return new Set(result.rows.map((row) => row.id));
+}
+
 export function queueOrder(order: StreamOrder) {
 	if (serviceUserIds.has(order.userId)) return;
 
@@ -71,11 +83,43 @@ export async function flushBatch() {
 	balanceBucket.clear();
 
 	try {
-		if (orders.length > 0) await insertOrders(orders.map(([, order]) => order));
-		if (fills.length > 0) await insertFills(fills.map(([, fill]) => fill));
-		if (balanceHistory.length > 0)
-			await insertBalanceHistory(balanceHistory.map(([, entry]) => entry));
-		if (latestBalances.length > 0) await upsertBalances(latestBalances);
+		const knownUsers = await loadKnownUsers([
+			...orders.map(([, order]) => order.userId),
+			...fills.flatMap(([, fill]) => [fill.buyerId, fill.sellerId]),
+			...balanceHistory.map(([, entry]) => entry.event.userId),
+			...latestBalances.map(({ event }) => event.userId),
+		]);
+
+		const validOrders = orders.filter(([, order]) => knownUsers.has(order.userId));
+		const validFills = fills.filter(
+			([, fill]) => knownUsers.has(fill.buyerId) && knownUsers.has(fill.sellerId),
+		);
+		const validBalanceHistory = balanceHistory.filter(([, entry]) =>
+			knownUsers.has(entry.event.userId),
+		);
+		const validLatestBalances = latestBalances.filter(({ event }) =>
+			knownUsers.has(event.userId),
+		);
+
+		const droppedOrders = orders.length - validOrders.length;
+		const droppedFills = fills.length - validFills.length;
+		const droppedHistory = balanceHistory.length - validBalanceHistory.length;
+		const droppedBalances = latestBalances.length - validLatestBalances.length;
+
+		if (droppedOrders || droppedFills || droppedHistory || droppedBalances) {
+			logger.warn("Dropped engine events for deleted users", {
+				orders: droppedOrders,
+				fills: droppedFills,
+				balanceHistory: droppedHistory,
+				balances: droppedBalances,
+			});
+		}
+
+		if (validBalanceHistory.length > 0)
+			await insertBalanceHistory(validBalanceHistory.map(([, entry]) => entry));
+		if (validLatestBalances.length > 0) await upsertBalances(validLatestBalances);
+		if (validOrders.length > 0) await insertOrders(validOrders.map(([, order]) => order));
+		if (validFills.length > 0) await insertFills(validFills.map(([, fill]) => fill));
 	} catch (err) {
 		logger.error("Failed to flush batch", err);
 
