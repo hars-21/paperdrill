@@ -355,7 +355,7 @@ export async function getPortfolioAnalytics(req: Request, res: Response) {
 				prisma.portfolioSnapshot.findFirst({
 					where: { userId, at: { gte: since } },
 					orderBy: { at: "asc" },
-					select: { at: true, equity: true },
+					select: { at: true, equity: true, netContributions: true },
 				}),
 			]);
 
@@ -397,7 +397,22 @@ export async function getPortfolioAnalytics(req: Request, res: Response) {
 		const worst = performance[performance.length - 1] ?? null;
 		const sells = sides.find((entry) => entry.side === "SELL")?._count._all ?? 0;
 		const buys = sides.find((entry) => entry.side === "BUY")?._count._all ?? 0;
-		const change = start == null ? null : view.equity - start.equity;
+		// Deposits and withdrawals change equity without being performance.
+		// Compare total PnL against the snapshot's own contribution baseline.
+		const startPnl =
+			start?.netContributions == null
+				? null
+				: start.equity - start.netContributions;
+		const currentPnl =
+			view.netContributions == null ? null : view.equity - view.netContributions;
+		const change =
+			startPnl == null || currentPnl == null ? null : currentPnl - startPnl;
+		const changeBase =
+			start == null
+				? null
+				: start.netContributions != null && start.netContributions > 0n
+					? start.netContributions
+					: start.equity;
 
 		res.status(200).json({
 			quoteAsset: portfolio.quoteAsset,
@@ -431,12 +446,12 @@ export async function getPortfolioAnalytics(req: Request, res: Response) {
 				lastTradeAt: span._max.occurredAt?.toISOString() ?? null,
 			},
 			change24h:
-				start == null || change == null
+				start == null || change == null || changeBase == null
 					? null
 					: {
 							from: start.at.toISOString(),
 							change: formatMoney(change, quotePrecision),
-							changePercent: formatPercent(change, start.equity),
+							changePercent: formatPercent(change, changeBase),
 						},
 		});
 	} catch (error) {

@@ -599,7 +599,7 @@ export function PortfolioPage() {
 
 						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 							<AnalyticsCard
-								label="24 hour change"
+								label="24 hour performance"
 								value={
 									analyticsSlice.change24h
 										? `${signedMoney(analyticsSlice.change24h.change, quotePrecision)} ${quoteAsset}`
