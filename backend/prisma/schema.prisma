@@ -61,6 +61,9 @@ model User {
   dailyCredits  DailyCredit[]
   balances      Balance[]
   balanceHistory BalanceHistory[]
+  positions     Position[]
+  positionEvents PositionEvent[]
+  portfolioSnapshots PortfolioSnapshot[]
 }
 
 model DailyCredit {
@@ -194,6 +197,68 @@ model Market {
 
   orders Order[]
   fills  Fill[]
+}
+
+model Position {
+  userId        String
+  asset         String
+  qty           BigInt
+  costBasis     BigInt
+  realizedPnl   BigInt   @default(0)
+  lastBuyPrice  BigInt?
+  lastBuyQty    BigInt?
+  lastBuyAt     DateTime?
+  lastSellPrice BigInt?
+  lastSellQty   BigInt?
+  lastSellAt    DateTime?
+  tradeCount    Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, asset])
+  @@index([asset])
+}
+
+model PositionEvent {
+  id              String   @id @default(uuid())
+  fillId          String
+  userId          String
+  asset           String
+  symbol          String
+  side            String
+  price           BigInt
+  qty             BigInt
+  quoteAmount     BigInt
+  costBasisBefore BigInt
+  costBasisAfter  BigInt
+  realizedPnl     BigInt
+  occurredAt      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fillId, userId])
+  @@index([userId, asset, occurredAt])
+  @@index([userId, occurredAt])
+}
+
+model PortfolioSnapshot {
+  id               String   @id @default(uuid())
+  userId           String
+  at               DateTime
+  quoteAsset       String
+  cash             BigInt
+  positionsValue   BigInt
+  equity           BigInt
+  realizedPnl      BigInt
+  unrealizedPnl    BigInt
+  netContributions BigInt
+  partial          Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, at])
+  @@index([at])
 }
 
 model Candle {
