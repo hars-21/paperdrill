@@ -111,7 +111,11 @@
 							"GET /balances",
 							"GET /balances/history",
 							"GET /balances/history/series",
-							"GET /portfolio"
+							"GET /portfolio",
+							"GET /portfolio/history",
+							"GET /portfolio/analytics",
+							"GET /portfolio/positions/{asset}",
+							"GET /portfolio/positions/{asset}/events"
 						]
 					}
 				]
