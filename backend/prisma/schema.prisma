@@ -261,6 +261,12 @@ model PortfolioSnapshot {
   @@index([at])
 }
 
+model ProjectionCursor {
+  name        String   @id
+  lastEventId String
+  updatedAt   DateTime @updatedAt
+}
+
 model Candle {
   symbol    String
   open      BigInt

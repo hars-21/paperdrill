@@ -53,6 +53,32 @@ export interface PersistedBalanceHistory {
 	symbol: string | null;
 }
 
+export interface PersistedPosition {
+	userId: string;
+	asset: string;
+	qty: string;
+	costBasis: string;
+	realizedPnl: string;
+	lastBuyPrice: string | null;
+	lastBuyQty: string | null;
+	lastSellPrice: string | null;
+	lastSellQty: string | null;
+	tradeCount: number;
+}
+
+export interface PersistedPositionEvent {
+	fillId: string;
+	userId: string;
+	asset: string;
+	side: "BUY" | "SELL";
+	price: string;
+	qty: string;
+	quoteAmount: string;
+	costBasisBefore: string;
+	costBasisAfter: string;
+	realizedPnl: string;
+}
+
 export class TestDatabase {
 	private readonly pool = new Pool({ connectionString: env.databaseUrl });
 
@@ -140,5 +166,39 @@ export class TestDatabase {
 			[referenceId],
 		);
 		return result.rows;
+	}
+
+	async position(userId: string, asset: string): Promise<PersistedPosition | undefined> {
+		const result = await this.pool.query<PersistedPosition>(
+			`SELECT "userId", asset, qty::text, "costBasis"::text, "realizedPnl"::text,
+			        "lastBuyPrice"::text, "lastBuyQty"::text, "lastSellPrice"::text,
+			        "lastSellQty"::text, "tradeCount"
+			 FROM "Position" WHERE "userId" = $1 AND asset = $2`,
+			[userId, asset],
+		);
+		return result.rows[0];
+	}
+
+	async positionEvent(
+		fillId: string,
+		userId: string,
+	): Promise<PersistedPositionEvent | undefined> {
+		const result = await this.pool.query<PersistedPositionEvent>(
+			`SELECT "fillId", "userId", asset, side, price::text, qty::text,
+			        "quoteAmount"::text, "costBasisBefore"::text, "costBasisAfter"::text,
+			        "realizedPnl"::text
+			 FROM "PositionEvent" WHERE "fillId" = $1 AND "userId" = $2`,
+			[fillId, userId],
+		);
+		return result.rows[0];
+	}
+
+	async positionEventCount(fillId: string, userId: string): Promise<number> {
+		const result = await this.pool.query<{ count: string }>(
+			`SELECT COUNT(*)::text AS count FROM "PositionEvent"
+			 WHERE "fillId" = $1 AND "userId" = $2`,
+			[fillId, userId],
+		);
+		return Number(result.rows[0]?.count ?? 0);
 	}
 }

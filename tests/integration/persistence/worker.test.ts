@@ -69,6 +69,124 @@ test("worker persists a duplicate fill event only once", async () => {
 	});
 });
 
+test("worker projects fills into weighted-average positions and trade events", async () => {
+	const buyer = await createTestUser("position-buyer");
+	const seller = await createTestUser("position-seller");
+	const seed = await createTestUser("position-seed");
+	const seedAt = Date.now() - 1_000;
+	const at = Date.now();
+
+	const seedFill = {
+		id: crypto.randomUUID(),
+		symbol: "ETH_USD",
+		price: "100000",
+		qty: "5000",
+		buyOrderId: crypto.randomUUID(),
+		sellOrderId: crypto.randomUUID(),
+		buyerId: seller.id,
+		sellerId: seed.id,
+		isBuyerMaker: false,
+		createdAt: seedAt,
+	};
+	const fill = {
+		id: crypto.randomUUID(),
+		symbol: "ETH_USD",
+		price: "200000",
+		qty: "5000",
+		buyOrderId: crypto.randomUUID(),
+		sellOrderId: crypto.randomUUID(),
+		buyerId: buyer.id,
+		sellerId: seller.id,
+		isBuyerMaker: false,
+		createdAt: at,
+	};
+
+	await engine.addEngineEvent({
+		id: crypto.randomUUID(),
+		type: "fill.created",
+		version: 1,
+		occurredAt: seedAt,
+		event: { type: "fill.created", fill: seedFill },
+	});
+	const fillRecord = {
+		id: crypto.randomUUID(),
+		type: "fill.created",
+		version: 1,
+		occurredAt: at,
+		event: { type: "fill.created", fill },
+	};
+	const lastEventId = await engine.addEngineEvent(fillRecord);
+
+	await waitFor(
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, lastEventId),
+		{ description: "worker position checkpoint" },
+	);
+
+	expect(await database.position(buyer.id, "ETH")).toMatchObject({
+		userId: buyer.id,
+		asset: "ETH",
+		qty: "5000",
+		costBasis: "1000000",
+		realizedPnl: "0",
+		lastBuyPrice: "200000",
+		lastBuyQty: "5000",
+		lastSellPrice: null,
+		tradeCount: 1,
+	});
+	expect(await database.position(seller.id, "ETH")).toMatchObject({
+		userId: seller.id,
+		asset: "ETH",
+		qty: "0",
+		costBasis: "0",
+		realizedPnl: "500000",
+		lastBuyPrice: "100000",
+		lastSellPrice: "200000",
+		lastSellQty: "5000",
+		tradeCount: 2,
+	});
+
+	expect(await database.positionEvent(fill.id, buyer.id)).toMatchObject({
+		fillId: fill.id,
+		userId: buyer.id,
+		asset: "ETH",
+		side: "BUY",
+		price: "200000",
+		qty: "5000",
+		quoteAmount: "1000000",
+		costBasisBefore: "0",
+		costBasisAfter: "1000000",
+		realizedPnl: "0",
+	});
+	expect(await database.positionEvent(fill.id, seller.id)).toMatchObject({
+		fillId: fill.id,
+		userId: seller.id,
+		asset: "ETH",
+		side: "SELL",
+		price: "200000",
+		qty: "5000",
+		quoteAmount: "1000000",
+		costBasisBefore: "500000",
+		costBasisAfter: "0",
+		realizedPnl: "500000",
+	});
+
+	const duplicateEventId = await engine.addEngineEvent(fillRecord);
+	await waitFor(
+		() => engine.redis.get("worker:event:last_id"),
+		(cursor) => streamIdAtLeast(cursor, duplicateEventId),
+		{ description: "worker duplicate-fill position checkpoint" },
+	);
+
+	expect(await database.position(buyer.id, "ETH")).toMatchObject({
+		qty: "5000",
+		costBasis: "1000000",
+		realizedPnl: "0",
+		tradeCount: 1,
+	});
+	expect(await database.positionEventCount(fill.id, buyer.id)).toBe(1);
+});
+
 test("worker skips deleted-user events without blocking valid projections", async () => {
 	const user = await createTestUser("deleted-user-neighbor");
 	const missingUserId = crypto.randomUUID();

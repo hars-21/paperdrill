@@ -10,8 +10,11 @@ import {
 	queueBalance,
 	queueFill,
 	queueOrder,
+	queuePositionFill,
 	loadServiceUserIds,
+	loadPositionState,
 } from "./persistence";
+import { loadMarkets } from "./markets";
 import type { EngineEventRecord } from "./types";
 import { startHealth, stopHealth } from "./health";
 
@@ -30,6 +33,16 @@ await pool.query("SELECT 1").catch((err) => {
 
 await loadServiceUserIds().catch((err) => {
 	logger.error("Failed to load service accounts", err);
+	process.exit(1);
+});
+
+await loadMarkets().catch((err) => {
+	logger.error("Failed to load markets", err);
+	process.exit(1);
+});
+
+await loadPositionState().catch((err) => {
+	logger.error("Failed to load positions", err);
 	process.exit(1);
 });
 
@@ -88,7 +101,7 @@ function flushAndCheckpoint() {
 	return flushPromise;
 }
 
-function dispatch(record: EngineEventRecord) {
+function dispatch(record: EngineEventRecord, streamId: string) {
 	switch (record.event.type) {
 		case "order.created":
 		case "order.filled":
@@ -97,6 +110,7 @@ function dispatch(record: EngineEventRecord) {
 			queueOrder(record.event.order);
 			return;
 		case "fill.created":
+			queuePositionFill(record.event.fill, streamId);
 			queueFill(record.event.fill);
 			return;
 		case "balance.changed":
@@ -138,7 +152,7 @@ async function main() {
 					}
 
 					try {
-						dispatch(record);
+						dispatch(record, message.id);
 						lastEventId = message.id;
 					} catch (err) {
 						logger.error("Failed to queue engine event", {
