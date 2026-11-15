@@ -74,7 +74,7 @@ export async function listenForEngineresponses(): Promise<void> {
 
 export async function listenForOrderbookDepth(): Promise<void> {
 	await marketSubscriber.pSubscribe(
-		["depth:*", "trade:*", "candle:*", "ticker:*"],
+		["depth:*", "trade:*", "candle:*", "ticker:*", "account:*"],
 		(message, channel) => {
 			try {
 				const parsedData = JSON.parse(message);
@@ -96,7 +96,7 @@ export async function listenForOrderbookDepth(): Promise<void> {
 					ws.send(JSON.stringify(formatted));
 				});
 			} catch (err) {
-				logger.error("Invalid depth message", err);
+				logger.error("Failed to forward realtime message", err);
 			}
 		},
 	);

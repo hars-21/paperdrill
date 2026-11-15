@@ -17,6 +17,8 @@ import { sendToEngine } from "../utils/engineClient";
 import { assetPrecision } from "../store/market";
 import { toBigInt } from "../utils/convert";
 import { ApiError, sendApiError } from "../utils/apiError";
+import { issueAccountTicket } from "../utils/websocket";
+import { getUserId } from "./user";
 
 const INITIAL_BALANCE_ASSET = "USD";
 const INITIAL_BALANCE_AMOUNT = "10000";
@@ -171,6 +173,13 @@ export async function signout(_req: Request, res: Response) {
 		.status(200)
 		.clearCookie("token", config.cookie)
 		.json({ success: true, message: "Signed out successfully" });
+}
+
+export async function createWebSocketTicket(req: Request, res: Response) {
+	const userId = getUserId(req);
+	const ticket = await issueAccountTicket(userId);
+
+	res.status(201).json(ticket);
 }
 
 export async function verifyEmail(req: Request, res: Response) {
