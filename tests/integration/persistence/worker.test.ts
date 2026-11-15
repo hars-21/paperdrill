@@ -195,6 +195,19 @@ test("worker projects fills into weighted-average positions and trade events", a
 		tradeCount: 1,
 	});
 
+	const persistedSnapshot = await waitFor(
+		() => database.portfolioSnapshot(buyer.id),
+		(row) => row != null,
+		{ description: "persisted buyer portfolio snapshot", timeoutMs: 15000 },
+	);
+
+	expect(persistedSnapshot).toMatchObject({
+		userId: buyer.id,
+		quoteAsset: "USD",
+		netContributions: "1000000",
+		partial: false,
+	});
+
 	const duplicateEventId = await engine.addEngineEvent(fillRecord);
 	await waitFor(
 		() => engine.redis.get("worker:event:last_id"),

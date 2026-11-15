@@ -15,6 +15,7 @@ import type { StreamBalanceEvent } from "./types";
 const SNAPSHOT_KEY_PREFIX = "portfolio:snapshot:";
 const ACCOUNT_CHANNEL_PREFIX = "account:";
 const SNAPSHOT_TTL_SECONDS = 15 * 60;
+const SNAPSHOT_PERSIST_INTERVAL_MS = 60_000;
 const DEBOUNCE_MS = 10_000;
 const HEARTBEAT_MS = 5 * 60 * 1000;
 const SCAN_INTERVAL_MS = 60_000;
@@ -31,6 +32,7 @@ interface AccountState {
 	publishing: boolean;
 	version: number;
 	lastPublishedAt: number;
+	lastPersistedAt: number;
 	timer: ReturnType<typeof setTimeout> | null;
 }
 
@@ -80,6 +82,7 @@ function createAccount(contributions: bigint): AccountState {
 		publishing: false,
 		version: 0,
 		lastPublishedAt: 0,
+		lastPersistedAt: 0,
 		timer: null,
 	};
 }
@@ -232,6 +235,26 @@ function buildSnapshot(userId: string, account: AccountState): AccountSnapshot {
 	});
 }
 
+async function persistSnapshot(snapshot: AccountSnapshot) {
+	await pool.query(
+		`INSERT INTO "PortfolioSnapshot" (id, "userId", at, "quoteAsset", cash, "positionsValue", equity, "realizedPnl", "unrealizedPnl", "netContributions", partial)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+		[
+			crypto.randomUUID(),
+			snapshot.userId,
+			new Date(snapshot.at),
+			snapshot.quoteAsset,
+			snapshot.cash,
+			snapshot.positionsValue,
+			snapshot.equity,
+			snapshot.realizedPnl,
+			snapshot.unrealizedPnl,
+			snapshot.netContributions,
+			snapshot.partial,
+		],
+	);
+}
+
 async function publishAccount(userId: string) {
 	const account = accounts.get(userId);
 	if (!account || account.publishing) return;
@@ -250,9 +273,14 @@ async function publishAccount(userId: string) {
 		]);
 
 		account.lastPublishedAt = snapshot.at;
+
+		if (snapshot.at - account.lastPersistedAt >= SNAPSHOT_PERSIST_INTERVAL_MS) {
+			await persistSnapshot(snapshot);
+			account.lastPersistedAt = snapshot.at;
+		}
 	} catch (err) {
 		account.dirty = true;
-		logger.error("Failed to publish account snapshot", {
+		logger.error("Failed to update account snapshot", {
 			userId,
 			error: err instanceof Error ? err.message : String(err),
 		});

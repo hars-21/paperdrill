@@ -79,6 +79,18 @@ export interface PersistedPositionEvent {
 	realizedPnl: string;
 }
 
+export interface PersistedPortfolioSnapshot {
+	userId: string;
+	quoteAsset: string;
+	cash: string;
+	positionsValue: string;
+	equity: string;
+	realizedPnl: string;
+	unrealizedPnl: string;
+	netContributions: string;
+	partial: boolean;
+}
+
 export class TestDatabase {
 	private readonly pool = new Pool({ connectionString: env.databaseUrl });
 
@@ -200,5 +212,17 @@ export class TestDatabase {
 			[fillId, userId],
 		);
 		return Number(result.rows[0]?.count ?? 0);
+	}
+
+	async portfolioSnapshot(userId: string): Promise<PersistedPortfolioSnapshot | undefined> {
+		const result = await this.pool.query<PersistedPortfolioSnapshot>(
+			`SELECT "userId", "quoteAsset", cash::text, "positionsValue"::text,
+			        equity::text, "realizedPnl"::text, "unrealizedPnl"::text,
+			        "netContributions"::text, partial
+			 FROM "PortfolioSnapshot" WHERE "userId" = $1
+			 ORDER BY at DESC LIMIT 1`,
+			[userId],
+		);
+		return result.rows[0];
 	}
 }
