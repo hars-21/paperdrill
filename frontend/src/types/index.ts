@@ -103,25 +103,181 @@ export interface DailyCredit {
 	nextEligibleAt: string;
 }
 
+export type PortfolioSource = "live" | "projection" | "engine";
+
 export interface PortfolioPosition {
 	asset: string;
+	symbol: string | null;
+	qty: string;
 	available: string;
 	locked: string;
 	total: string;
-	markPrice: string;
+	costBasis: string | null;
+	averageCost: string | null;
+	markPrice: string | null;
 	value: string;
+	realizedPnl: string | null;
+	unrealizedPnl: string | null;
+	unrealizedPnlPercent: string | null;
+	allocationPercent: string | null;
+	lastBuyPrice: string | null;
+	lastBuyQty: string | null;
+	lastBuyAt: string | null;
+	lastSellPrice: string | null;
+	lastSellQty: string | null;
+	lastSellAt: string | null;
+	tradeCount: number | null;
+	partial: boolean;
 }
 
 export interface Portfolio {
 	quoteAsset: string;
-	equity: string;
-	baselineEquity: string;
-	pnl: string;
-	pnlPercent: string;
-	baselineAt: string;
 	asOf: string;
+	source: PortfolioSource;
 	partial: boolean;
+	cash: string;
+	positionsValue: string;
+	equity: string;
+	costBasis: string | null;
+	realizedPnl: string | null;
+	unrealizedPnl: string | null;
+	netContributions: string | null;
+	totalPnl: string | null;
+	totalPnlPercent: string | null;
+	baselineEquity: string | null;
+	baselineAt: string | null;
+	pnl: string | null;
+	pnlPercent: string | null;
 	positions: PortfolioPosition[];
+}
+
+export type PortfolioHistoryRange = "24h" | "7d" | "30d" | "90d" | "all";
+
+export interface PortfolioHistoryPoint {
+	at: string;
+	cash: string;
+	positionsValue: string;
+	equity: string;
+	realizedPnl: string;
+	unrealizedPnl: string;
+	netContributions: string;
+	totalPnl: string;
+	partial: boolean;
+}
+
+export interface PortfolioHistoryResponse {
+	quoteAsset: string;
+	range: PortfolioHistoryRange;
+	from: string;
+	to: string;
+	points: PortfolioHistoryPoint[];
+}
+
+export interface PortfolioAllocationEntry {
+	asset: string;
+	symbol: string | null;
+	value: string;
+	percent: string | null;
+}
+
+export interface PortfolioPerformanceEntry {
+	asset: string;
+	symbol: string | null;
+	costBasis: string | null;
+	realizedPnl: string | null;
+	unrealizedPnl: string | null;
+	totalPnl: string | null;
+	totalPnlPercent: string | null;
+	tradeCount: number | null;
+	open: boolean;
+}
+
+export interface PortfolioAnalytics {
+	quoteAsset: string;
+	asOf: string;
+	source: PortfolioSource;
+	partial: boolean;
+	equity: string;
+	cash: string;
+	positionsValue: string;
+	costBasis: string | null;
+	realizedPnl: string | null;
+	unrealizedPnl: string | null;
+	netContributions: string | null;
+	totalPnl: string | null;
+	totalPnlPercent: string | null;
+	allocation: PortfolioAllocationEntry[];
+	cashAllocationPercent: string | null;
+	performance: PortfolioPerformanceEntry[];
+	bestAsset: PortfolioPerformanceEntry | null;
+	worstAsset: PortfolioPerformanceEntry | null;
+	trading: {
+		events: number;
+		buys: number;
+		sells: number;
+		winningSells: number;
+		losingSells: number;
+		winRate: string | null;
+		realizedPnl: string | null;
+		firstTradeAt: string | null;
+		lastTradeAt: string | null;
+	};
+	change24h: {
+		from: string;
+		change: string | null;
+		changePercent: string | null;
+	} | null;
+}
+
+export interface PortfolioPositionDetail {
+	asset: string;
+	symbol: string | null;
+	quoteAsset: string;
+	asOf: string;
+	source: PortfolioSource;
+	partial: boolean;
+	position: PortfolioPosition;
+	portfolio: {
+		cash: string;
+		positionsValue: string;
+		equity: string;
+	};
+	trading: {
+		fills: number;
+		buys: number;
+		sells: number;
+		realizedPnl: string | null;
+		firstTradeAt: string | null;
+		lastTradeAt: string | null;
+	};
+}
+
+export interface PortfolioPositionEvent {
+	id: string;
+	fillId: string;
+	symbol: string;
+	side: "BUY" | "SELL";
+	price: string;
+	qty: string;
+	quoteAmount: string;
+	costBasisBefore: string;
+	costBasisAfter: string;
+	realizedPnl: string;
+	occurredAt: string;
+}
+
+export interface PortfolioPositionEventsResponse {
+	asset: string;
+	quoteAsset: string;
+	events: PortfolioPositionEvent[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
 }
 
 export interface LeaderboardEntry {

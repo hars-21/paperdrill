@@ -81,19 +81,15 @@ function getBalanceSnapshot(portfolio: Portfolio | null): BalanceSnapshot {
 		return { available: null, balance: null, returnValue: null };
 	}
 
-	const quotePosition = portfolio.positions.find(
-		(position) => position.asset === portfolio.quoteAsset,
-	);
-	const returnNumber = Number(portfolio.pnlPercent);
+	const returnNumber = portfolio.pnlPercent == null ? null : Number(portfolio.pnlPercent);
 
 	return {
-		available: quotePosition
-			? `${formatPrice(quotePosition.available)} ${portfolio.quoteAsset}`
-			: null,
+		available: `${formatPrice(portfolio.cash)} ${portfolio.quoteAsset}`,
 		balance: `${formatPrice(portfolio.equity)} ${portfolio.quoteAsset}`,
-		returnValue: Number.isFinite(returnNumber)
-			? `${returnNumber > 0 ? "+" : ""}${returnNumber.toFixed(2)}%`
-			: null,
+		returnValue:
+			returnNumber != null && Number.isFinite(returnNumber)
+				? `${returnNumber > 0 ? "+" : ""}${returnNumber.toFixed(2)}%`
+				: null,
 	};
 }
 
@@ -334,7 +330,7 @@ function AccountMenu({
 						)}
 						<div className="mt-3 grid grid-cols-2 gap-3 border-t border-border/50 pt-2.5 text-xs">
 							<div>
-								<p className="text-medium-emphasis">Available</p>
+								<p className="text-medium-emphasis">Cash</p>
 								<p className="mt-1 truncate font-medium text-high-emphasis tabular-nums">
 									{balanceLoading ? "Loading" : (balance.available ?? "Unavailable")}
 								</p>

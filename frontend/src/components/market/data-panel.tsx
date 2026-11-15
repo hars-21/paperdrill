@@ -631,18 +631,21 @@ export function DataPanel({ loading = false, symbol, showBalances = true }: Data
 			.filter(([, balance]) => Number(balance.available) > 0 || Number(balance.locked) > 0)
 			.map(([asset, balance]) => {
 				const position = positions.get(asset);
+				const isQuote = asset === portfolio?.quoteAsset;
 				const available = balance.available ?? "0";
 				const locked = balance.locked ?? "0";
-				const value = position?.value ?? null;
+				const total = String(Number(available) + Number(locked));
+				const value = isQuote ? total : (position?.value ?? null);
 				return {
 					asset,
 					available,
 					locked,
-					total: String(Number(available) + Number(locked)),
+					total,
 					precision: precisionForAsset(asset),
-					markPrice: position?.markPrice ?? null,
+					markPrice: isQuote ? "1" : (position?.markPrice ?? null),
 					value,
-					allocation: value && portfolioEquity > 0 ? (Number(value) / portfolioEquity) * 100 : null,
+					allocation:
+						value && portfolioEquity > 0 ? (Number(value) / portfolioEquity) * 100 : null,
 					marketSymbol: markets.find((market) => market.baseAsset === asset)?.symbol ?? null,
 				};
 			})

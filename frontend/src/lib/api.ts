@@ -14,6 +14,11 @@ import type {
 	MyLeaderboardResponse,
 	OrderRecord,
 	Portfolio,
+	PortfolioAnalytics,
+	PortfolioHistoryRange,
+	PortfolioHistoryResponse,
+	PortfolioPositionDetail,
+	PortfolioPositionEventsResponse,
 	Ticker,
 	UserBalance,
 	UserTrade,
@@ -194,6 +199,32 @@ export const api = {
 
 	getPortfolio() {
 		return request<Portfolio>("/portfolio");
+	},
+
+	getPortfolioHistory(range: PortfolioHistoryRange = "30d") {
+		return request<PortfolioHistoryResponse>(`/portfolio/history?range=${range}`);
+	},
+
+	getPortfolioAnalytics() {
+		return request<PortfolioAnalytics>("/portfolio/analytics");
+	},
+
+	getPortfolioPosition(asset: string) {
+		return request<PortfolioPositionDetail>(
+			`/portfolio/positions/${encodeURIComponent(asset)}`,
+		);
+	},
+
+	getPortfolioPositionEvents(asset: string, page = 1, limit = 20) {
+		return request<PortfolioPositionEventsResponse>(
+			`/portfolio/positions/${encodeURIComponent(asset)}/events?page=${page}&limit=${limit}`,
+		);
+	},
+
+	getWebSocketTicket() {
+		return request<{ ticket: string; expiresAt: string }>("/auth/ws-ticket", {
+			method: "POST",
+		});
 	},
 
 	claimDailyCredit() {
