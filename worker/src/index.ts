@@ -24,6 +24,10 @@ import {
 } from "./accounts";
 import type { EngineEventRecord } from "./types";
 import { startHealth, stopHealth } from "./health";
+import {
+	startPortfolioRetention,
+	stopPortfolioRetention,
+} from "./portfolioRetention";
 
 const abortController = new AbortController();
 const CURSOR_KEY = "worker:event:last_id";
@@ -61,6 +65,7 @@ await loadAccounts().catch((err) => {
 await warmUpTickers();
 await startHealth();
 startAccountSnapshots();
+startPortfolioRetention();
 
 logger.info("Worker started, listening for engine events");
 
@@ -200,6 +205,7 @@ async function gracefulShutdown(signal: string) {
 	abortController.abort();
 	clearTimeout(candleFlushInterval);
 	clearInterval(batchInterval);
+	stopPortfolioRetention();
 	await stopHealth();
 
 	try {
