@@ -1,6 +1,5 @@
 import { marketStore, assetPrecision } from "../store/market";
 import { fromBigInt } from "./convert";
-import type { PortfolioPosition } from "./portfolio";
 
 function fmt(val: unknown, prec: number): string | number | null {
 	if (val == null) return null;
@@ -185,43 +184,6 @@ export function formatBalanceHistoryEntry(entry: {
 		referenceId: entry.referenceId,
 		symbol: entry.symbol,
 		occurredAt: entry.occurredAt.toISOString(),
-	};
-}
-
-export function formatPortfolio(
-	portfolio: {
-		quoteAsset: string;
-		quotePrecision: number;
-		equity: bigint;
-		positions: PortfolioPosition[];
-		partial?: boolean;
-	},
-	baseline: bigint,
-	baselineAt: Date,
-) {
-	const pnl = portfolio.equity - baseline;
-	const pnlPercent = baseline === 0n ? 0n : (pnl * 10000n) / baseline;
-	const timestamps = portfolio.positions
-		.map((position) => position.markTimestamp)
-		.filter((timestamp): timestamp is number => timestamp != null);
-
-	return {
-		quoteAsset: portfolio.quoteAsset,
-		equity: fmt(portfolio.equity, portfolio.quotePrecision),
-		baselineEquity: fmt(baseline, portfolio.quotePrecision),
-		pnl: fmt(pnl, portfolio.quotePrecision),
-		pnlPercent: fmt(pnlPercent, 2),
-		baselineAt: baselineAt.toISOString(),
-		asOf: new Date(timestamps.length > 0 ? Math.min(...timestamps) : Date.now()).toISOString(),
-		partial: portfolio.partial ?? false,
-		positions: portfolio.positions.map((position) => ({
-			asset: position.asset,
-			available: fmt(position.available, position.precision),
-			locked: fmt(position.locked, position.precision),
-			total: fmt(position.total, position.precision),
-			markPrice: fmt(position.markPrice, portfolio.quotePrecision),
-			value: fmt(position.value, portfolio.quotePrecision),
-		})),
 	};
 }
 
