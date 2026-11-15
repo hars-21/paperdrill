@@ -15,6 +15,13 @@ import {
 	loadPositionState,
 } from "./persistence";
 import { loadMarkets } from "./markets";
+import {
+	applyAccountBalance,
+	flushAccountSnapshots,
+	loadAccounts,
+	markAccountDirty,
+	startAccountSnapshots,
+} from "./accounts";
 import type { EngineEventRecord } from "./types";
 import { startHealth, stopHealth } from "./health";
 
@@ -46,8 +53,14 @@ await loadPositionState().catch((err) => {
 	process.exit(1);
 });
 
+await loadAccounts().catch((err) => {
+	logger.error("Failed to load accounts", err);
+	process.exit(1);
+});
+
 await warmUpTickers();
 await startHealth();
+startAccountSnapshots();
 
 logger.info("Worker started, listening for engine events");
 
@@ -112,9 +125,12 @@ function dispatch(record: EngineEventRecord, streamId: string) {
 		case "fill.created":
 			queuePositionFill(record.event.fill, streamId);
 			queueFill(record.event.fill);
+			markAccountDirty(record.event.fill.buyerId);
+			markAccountDirty(record.event.fill.sellerId);
 			return;
 		case "balance.changed":
 			queueBalance(record.id, record.event);
+			applyAccountBalance(record.event);
 			return;
 		default:
 			return;
@@ -189,6 +205,7 @@ async function gracefulShutdown(signal: string) {
 	try {
 		await flushCandles();
 		await flushAndCheckpoint();
+		await flushAccountSnapshots();
 	} catch (err) {
 		logger.error("Error during shutdown flush", err);
 	}

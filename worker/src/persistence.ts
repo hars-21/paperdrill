@@ -110,6 +110,22 @@ export async function loadPositionState() {
 	);
 }
 
+export function isServiceUser(userId: string) {
+	return serviceUserIds.has(userId);
+}
+
+export function getUserPositions(userId: string) {
+	const prefix = `${userId}:`;
+	const positions: { asset: string; state: PositionState }[] = [];
+
+	for (const [key, state] of positionState) {
+		if (!key.startsWith(prefix)) continue;
+		positions.push({ asset: key.slice(prefix.length), state: { ...state } });
+	}
+
+	return positions;
+}
+
 export function queuePositionFill(fill: StreamFill, streamId: string) {
 	if (compareStreamIds(streamId, positionCursor) <= 0) return;
 
