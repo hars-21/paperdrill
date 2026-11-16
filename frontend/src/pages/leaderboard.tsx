@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import {
+	LeaderboardHistoryChart,
+	LeaderboardSparkline,
+} from "@/components/leaderboard/leaderboard-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FeedbackState, InlineNotice } from "@/components/ui/feedback-state";
@@ -8,20 +12,65 @@ import { Page, PageContent, PageHeader, PageHeading } from "@/components/ui/page
 import { Skeleton } from "@/components/ui/skeleton";
 import { Surface } from "@/components/ui/surface";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
+import {
+	useLeaderboard,
+	useLeaderboardStream,
+	useMyLeaderboard,
+} from "@/hooks/use-leaderboard";
 import { getLastTradePath } from "@/lib/ux-preferences";
 import { cn } from "@/lib/utils";
-import type { LeaderboardEntry, LeaderboardResponse, MyLeaderboardResponse } from "@/types";
+import type {
+	LeaderboardEntry,
+	LeaderboardRange,
+	MyLeaderboardResponse,
+} from "@/types";
 import { formatChange, formatDateTime, formatPrice } from "@/utils/format";
 
 const PAGE_SIZE = 25;
-const REFRESH_INTERVAL = 60_000;
+
+const RANGES: { value: LeaderboardRange; label: string; description: string }[] = [
+	{ value: "24h", label: "24H", description: "24-hour return" },
+	{ value: "7d", label: "7D", description: "7-day return" },
+	{ value: "30d", label: "30D", description: "30-day return" },
+	{ value: "all", label: "All", description: "All-time return" },
+];
+
+const PERIOD: Record<LeaderboardRange, string> = {
+	"24h": "24-hour",
+	"7d": "7-day",
+	"30d": "30-day",
+	all: "all-time",
+};
+
+function isRange(value: string | null): value is LeaderboardRange {
+	return value === "24h" || value === "7d" || value === "30d" || value === "all";
+}
 
 export function LeaderboardPage() {
 	const { authenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
+	const rangeParam = searchParams.get("range");
+	const range: LeaderboardRange = isRange(rangeParam) ? rangeParam : "all";
 	const pageParam = Number(searchParams.get("page"));
 	const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+
+	const { leaderboard, loading, fetching, error, refresh } = useLeaderboard(range, page);
+	const { mine, loading: mineLoading } = useMyLeaderboard(range);
+	useLeaderboardStream();
+
+	const setRange = useCallback(
+		(nextRange: LeaderboardRange) => {
+			setSearchParams((current) => {
+				const next = new URLSearchParams(current);
+				if (nextRange === "all") next.delete("range");
+				else next.set("range", nextRange);
+				next.delete("page");
+				return next;
+			});
+		},
+		[setSearchParams],
+	);
+
 	const setPage = useCallback(
 		(nextPage: number) => {
 			setSearchParams((current) => {
@@ -33,53 +82,10 @@ export function LeaderboardPage() {
 		},
 		[setSearchParams],
 	);
-	const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
-	const [mine, setMine] = useState<MyLeaderboardResponse | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const offset = (page - 1) * PAGE_SIZE;
-
-	const load = useCallback(
-		async (showLoading = false) => {
-			if (showLoading) setLoading(true);
-
-			const personalRequest = authenticated
-				? api.getMyLeaderboardEntry().catch(() => null)
-				: Promise.resolve(null);
-
-			try {
-				const [data, personal] = await Promise.all([
-					api.getLeaderboard(PAGE_SIZE, offset),
-					personalRequest,
-				]);
-				setLeaderboard(data);
-				setMine(personal);
-				setError(null);
-			} catch (cause) {
-				setError(cause instanceof Error ? cause.message : "Failed to load leaderboard");
-			} finally {
-				setLoading(false);
-			}
-		},
-		[authenticated, offset],
-	);
-
-	useEffect(() => {
-		void load(true);
-		const interval = window.setInterval(() => void load(), REFRESH_INTERVAL);
-		const handleVisibility = () => {
-			if (document.visibilityState === "visible") void load();
-		};
-		document.addEventListener("visibilitychange", handleVisibility);
-
-		return () => {
-			window.clearInterval(interval);
-			document.removeEventListener("visibilitychange", handleVisibility);
-		};
-	}, [load]);
 
 	const total = leaderboard?.pagination.total ?? 0;
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+	const offset = (page - 1) * PAGE_SIZE;
 	const firstVisible = total === 0 ? 0 : offset + 1;
 	const lastVisible = Math.min(offset + PAGE_SIZE, total);
 	const myEntry = mine?.eligible ? mine.entry : null;
@@ -96,26 +102,32 @@ export function LeaderboardPage() {
 			<PageHeader className="max-w-7xl">
 				<PageHeading
 					title="Leaderboard"
-					description="Global standings ranked by all-time portfolio return."
+					description="Live standings ranked by portfolio performance. Deposits and credits are excluded from returns."
+					action={
+						<div className="flex flex-col items-start gap-2 sm:items-end">
+							<RangeTabs value={range} onChange={setRange} />
+							<LiveStatus
+								asOf={leaderboard?.asOf ?? null}
+								syncing={fetching && !loading}
+							/>
+						</div>
+					}
 				/>
 			</PageHeader>
 
 			<PageContent className="max-w-7xl space-y-5">
-				{mine?.eligible ? (
-					<PersonalStanding entry={mine.entry} quoteAsset={mine.quoteAsset} />
-				) : mine ? (
-					<EligibilityMessage reason={mine.reason} />
-				) : null}
-
-				{leaderboard?.stale ? (
-					<InlineNotice className="rounded-xl border border-border/60">
-						Updates are delayed. Showing the latest completed standings.
-					</InlineNotice>
+				{authenticated ? (
+					<PersonalStanding
+						mine={mine}
+						loading={mineLoading}
+						range={range}
+						quoteAsset={leaderboard?.quoteAsset ?? "USD"}
+					/>
 				) : null}
 
 				{error && leaderboard ? (
 					<InlineNotice tone="error" className="rounded-xl border border-red-text/20 bg-red-bg/20">
-						The latest standings could not be loaded. Existing results are still shown.
+						Live updates paused. Showing the latest standings we received.
 					</InlineNotice>
 				) : null}
 
@@ -123,7 +135,7 @@ export function LeaderboardPage() {
 					<LeaderboardSkeleton />
 				) : !leaderboard ? (
 					<Surface className="rounded-xl shadow-sm">
-						<UnavailableState error={error} onRetry={() => void load(true)} />
+						<UnavailableState error={error} onRetry={() => void refresh()} />
 					</Surface>
 				) : rows.length === 0 ? (
 					<Surface className="rounded-xl shadow-sm">
@@ -134,17 +146,20 @@ export function LeaderboardPage() {
 						{podiumEntries.length > 0 ? (
 							<Podium
 								entries={podiumEntries}
+								range={range}
 								quoteAsset={leaderboard.quoteAsset}
-								myPosition={myEntry?.position}
+								currentUserId={myEntry?.userId}
 							/>
 						) : null}
 
 						<RankingsPanel
 							entries={rankingEntries}
+							range={range}
 							quoteAsset={leaderboard.quoteAsset}
-							myPosition={myEntry?.position}
+							currentUserId={myEntry?.userId}
 							total={total}
 							asOf={leaderboard.asOf}
+							fetching={fetching}
 							page={page}
 							totalPages={totalPages}
 							firstVisible={firstVisible}
@@ -158,153 +173,200 @@ export function LeaderboardPage() {
 	);
 }
 
+function RangeTabs({
+	value,
+	onChange,
+}: {
+	value: LeaderboardRange;
+	onChange: (range: LeaderboardRange) => void;
+}) {
+	return (
+		<div
+			role="group"
+			aria-label="Leaderboard time range"
+			className="inline-flex flex-wrap rounded-lg border border-border/60 bg-l1 p-0.5"
+		>
+			{RANGES.map((range) => (
+				<button
+					key={range.value}
+					type="button"
+					aria-pressed={value === range.value}
+					title={range.description}
+					onClick={() => onChange(range.value)}
+					className={cn(
+						"rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+						value === range.value
+							? "bg-l2 text-high-emphasis shadow-sm"
+							: "text-medium-emphasis hover:text-high-emphasis",
+					)}
+				>
+					{range.label}
+				</button>
+			))}
+		</div>
+	);
+}
+
+function LiveStatus({ asOf, syncing }: { asOf: string | null; syncing: boolean }) {
+	return (
+		<span className="inline-flex items-center gap-2 text-xs text-medium-emphasis">
+			<span className="relative flex size-2" aria-hidden="true">
+				<span className="absolute inline-flex size-full rounded-full bg-green-text/50 motion-safe:animate-ping" />
+				<span className="relative inline-flex size-2 rounded-full bg-green-text" />
+			</span>
+			<span>{syncing ? "Syncing" : "Live"}</span>
+			{asOf ? (
+				<span className="text-low-emphasis">· Updated {formatDateTime(asOf)}</span>
+			) : null}
+		</span>
+	);
+}
+
 function Podium({
 	entries,
+	range,
 	quoteAsset,
-	myPosition,
+	currentUserId,
 }: {
 	entries: LeaderboardEntry[];
+	range: LeaderboardRange;
 	quoteAsset: string;
-	myPosition?: number;
+	currentUserId?: string;
 }) {
-	const champion = entries[0];
-	if (!champion) return null;
-	const runners = entries.slice(1);
-
 	return (
 		<section aria-labelledby="podium-heading">
 			<h2 id="podium-heading" className="sr-only">
 				Leading traders
 			</h2>
-			<Surface
-				className={cn(
-					"grid overflow-hidden rounded-xl shadow-sm",
-					runners.length > 0 && "md:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]",
-				)}
-			>
-				<Champion
-					entry={champion}
-					quoteAsset={quoteAsset}
-					current={champion.position === myPosition}
-				/>
-				{runners.length > 0 ? (
-					<div className="divide-y divide-border/40 border-t border-border/40 md:border-t-0 md:border-l">
-						{runners.map((entry) => (
-							<Runner
-								key={entry.position}
-								entry={entry}
-								quoteAsset={quoteAsset}
-								current={entry.position === myPosition}
-							/>
-						))}
-					</div>
-				) : null}
-			</Surface>
+			<div className="grid items-stretch gap-3 lg:grid-cols-[1.35fr_1fr_1fr]">
+				{entries.map((entry, index) => (
+					<PodiumCard
+						key={entry.userId}
+						entry={entry}
+						range={range}
+						quoteAsset={quoteAsset}
+						current={entry.userId === currentUserId}
+						featured={index === 0}
+					/>
+				))}
+			</div>
 		</section>
 	);
 }
 
-function Champion({
+function PodiumCard({
 	entry,
+	range,
 	quoteAsset,
 	current,
+	featured,
 }: {
 	entry: LeaderboardEntry;
+	range: LeaderboardRange;
 	quoteAsset: string;
 	current: boolean;
+	featured: boolean;
 }) {
-	const pnl = Number(entry.pnl);
 	const change = formatChange(entry.pnlPercent);
+	const pnl = Number(entry.pnl);
 
 	return (
-		<div className={cn("relative flex min-h-72 flex-col bg-l2/35 p-5 sm:p-7", current && "bg-l2")}>
-			<div className="flex items-center justify-between gap-4">
-				<div className="flex items-center gap-2 text-sm font-medium text-medium-emphasis">
-					<Trophy className="size-4 text-primary" aria-hidden="true" />
-					<span>Rank #{entry.rank}</span>
+		<Surface
+			className={cn(
+				"relative flex h-full flex-col rounded-xl shadow-sm transition-colors",
+				current && "ring-1 ring-primary/40",
+				featured && "bg-l2/20",
+			)}
+		>
+			<div className="flex flex-1 flex-col p-4 sm:p-5">
+				<div className="flex items-center justify-between gap-3">
+					<span className="inline-flex items-center gap-2 text-xs font-medium text-medium-emphasis">
+						<Trophy
+							className={cn("size-4", entry.rank === 1 ? "text-primary" : "text-low-emphasis")}
+							aria-hidden="true"
+						/>
+						Rank #{entry.rank}
+					</span>
+					{current ? <span className="text-xs font-medium text-primary">You</span> : null}
 				</div>
-				{current ? <span className="text-xs font-medium text-primary">Your position</span> : null}
-			</div>
 
-			<div className="my-auto flex items-center gap-4 py-8">
-				<TraderAvatar
-					entry={entry}
-					className="size-16 border-2 sm:size-20"
-					fallbackClassName="text-xl sm:text-2xl"
-				/>
-				<div className="min-w-0">
-					<p className="truncate text-xl font-semibold tracking-tight text-high-emphasis sm:text-2xl">
-						{entry.name}
-					</p>
-					<p
-						className={cn(
-							"mt-2 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl",
-							valueTone(entry.pnlPercent),
-						)}
-					>
-						{change.text}
-					</p>
-					<p className="mt-1 text-xs text-medium-emphasis">All-time return</p>
-				</div>
-			</div>
-
-			<div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4">
-				<StandingMetric
-					label="PnL"
-					value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)} ${quoteAsset}`}
-					valueClassName={valueTone(entry.pnl)}
-				/>
-				<StandingMetric label="Portfolio" value={`${formatPrice(entry.equity)} ${quoteAsset}`} />
-			</div>
-		</div>
-	);
-}
-
-function Runner({
-	entry,
-	quoteAsset,
-	current,
-}: {
-	entry: LeaderboardEntry;
-	quoteAsset: string;
-	current: boolean;
-}) {
-	const pnl = Number(entry.pnl);
-	const change = formatChange(entry.pnlPercent);
-
-	return (
-		<div className={cn("flex min-h-36 flex-col justify-center p-5", current && "bg-l2")}>
-			<div className="flex items-center gap-3">
-				<span className="w-8 shrink-0 text-xl font-semibold text-low-emphasis tabular-nums">
-					#{entry.rank}
-				</span>
-				<TraderAvatar entry={entry} className="size-11 border" fallbackClassName="text-sm" />
-				<div className="min-w-0 flex-1">
-					<div className="flex items-center gap-2">
+				<div className="mt-4 flex items-center gap-3">
+					<TraderAvatar
+						entry={entry}
+						className={cn("border", featured ? "size-12 sm:size-14" : "size-10")}
+						fallbackClassName={featured ? "text-base" : "text-xs"}
+					/>
+					<div className="min-w-0">
 						<p className="truncate font-semibold text-high-emphasis">{entry.name}</p>
-						{current ? <span className="shrink-0 text-xs text-primary">You</span> : null}
+						<p className="mt-0.5 text-xs text-medium-emphasis">{PERIOD[range]} return</p>
 					</div>
-					<p className="mt-0.5 text-xs text-medium-emphasis tabular-nums">
-						{pnl > 0 ? "+" : ""}
-						{formatPrice(entry.pnl)} {quoteAsset} PnL
-					</p>
 				</div>
+
 				<p
-					className={cn("shrink-0 text-lg font-semibold tabular-nums", valueTone(entry.pnlPercent))}
+					className={cn(
+						"mt-4 font-semibold tracking-tight tabular-nums",
+						featured ? "text-3xl sm:text-4xl" : "text-2xl",
+						valueTone(entry.pnlPercent),
+					)}
 				>
 					{change.text}
 				</p>
+
+				<div className="mt-4 grid grid-cols-2 gap-3 border-t border-border/40 pt-3 text-xs">
+					<PodiumMetric
+						label={`${PERIOD[range].replace(" return", "")} PnL`}
+						value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)} ${quoteAsset}`}
+						tone={valueTone(entry.pnl)}
+					/>
+					<PodiumMetric
+						label="Portfolio"
+						value={`${formatPrice(entry.equity)} ${quoteAsset}`}
+					/>
+				</div>
 			</div>
+
+			<div className="border-t border-border/40 px-4 pb-4 pt-3 sm:px-5">
+				{featured ? (
+					<LeaderboardHistoryChart
+						history={entry.history}
+						quoteAsset={quoteAsset}
+						heightClassName="h-36"
+					/>
+				) : (
+					<LeaderboardSparkline history={entry.history} className="h-9" />
+				)}
+			</div>
+		</Surface>
+	);
+}
+
+function PodiumMetric({
+	label,
+	value,
+	tone,
+}: {
+	label: string;
+	value: string;
+	tone?: string;
+}) {
+	return (
+		<div className="min-w-0">
+			<p className="text-[11px] text-low-emphasis">{label}</p>
+			<p className={cn("mt-0.5 truncate font-medium tabular-nums text-high-emphasis", tone)}>
+				{value}
+			</p>
 		</div>
 	);
 }
 
 function RankingsPanel({
 	entries,
+	range,
 	quoteAsset,
-	myPosition,
+	currentUserId,
 	total,
 	asOf,
+	fetching,
 	page,
 	totalPages,
 	firstVisible,
@@ -312,10 +374,12 @@ function RankingsPanel({
 	onPageChange,
 }: {
 	entries: LeaderboardEntry[];
+	range: LeaderboardRange;
 	quoteAsset: string;
-	myPosition?: number;
+	currentUserId?: string;
 	total: number;
 	asOf: string;
+	fetching: boolean;
 	page: number;
 	totalPages: number;
 	firstVisible: number;
@@ -325,21 +389,22 @@ function RankingsPanel({
 	return (
 		<section aria-labelledby="rankings-heading">
 			<Surface className="rounded-xl shadow-sm">
-				<div className="flex flex-col gap-1 border-b border-border/40 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
+				<div className="flex flex-col gap-2 border-b border-border/40 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
 					<div>
-						<div className="flex items-baseline gap-2">
-							<h2 id="rankings-heading" className="font-semibold text-high-emphasis">
-								Rankings
-							</h2>
-						</div>
-						<p className="mt-1 text-xs text-medium-emphasis">Updated {formatDateTime(asOf)}</p>
+						<h2 id="rankings-heading" className="font-semibold text-high-emphasis">
+							Rankings
+						</h2>
+						<p className="mt-1 text-xs text-medium-emphasis">
+							{PERIOD[range]} return · {total} {total === 1 ? "trader" : "traders"} ranked
+						</p>
 					</div>
-					<p className="text-xs text-medium-emphasis">Return determines rank</p>
+					<LiveStatus asOf={asOf} syncing={fetching} />
 				</div>
 
-				<div className="hidden grid-cols-[3rem_minmax(0,1fr)_7rem_9rem_10rem] items-center gap-3 border-b border-border/40 bg-l2/50 px-4 py-2.5 text-xs text-medium-emphasis sm:grid sm:px-5">
+				<div className="hidden grid-cols-[3rem_minmax(0,1fr)_8rem_6.5rem_8rem_9rem] items-center gap-3 border-b border-border/40 bg-l2/50 px-4 py-2.5 text-xs text-medium-emphasis sm:grid sm:px-5">
 					<span>Rank</span>
 					<span>Trader</span>
+					<span>Trend</span>
 					<span className="text-right">Return</span>
 					<span className="text-right">PnL ({quoteAsset})</span>
 					<span className="text-right">Portfolio ({quoteAsset})</span>
@@ -349,10 +414,9 @@ function RankingsPanel({
 					<ol>
 						{entries.map((entry) => (
 							<RankingRow
-								key={entry.position}
+								key={entry.userId}
 								entry={entry}
-								quoteAsset={quoteAsset}
-								current={entry.position === myPosition}
+								current={entry.userId === currentUserId}
 							/>
 						))}
 					</ol>
@@ -397,22 +461,14 @@ function RankingsPanel({
 	);
 }
 
-function RankingRow({
-	entry,
-	quoteAsset,
-	current,
-}: {
-	entry: LeaderboardEntry;
-	quoteAsset: string;
-	current: boolean;
-}) {
-	const pnl = Number(entry.pnl);
+function RankingRow({ entry, current }: { entry: LeaderboardEntry; current: boolean }) {
 	const change = formatChange(entry.pnlPercent);
+	const pnl = Number(entry.pnl);
 
 	return (
 		<li
 			className={cn(
-				"grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-l2/40 sm:grid-cols-[3rem_minmax(0,1fr)_7rem_9rem_10rem] sm:px-5",
+				"grid grid-cols-[2rem_minmax(0,1fr)_5rem_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-l2/40 sm:grid-cols-[3rem_minmax(0,1fr)_8rem_6.5rem_8rem_9rem] sm:px-5",
 				current && "border-l-2 border-primary bg-l2 pl-3.5 sm:pl-4.5",
 			)}
 		>
@@ -424,66 +480,104 @@ function RankingRow({
 						<p className="truncate font-medium text-high-emphasis">{entry.name}</p>
 						{current ? <span className="shrink-0 text-xs text-primary">You</span> : null}
 					</div>
-					<p className="mt-0.5 truncate text-xs text-medium-emphasis sm:hidden">
-						Portfolio {formatPrice(entry.equity)} {quoteAsset}
+					<p className="mt-0.5 truncate text-xs text-medium-emphasis tabular-nums sm:hidden">
+						{pnl > 0 ? "+" : ""}
+						{formatPrice(entry.pnl)} · {formatPrice(entry.equity)}
 					</p>
 				</div>
 			</div>
-			<div className="text-right">
-				<p className={cn("font-semibold tabular-nums", valueTone(entry.pnlPercent))}>
-					{change.text}
-				</p>
-				<p className={cn("mt-0.5 text-xs tabular-nums sm:hidden", valueTone(entry.pnl))}>
+			<div className="h-9 min-w-0">
+				<LeaderboardSparkline history={entry.history} className="h-9" />
+			</div>
+			<p className={cn("text-right font-semibold tabular-nums", valueTone(entry.pnlPercent))}>
+				{change.text}
+			</p>
+			<div className="hidden text-right sm:block">
+				<p className={cn("text-sm font-medium tabular-nums", valueTone(entry.pnl))}>
 					{pnl > 0 ? "+" : ""}
 					{formatPrice(entry.pnl)}
 				</p>
+				<p className={cn("mt-0.5 text-[11px] tabular-nums", valueTone(entry.totalPnlPercent))}>
+					{formatChange(entry.totalPnlPercent).text} all-time
+				</p>
 			</div>
-			<p
-				className={cn(
-					"hidden text-right text-sm font-medium tabular-nums sm:block",
-					valueTone(entry.pnl),
-				)}
-			>
-				{pnl > 0 ? "+" : ""}
-				{formatPrice(entry.pnl)}
-			</p>
-			<p className="hidden text-right text-sm font-medium text-high-emphasis tabular-nums sm:block">
-				{formatPrice(entry.equity)}
-			</p>
+			<div className="hidden text-right sm:block">
+				<p className="text-sm font-medium text-high-emphasis tabular-nums">
+					{formatPrice(entry.equity)}
+				</p>
+				<p className="mt-0.5 text-[11px] text-low-emphasis tabular-nums">
+					{formatPrice(entry.netContributions)} in
+				</p>
+			</div>
 		</li>
 	);
 }
 
-function PersonalStanding({ entry, quoteAsset }: { entry: LeaderboardEntry; quoteAsset: string }) {
-	const pnl = Number(entry.pnl);
+function PersonalStanding({
+	mine,
+	loading,
+	range,
+	quoteAsset,
+}: {
+	mine: MyLeaderboardResponse | null;
+	loading: boolean;
+	range: LeaderboardRange;
+	quoteAsset: string;
+}) {
+	if (loading && !mine) {
+		return (
+			<Surface className="rounded-xl p-4 shadow-sm sm:p-5">
+				<Skeleton className="h-16 w-full" />
+			</Surface>
+		);
+	}
+
+	if (!mine) return null;
+
+	if (!mine.eligible) {
+		return <EligibilityMessage reason={mine.reason} />;
+	}
+
+	const entry = mine.entry;
 	const change = formatChange(entry.pnlPercent);
+	const pnl = Number(entry.pnl);
 
 	return (
-		<Surface className="grid overflow-hidden rounded-xl shadow-sm sm:grid-cols-[minmax(13rem,1.35fr)_repeat(3,minmax(8rem,1fr))]">
-			<div className="flex items-center gap-3 bg-l2/50 px-4 py-4 sm:px-5">
-				<TraderAvatar entry={entry} className="size-11 border" fallbackClassName="text-sm" />
-				<div className="min-w-0">
-					<p className="text-xs text-medium-emphasis">Your standing</p>
-					<p className="mt-0.5 truncate font-semibold text-high-emphasis">{entry.name}</p>
+		<Surface className="overflow-hidden rounded-xl border-primary/30 shadow-sm">
+			<div className="grid gap-0 lg:grid-cols-[minmax(13rem,1.3fr)_repeat(3,minmax(7rem,1fr))_minmax(12rem,1.4fr)]">
+				<div className="flex items-center gap-3 border-b border-border/40 bg-l2/40 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5">
+					<TraderAvatar entry={entry} className="size-11 border" fallbackClassName="text-sm" />
+					<div className="min-w-0">
+						<p className="text-xs text-medium-emphasis">Your standing</p>
+						<p className="mt-0.5 truncate font-semibold text-high-emphasis">{entry.name}</p>
+						<p className="mt-0.5 text-[11px] text-low-emphasis">{PERIOD[range]} return</p>
+					</div>
+				</div>
+
+				<StandingMetric
+					className="border-b border-border/40 lg:border-b-0 lg:border-r"
+					label="Rank"
+					value={`#${entry.rank}`}
+				/>
+				<StandingMetric
+					className="border-b border-border/40 lg:border-b-0 lg:border-r"
+					label="Return"
+					value={change.text}
+					valueClassName={valueTone(entry.pnlPercent)}
+				/>
+				<StandingMetric
+					className="border-b border-border/40 lg:border-b-0 lg:border-r"
+					label={`PnL (${quoteAsset})`}
+					value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)}`}
+					valueClassName={valueTone(entry.pnl)}
+				/>
+				<div className="px-4 py-3 lg:px-5">
+					<LeaderboardSparkline history={entry.history} className="h-10" />
+					<p className="mt-1 text-[11px] text-low-emphasis tabular-nums">
+						{formatPrice(entry.equity)} {quoteAsset} portfolio
+					</p>
 				</div>
 			</div>
-			<StandingMetric
-				className="border-t sm:border-t-0 sm:border-l"
-				label="Rank"
-				value={`#${entry.rank}`}
-			/>
-			<StandingMetric
-				className="border-t sm:border-t-0 sm:border-l"
-				label="Return"
-				value={change.text}
-				valueClassName={valueTone(entry.pnlPercent)}
-			/>
-			<StandingMetric
-				className="border-t sm:border-t-0 sm:border-l"
-				label="PnL"
-				value={`${pnl > 0 ? "+" : ""}${formatPrice(entry.pnl)} ${quoteAsset}`}
-				valueClassName={valueTone(entry.pnl)}
-			/>
 		</Surface>
 	);
 }
@@ -500,7 +594,7 @@ function StandingMetric({
 	className?: string;
 }) {
 	return (
-		<div className={cn("flex min-w-0 flex-col justify-center px-4 py-3 sm:px-5", className)}>
+		<div className={cn("flex min-w-0 flex-col justify-center px-4 py-3 lg:px-5", className)}>
 			<p className="text-xs text-medium-emphasis">{label}</p>
 			<p
 				className={cn(
@@ -569,7 +663,7 @@ function EligibilityMessage({
 	return (
 		<Surface className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 shadow-sm sm:px-5">
 			<p className="text-sm text-medium-emphasis">
-				{content?.text ?? "Your standing will appear after the next leaderboard update."}
+				{content?.text ?? "Your return will appear once your portfolio has a usable baseline."}
 			</p>
 			{content ? (
 				<Button asChild variant="secondary" size="sm">
@@ -580,13 +674,13 @@ function EligibilityMessage({
 	);
 }
 
-function UnavailableState({ error, onRetry }: { error: string | null; onRetry: () => void }) {
+function UnavailableState({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
 	return (
 		<FeedbackState
 			className="min-h-80"
 			icon={Trophy}
 			title="Leaderboard unavailable"
-			description={error ?? "The first standings are still being calculated."}
+			description={error?.message ?? "Live standings are starting up."}
 			action={
 				<Button variant="secondary" size="sm" onClick={onRetry}>
 					Try again
@@ -601,7 +695,7 @@ function EmptyState() {
 		<FeedbackState
 			className="min-h-80"
 			icon={Trophy}
-			title="No ranked traders yet"
+			title="No ranked traders in this window"
 			description="Verify your account and complete a trade to enter the standings."
 			action={
 				<Button asChild variant="secondary" size="sm">
@@ -615,29 +709,22 @@ function EmptyState() {
 function LeaderboardSkeleton() {
 	return (
 		<div className="space-y-5">
-			<Surface className="grid overflow-hidden rounded-xl shadow-sm md:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
-				<div className="min-h-72 bg-l2/35 p-6">
-					<Skeleton className="h-4 w-20" />
-					<div className="flex items-center gap-4 py-12">
-						<Skeleton className="size-16 rounded-full" />
-						<div className="space-y-3">
-							<Skeleton className="h-5 w-36" />
-							<Skeleton className="h-9 w-28" />
-						</div>
-					</div>
-					<Skeleton className="h-10 w-full" />
-				</div>
-				<div className="divide-y divide-border/40 border-t border-border/40 md:border-t-0 md:border-l">
-					{Array.from({ length: 2 }).map((_, index) => (
-						<div key={index} className="flex min-h-36 items-center gap-3 p-5">
-							<Skeleton className="h-6 w-8" />
+			<div className="grid items-stretch gap-3 lg:grid-cols-[1.35fr_1fr_1fr]">
+				{Array.from({ length: 3 }).map((_, index) => (
+					<Surface key={index} className="rounded-xl p-5 shadow-sm">
+						<Skeleton className="h-4 w-20" />
+						<div className="mt-5 flex items-center gap-3">
 							<Skeleton className="size-11 rounded-full" />
-							<Skeleton className="h-5 flex-1" />
-							<Skeleton className="h-5 w-16" />
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-28" />
+								<Skeleton className="h-3 w-20" />
+							</div>
 						</div>
-					))}
-				</div>
-			</Surface>
+						<Skeleton className="mt-5 h-9 w-28" />
+						<Skeleton className="mt-5 h-10 w-full" />
+					</Surface>
+				))}
+			</div>
 
 			<Surface className="rounded-xl p-4 shadow-sm sm:p-5">
 				<Skeleton className="h-5 w-32" />

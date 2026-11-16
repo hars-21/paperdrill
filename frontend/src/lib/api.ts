@@ -9,6 +9,7 @@ import type {
 	Candle,
 	CreatedApiKey,
 	DailyCredit,
+	LeaderboardRange,
 	LeaderboardResponse,
 	Market,
 	MyLeaderboardResponse,
@@ -231,12 +232,14 @@ export const api = {
 		return request<DailyCredit>("/users/me/daily-credit", { method: "POST" });
 	},
 
-	getLeaderboard(limit = 25, offset = 0) {
-		return request<LeaderboardResponse>(`/leaderboard?limit=${limit}&offset=${offset}`);
+	getLeaderboard(range: LeaderboardRange = "all", limit = 25, offset = 0) {
+		return request<LeaderboardResponse>(
+			`/leaderboard?range=${range}&limit=${limit}&offset=${offset}`,
+		);
 	},
 
-	getMyLeaderboardEntry() {
-		return request<MyLeaderboardResponse>("/leaderboard/me");
+	getMyLeaderboardEntry(range: LeaderboardRange = "all") {
+		return request<MyLeaderboardResponse>(`/leaderboard/me?range=${range}`);
 	},
 
 	getApiKeys() {

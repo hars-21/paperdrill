@@ -280,20 +280,33 @@ export interface PortfolioPositionEventsResponse {
 	};
 }
 
+export type LeaderboardRange = "24h" | "7d" | "30d" | "all";
+
+export interface LeaderboardHistoryPoint {
+	at: string;
+	equity: string;
+	netContributions: string;
+}
+
 export interface LeaderboardEntry {
+	userId: string;
 	position: number;
 	rank: number;
 	name: string;
 	avatarUrl?: string | null;
 	equity: string;
+	netContributions: string;
 	pnl: string;
 	pnlPercent: string;
+	totalPnl: string;
+	totalPnlPercent: string;
+	history: LeaderboardHistoryPoint[];
 }
 
 export interface LeaderboardResponse {
 	asOf: string;
 	quoteAsset: string;
-	stale: boolean;
+	range: LeaderboardRange;
 	entries: LeaderboardEntry[];
 	pagination: {
 		limit: number;
@@ -307,6 +320,7 @@ export type MyLeaderboardResponse =
 			eligible: true;
 			asOf: string;
 			quoteAsset: string;
+			range: LeaderboardRange;
 			entry: LeaderboardEntry;
 	  }
 	| {
