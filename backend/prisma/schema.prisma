@@ -57,7 +57,6 @@ model User {
   orders        Order[]
   buyFills      Fill[]    @relation("FillBuyer")
   sellFills     Fill[]    @relation("FillSeller")
-  leaderboardEntry LeaderboardEntry?
   dailyCredits  DailyCredit[]
   balances      Balance[]
   balanceHistory BalanceHistory[]
@@ -80,23 +79,6 @@ model DailyCredit {
 
   @@unique([userId, creditDate])
   @@index([status, createdAt])
-}
-
-model LeaderboardEntry {
-  userId   String @id
-  position Int    @unique
-  rank     Int
-  baseline BigInt
-  equity   BigInt
-  pnl      BigInt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model LeaderboardState {
-  id         Int      @id
-  quoteAsset String
-  asOf       DateTime
 }
 
 model ApiKey {
