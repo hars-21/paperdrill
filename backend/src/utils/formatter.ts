@@ -1,5 +1,6 @@
 import { marketStore, assetPrecision } from "../store/market";
 import { fromBigInt } from "./convert";
+import type { LeaderboardHistoryPoint, LeaderboardStanding } from "./leaderboard";
 
 function fmt(val: unknown, prec: number): string | number | null {
 	if (val == null) return null;
@@ -188,25 +189,28 @@ export function formatBalanceHistoryEntry(entry: {
 }
 
 export function formatLeaderboardEntry(
-	entry: {
-		position: number;
-		rank: number;
-		baseline: bigint;
-		equity: bigint;
-		pnl: bigint;
-	},
+	entry: LeaderboardStanding,
 	name: string,
 	quotePrecision: number,
+	history: LeaderboardHistoryPoint[],
 ) {
-	const pnlPercent = entry.baseline === 0n ? 0n : (entry.pnl * 10000n) / entry.baseline;
-
 	return {
+		userId: entry.userId,
 		position: entry.position,
 		rank: entry.rank,
 		name,
+		avatarUrl: null,
 		equity: fmt(entry.equity, quotePrecision),
+		netContributions: fmt(entry.netContributions, quotePrecision),
 		pnl: fmt(entry.pnl, quotePrecision),
-		pnlPercent: fmt(pnlPercent, 2),
+		pnlPercent: fmt(entry.returnBps, 2),
+		totalPnl: fmt(entry.totalPnl, quotePrecision),
+		totalPnlPercent: fmt(entry.totalReturnBps, 2),
+		history: history.map((point) => ({
+			at: new Date(point.at).toISOString(),
+			equity: fmt(point.equity, quotePrecision),
+			netContributions: fmt(point.netContributions, quotePrecision),
+		})),
 	};
 }
 

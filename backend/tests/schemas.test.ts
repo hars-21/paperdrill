@@ -32,6 +32,8 @@ test("leaderboard pagination applies public query limits", () => {
 	expect(leaderboardQuerySchema.safeParse({ limit: "25", offset: "0" }).success).toBe(true);
 	expect(leaderboardQuerySchema.safeParse({ limit: "101" }).success).toBe(false);
 	expect(leaderboardQuerySchema.safeParse({ offset: "-1" }).success).toBe(false);
+	expect(leaderboardQuerySchema.safeParse({ range: "7d" }).success).toBe(true);
+	expect(leaderboardQuerySchema.safeParse({ range: "90d" }).success).toBe(false);
 });
 
 test("order input accepts the two supported order shapes", () => {

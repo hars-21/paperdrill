@@ -11,7 +11,7 @@ import { connectRedis, disconnectRedis } from "./redis";
 import { logger } from "./utils/logger";
 import { prisma } from "./db";
 import { loadMarkets } from "./store/market";
-import { startLeaderboardRefresh, stopLeaderboardRefresh } from "./services/leaderboard";
+import { startLeaderboard, stopLeaderboard } from "./services/leaderboard";
 import { flushSentry } from "./instrument";
 
 const { httpServer, wss } = createAppServer();
@@ -25,9 +25,11 @@ async function main() {
 			process.exit(1);
 		});
 
+	// Seed existing history without blocking startup; the leaderboard API
+	// reports "not ready" until the first pass completes.
+	void startLeaderboard();
 	listenForEngineresponses().catch((err) => logger.error("Engine listener error", err));
 	listenForOrderbookDepth().catch((err) => logger.error("Orderbook listener error", err));
-	startLeaderboardRefresh();
 
 	httpServer.listen(config.app.port, () => {
 		logger.info(`HTTP + WS server running on port ${config.app.port}`);
@@ -43,7 +45,7 @@ async function gracefulShutdown(signal: string) {
 	}, 10000);
 
 	engineAbortController.abort();
-	stopLeaderboardRefresh();
+	stopLeaderboard();
 
 	try {
 		await new Promise<void>((resolve) => httpServer.close(() => resolve()));

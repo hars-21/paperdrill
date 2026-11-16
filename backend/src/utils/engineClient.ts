@@ -10,6 +10,7 @@ import { logger } from "./logger";
 import { marketSubscriber, publisher, responsesubscriber } from "../redis";
 import { formatCandle, formatDepth, formatTrade, formatTicker } from "./formatter";
 import { ApiError } from "./apiError";
+import { ingestAccountSnapshot } from "../services/leaderboard";
 
 export const engineAbortController = new AbortController();
 
@@ -78,6 +79,10 @@ export async function listenForOrderbookDepth(): Promise<void> {
 		(message, channel) => {
 			try {
 				const parsedData = JSON.parse(message);
+
+				if (channel.startsWith("account:")) {
+					ingestAccountSnapshot(parsedData);
+				}
 
 				let formatted: Record<string, unknown>;
 				if (parsedData.event === "depth") {
