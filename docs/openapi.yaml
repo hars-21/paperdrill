@@ -16,6 +16,8 @@ tags:
     description: Create, inspect, and cancel orders with a scoped API key.
   - name: Account
     description: Read balances, portfolio performance, and private trade history.
+  - name: Leaderboard
+    description: Live public standings and your personal ranking.
 paths:
   /markets:
     get:
@@ -647,6 +649,93 @@ paths:
                 $ref: "#/components/schemas/PortfolioPositionEvents"
         default:
           $ref: "#/components/responses/RequestError"
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      summary: Get the live leaderboard
+      description: |
+        Returns live standings for verified traders, ranked by portfolio return
+        over the selected window. Returns exclude deposits and credits, so a
+        contribution does not look like performance. Rankings update as worker
+        snapshots arrive; the endpoint reads the in-memory projection and does
+        not rely on a periodic database refresh.
+
+        Accounts younger than the selected range are ranked from inception. Each
+        entry includes a downsampled portfolio history for charting.
+      tags: [Leaderboard]
+      security: []
+      parameters:
+        - name: range
+          in: query
+          description: Ranking window.
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, all]
+            default: all
+        - name: limit
+          in: query
+          description: Number of entries per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: offset
+          in: query
+          description: Number of entries to skip.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        "200":
+          description: Leaderboard returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+        "503":
+          $ref: "#/components/responses/LeaderboardUnavailable"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /leaderboard/me:
+    get:
+      operationId: getMyLeaderboardEntry
+      summary: Get your leaderboard standing
+      description: |
+        Returns your live standing and portfolio history for the selected
+        window. Requires a signed-in session. If you are not yet ranked, the
+        response reports the reason (`EMAIL_NOT_VERIFIED`, `NO_TRADES`, or
+        `NOT_CALCULATED`).
+      tags: [Leaderboard]
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: range
+          in: query
+          description: Ranking window.
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, all]
+            default: all
+      responses:
+        "200":
+          description: Your standing, or an eligibility reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyLeaderboardResponse"
+        "401":
+          description: A signed-in session is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          $ref: "#/components/responses/LeaderboardUnavailable"
+        default:
+          $ref: "#/components/responses/RequestError"
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -654,6 +743,11 @@ components:
       in: header
       name: x-api-key
       description: A scoped API key created in the PaperDrill dashboard.
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: Session cookie set by the sign-in flow.
   parameters:
     Symbol:
       name: symbol
@@ -1664,6 +1758,118 @@ components:
             $ref: "#/components/schemas/PortfolioPositionEvent"
         pagination:
           $ref: "#/components/schemas/Pagination"
+    LeaderboardHistoryPoint:
+      type: object
+      required: [at, equity, netContributions]
+      properties:
+        at:
+          type: string
+          format: date-time
+        equity:
+          $ref: "#/components/schemas/DecimalString"
+        netContributions:
+          $ref: "#/components/schemas/DecimalString"
+    LeaderboardEntry:
+      type: object
+      required:
+        - userId
+        - position
+        - rank
+        - name
+        - equity
+        - netContributions
+        - pnl
+        - pnlPercent
+        - totalPnl
+        - totalPnlPercent
+        - history
+      properties:
+        userId:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          description: Row position after sorting, including ties.
+        rank:
+          type: integer
+          description: Competition rank; tied returns share a rank.
+        name:
+          type: string
+        avatarUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        equity:
+          $ref: "#/components/schemas/DecimalString"
+        netContributions:
+          $ref: "#/components/schemas/DecimalString"
+        pnl:
+          $ref: "#/components/schemas/SignedDecimalString"
+        pnlPercent:
+          $ref: "#/components/schemas/SignedDecimalString"
+        totalPnl:
+          $ref: "#/components/schemas/SignedDecimalString"
+        totalPnlPercent:
+          $ref: "#/components/schemas/SignedDecimalString"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardHistoryPoint"
+    LeaderboardResponse:
+      type: object
+      required: [asOf, quoteAsset, range, entries, pagination]
+      properties:
+        asOf:
+          type: string
+          format: date-time
+        quoteAsset:
+          type: string
+        range:
+          type: string
+          enum: [24h, 7d, 30d, all]
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        pagination:
+          type: object
+          required: [limit, offset, total]
+          properties:
+            limit:
+              type: integer
+            offset:
+              type: integer
+            total:
+              type: integer
+    LeaderboardIneligible:
+      type: object
+      required: [eligible, reason]
+      properties:
+        eligible:
+          type: boolean
+          enum: [false]
+        reason:
+          type: string
+          enum: [EMAIL_NOT_VERIFIED, NO_TRADES, NOT_CALCULATED]
+    MyLeaderboardResponse:
+      oneOf:
+        - type: object
+          required: [eligible, asOf, quoteAsset, range, entry]
+          properties:
+            eligible:
+              type: boolean
+              enum: [true]
+            asOf:
+              type: string
+              format: date-time
+            quoteAsset:
+              type: string
+            range:
+              type: string
+              enum: [24h, 7d, 30d, all]
+            entry:
+              $ref: "#/components/schemas/LeaderboardEntry"
+        - $ref: "#/components/schemas/LeaderboardIneligible"
     Pagination:
       type: object
       required: [page, limit, total, totalPages, hasNextPage, hasPreviousPage]
@@ -1760,6 +1966,12 @@ components:
             $ref: "#/components/schemas/ApiError"
     PortfolioUnavailable:
       description: Portfolio valuation is temporarily unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    LeaderboardUnavailable:
+      description: The leaderboard is still building its first projection.
       content:
         application/json:
           schema:

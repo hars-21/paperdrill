@@ -17,6 +17,7 @@ wss://api.paperdrill.dev
 | `depth:SYMBOL`  | Changed order-book levels only                   |
 | `ticker:SYMBOL` | Updated rolling 24-hour statistics               |
 | `candle:SYMBOL` | Current one-minute candle, updated on each trade |
+| `leaderboard`   | Live standings changed; refetch the leaderboard  |
 
 Use the exact symbol returned by `GET /markets`.
 
@@ -97,6 +98,16 @@ Tickets cannot be reused. Mint a new ticket for every connection attempt, includ
 Snapshot numbers are raw integers scaled by precision, not decimal strings. Divide money fields by `10 ** quotePrecision` and quantity fields by `10 ** qtyPrecision`. `at`, `lastBuyAt`, and `lastSellAt` are Unix milliseconds.
 
 Snapshots are sent after fills and balance changes with a short debounce, then at most every five minutes while positions are open. Fetch `GET /portfolio` once for initial state, then apply snapshots as replacements.
+
+## Leaderboard updates
+
+The public `leaderboard` channel announces that live standings changed. Subscribe without a ticket. Messages are lightweight invalidation signals, not full standings:
+
+```json
+{ "channel": "leaderboard", "asOf": "2026-03-01T12:00:00.000Z" }
+```
+
+Refetch `GET /leaderboard` when a message arrives. The server debounces bursts, so clients should debounce refetches too. Rankings are computed from the same live account snapshots; there is no polling interval to mirror.
 
 ## Subscribe
 
