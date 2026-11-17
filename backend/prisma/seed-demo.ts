@@ -31,7 +31,12 @@ if (!localHosts.has(parsedDatabaseUrl.hostname)) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 const now = new Date();
-const baseline = 1_010_000n;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const QUOTE_ASSET = "USD";
+const INITIAL_DEPOSIT = 1_000_000n;
+const DAILY_CREDIT_AMOUNT = 10_000n;
+const baseline = INITIAL_DEPOSIT + DAILY_CREDIT_AMOUNT;
+const creditDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 const demoEmail = "demo@paperdrill.local";
 const demoPassword = process.env.DEMO_USER_PASSWORD ?? "paperdrill-demo";
 
@@ -116,6 +121,98 @@ function emailFor(name: string) {
 	return `${name.toLowerCase().replaceAll(" ", ".")}@paperdrill.local`;
 }
 
+function buildPortfolio(userId: string, createdAt: Date, index: number, returnPercent: number) {
+	const market = markets[index % markets.length]!;
+	const random = mulberry32(7_003 + index * 1_009);
+	const targetEquity =
+		(baseline * BigInt(Math.round((100 + returnPercent) * 100))) / 10_000n;
+	const totalGain = targetEquity - baseline;
+	// Keep most capital in cash so every seeded account has a plausible,
+	// non-negative balance while still holding one meaningful position.
+	const allocationBps = BigInt(3_500 + Math.round(random() * 2_200));
+	const positionsValue = (targetEquity * allocationBps) / 10_000n;
+	const price = scale(market.lastPrice, market.pricePrecision);
+	const qty = (positionsValue * 10n ** BigInt(market.qtyPrecision)) / price;
+	let unrealizedPnl = (totalGain * 6n) / 10n;
+	let costBasis = positionsValue - unrealizedPnl;
+
+	if (costBasis <= 0n) {
+		costBasis = positionsValue / 2n;
+		unrealizedPnl = positionsValue - costBasis;
+	}
+
+	const realizedPnl = totalGain - unrealizedPnl;
+	const averagePrice = (costBasis * 10n ** BigInt(market.qtyPrecision)) / qty;
+
+	return {
+		userId,
+		createdAt,
+		market,
+		price,
+		targetEquity,
+		totalGain,
+		allocationBps,
+		qty,
+		costBasis,
+		realizedPnl,
+		unrealizedPnl,
+		averagePrice,
+		cash: targetEquity - positionsValue,
+	};
+}
+
+/**
+ * Daily history from account inception plus two-hourly points for the last
+ * day. The generated fills are only activity history, so projections are
+ * derived from these coherent portfolio snapshots instead.
+ */
+function buildSnapshotHistory(portfolio: ReturnType<typeof buildPortfolio>, seed: number) {
+	const startMs = portfolio.createdAt.getTime();
+	const endMs = now.getTime();
+	const creditAt = endMs;
+	const random = mulberry32(seed);
+	const timestamps = new Set<number>([startMs, endMs]);
+
+	for (let at = Math.ceil((startMs + 1) / DAY_MS) * DAY_MS; at < endMs; at += DAY_MS) {
+		timestamps.add(at);
+	}
+	for (let at = endMs - DAY_MS; at < endMs; at += 2 * 60 * 60 * 1000) {
+		if (at > startMs) timestamps.add(at);
+	}
+
+	const span = Math.max(1, endMs - startMs);
+	const gainNumber = Number(portfolio.totalGain);
+
+	return [...timestamps]
+		.sort((left, right) => left - right)
+		.map((at) => {
+			const progress = (at - startMs) / span;
+			const wobble =
+				Math.sin(progress * Math.PI) * (random() * 2 - 1) * Math.abs(gainNumber) * 0.06;
+			const gain = BigInt(
+				Math.round(gainNumber * Math.pow(progress, 1.08) + wobble),
+			);
+			const netContributions = at >= creditAt ? baseline : INITIAL_DEPOSIT;
+			const equity = netContributions + gain;
+			const positionsValue = (equity * portfolio.allocationBps) / 10_000n;
+			const unrealizedPnl = (gain * 6n) / 10n;
+
+			return {
+				id: crypto.randomUUID(),
+				userId: portfolio.userId,
+				at: new Date(at),
+				quoteAsset: QUOTE_ASSET,
+				cash: equity - positionsValue,
+				positionsValue,
+				equity,
+				realizedPnl: gain - unrealizedPnl,
+				unrealizedPnl,
+				netContributions,
+				partial: false,
+			};
+		});
+}
+
 function buildCandles(market: (typeof markets)[number], marketIndex: number) {
 	const random = mulberry32(8_141 + marketIndex * 9_973);
 	const intervalMs = 5 * 60 * 1000;
@@ -169,11 +266,15 @@ async function insertBatches<T>(
 
 async function clearDatabase() {
 	await prisma.$transaction(async (transaction) => {
+		await transaction.positionEvent.deleteMany();
+		await transaction.position.deleteMany();
+		await transaction.portfolioSnapshot.deleteMany();
+		await transaction.balanceHistory.deleteMany();
+		await transaction.balance.deleteMany();
+		await transaction.projectionCursor.deleteMany();
 		await transaction.verificationToken.deleteMany();
 		await transaction.dailyCredit.deleteMany();
 		await transaction.apiKey.deleteMany();
-		await transaction.leaderboardEntry.deleteMany();
-		await transaction.leaderboardState.deleteMany();
 		await transaction.fill.deleteMany();
 		await transaction.order.deleteMany();
 		await transaction.candle.deleteMany();
@@ -194,18 +295,22 @@ async function seed() {
 		bcrypt.hash(demoPassword, 10),
 		bcrypt.hash(crypto.randomUUID(), 10),
 	]);
-	const userRows = traders.map(([name], index) => ({
-		id: crypto.randomUUID(),
-		name,
-		email: name === "Kian Rao" ? demoEmail : emailFor(name),
-		emailVerified: true,
-		password: userPassword,
-		type: UserType.USER,
-		pnlBaseline: baseline,
-		pnlBaselineAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000),
-		createdAt: new Date(now.getTime() - (48 - index) * 24 * 60 * 60 * 1000),
-		updatedAt: now,
-	}));
+	const userRows = traders.map(([name], index) => {
+		const createdAt = new Date(now.getTime() - (48 - index) * DAY_MS);
+
+		return {
+			id: crypto.randomUUID(),
+			name,
+			email: name === "Kian Rao" ? demoEmail : emailFor(name),
+			emailVerified: true,
+			password: userPassword,
+			type: UserType.USER,
+			pnlBaseline: baseline,
+			pnlBaselineAt: createdAt,
+			createdAt,
+			updatedAt: now,
+		};
+	});
 	const serviceRows = markets.map((market) => ({
 		id: crypto.randomUUID(),
 		name: `${market.baseAsset} Market Maker`,
@@ -215,7 +320,7 @@ async function seed() {
 		type: UserType.SERVICE,
 		pnlBaseline: null,
 		pnlBaselineAt: null,
-		createdAt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+		createdAt: new Date(now.getTime() - 90 * DAY_MS),
 		updatedAt: now,
 	}));
 	await prisma.user.createMany({ data: [...userRows, ...serviceRows] });
@@ -228,18 +333,106 @@ async function seed() {
 				hashedSecret: crypto.createHash("sha256").update("demo-terminal-key").digest("hex"),
 				scopes: [Scope.ACCOUNT_READ, Scope.ORDER_READ, Scope.ORDER_CREATE, Scope.ORDER_CANCEL],
 				lastUsedAt: new Date(now.getTime() - 34 * 60 * 1000),
-				createdAt: new Date(now.getTime() - 17 * 24 * 60 * 60 * 1000),
+				createdAt: new Date(now.getTime() - 17 * DAY_MS),
 			},
 			{
 				userId: demoUser.id,
 				label: "Portfolio analytics",
 				hashedSecret: crypto.createHash("sha256").update("demo-analytics-key").digest("hex"),
 				scopes: [Scope.ACCOUNT_READ, Scope.ORDER_READ],
-				lastUsedAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
-				createdAt: new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000),
+				lastUsedAt: new Date(now.getTime() - 3 * DAY_MS),
+				createdAt: new Date(now.getTime() - 9 * DAY_MS),
 			},
 		],
 	});
+
+	const creditRows = userRows.map((user) => ({
+		id: crypto.randomUUID(),
+		userId: user.id,
+		creditDate,
+		asset: QUOTE_ASSET,
+		amount: DAILY_CREDIT_AMOUNT,
+		status: DailyCreditStatus.APPLIED,
+		createdAt: now,
+		appliedAt: now,
+	}));
+	const creditByUser = new Map<string, (typeof creditRows)[number]>(
+		creditRows.map((credit) => [credit.userId, credit]),
+	);
+	const portfolios = userRows.map((user, index) =>
+		buildPortfolio(user.id, user.createdAt, index, traders[index]![1]),
+	);
+	const balances = portfolios.flatMap((portfolio) => [
+		{
+			userId: portfolio.userId,
+			asset: QUOTE_ASSET,
+			available: portfolio.cash,
+			locked: 0n,
+			updatedAt: now,
+		},
+		{
+			userId: portfolio.userId,
+			asset: portfolio.market.baseAsset,
+			available: portfolio.qty,
+			locked: 0n,
+			updatedAt: now,
+		},
+	]);
+	const positions = portfolios.map((portfolio, index) => ({
+		userId: portfolio.userId,
+		asset: portfolio.market.baseAsset,
+		qty: portfolio.qty,
+		costBasis: portfolio.costBasis,
+		realizedPnl: portfolio.realizedPnl,
+		lastBuyPrice: portfolio.averagePrice,
+		lastBuyQty: portfolio.qty / 2n,
+		lastBuyAt: new Date(now.getTime() - (3 + (index % 5)) * DAY_MS),
+		lastSellPrice: portfolio.price,
+		lastSellQty: portfolio.qty / 4n,
+		lastSellAt: new Date(now.getTime() - (1 + (index % 3)) * DAY_MS),
+		tradeCount: 8 + (index % 11),
+		updatedAt: now,
+	}));
+	const snapshots = portfolios.flatMap((portfolio, index) =>
+		buildSnapshotHistory(portfolio, 91_003 + index * 577),
+	);
+	const balanceHistory = portfolios.flatMap((portfolio) => {
+		const credit = creditByUser.get(portfolio.userId)!;
+
+		return [
+			{
+				id: crypto.randomUUID(),
+				userId: portfolio.userId,
+				asset: QUOTE_ASSET,
+				available: INITIAL_DEPOSIT,
+				locked: 0n,
+				deltaAvailable: INITIAL_DEPOSIT,
+				deltaLocked: 0n,
+				reason: "initialized",
+				referenceId: null,
+				symbol: null,
+				occurredAt: portfolio.createdAt,
+			},
+			{
+				id: crypto.randomUUID(),
+				userId: portfolio.userId,
+				asset: QUOTE_ASSET,
+				available: baseline,
+				locked: 0n,
+				deltaAvailable: DAILY_CREDIT_AMOUNT,
+				deltaLocked: 0n,
+				reason: "credited",
+				referenceId: credit.id,
+				symbol: null,
+				occurredAt: now,
+			},
+		];
+	});
+	await prisma.balance.createMany({ data: balances });
+	await prisma.position.createMany({ data: positions });
+	await prisma.balanceHistory.createMany({ data: balanceHistory });
+	await prisma.dailyCredit.createMany({ data: creditRows });
+	await insertBatches(snapshots, (data) => prisma.portfolioSnapshot.createMany({ data }));
 
 	const candles = markets.flatMap((market, index) => buildCandles(market, index));
 	await insertBatches(candles, (data) => prisma.candle.createMany({ data }));
@@ -313,43 +506,14 @@ async function seed() {
 	await insertBatches(orders, (data) => prisma.order.createMany({ data }));
 	await insertBatches(fills, (data) => prisma.fill.createMany({ data }));
 
-	await prisma.leaderboardEntry.createMany({
-		data: traders.map(([, returnPercent], index) => {
-			const equity = (baseline * BigInt(Math.round((100 + returnPercent) * 100))) / 10_000n;
-			return {
-				userId: userRows[index]!.id,
-				position: index + 1,
-				rank: index + 1,
-				baseline,
-				equity,
-				pnl: equity - baseline,
-			};
-		}),
-	});
-	await prisma.leaderboardState.create({
-		data: { id: 1, quoteAsset: "USD", asOf: now },
-	});
-
-	const creditDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-	await prisma.dailyCredit.createMany({
-		data: userRows.map((user) => ({
-			id: crypto.randomUUID(),
-			userId: user.id,
-			creditDate,
-			asset: "USD",
-			amount: 10_000n,
-			status: DailyCreditStatus.APPLIED,
-			createdAt: now,
-			appliedAt: now,
-		})),
-	});
-
 	console.log("Demo data ready", {
 		markets: markets.length,
 		traders: traders.length,
 		candles: candles.length,
 		orders: orders.length,
 		fills: fills.length,
+		positions: positions.length,
+		snapshots: snapshots.length,
 	});
 	console.log(`Login: ${demoEmail} / ${demoPassword}`);
 }
