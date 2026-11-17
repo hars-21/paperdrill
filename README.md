@@ -3,10 +3,13 @@
   <p><strong>Competitive trading, powered by a real matching engine.</strong></p>
 
   <p>
-    <img alt="Release v1.0.0" src="https://img.shields.io/badge/release-v1.1.0-6d5dfc">
+    <a href="https://github.com/hars-21/paperdrill/releases"><img alt="Release v1.2.0" src="https://img.shields.io/badge/release-v1.2.0-6d5dfc"></a>
+    <a href="https://github.com/hars-21/paperdrill/actions/workflows/test.yml"><img alt="CI passing" src="https://github.com/hars-21/paperdrill/actions/workflows/test.yml/badge.svg?branch=main&event=push"></a>
     <img alt="Bun" src="https://img.shields.io/badge/runtime-Bun-000000?logo=bun&logoColor=white">
     <img alt="TypeScript" src="https://img.shields.io/badge/language-TypeScript-3178c6?logo=typescript&logoColor=white">
     <img alt="Docker" src="https://img.shields.io/badge/deployment-Docker-2496ed?logo=docker&logoColor=white">
+    <a href="https://docs.paperdrill.dev"><img alt="Documentation" src="https://img.shields.io/badge/docs-paperdrill.dev-E11D48?logo=mintlify&logoColor=white"></a>
+    <a href="https://github.com/hars-21/paperdrill/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/hars-21/paperdrill?label=stars&logo=github&color=6d5dfc"></a>
   </p>
 
   <p>
