@@ -9,6 +9,8 @@ import { apiLimiter } from "./middleware/rateLimit";
 import { authenticate } from "./middleware/auth";
 import { errorHandler, notFoundHandler, requestContext } from "./middleware/errors";
 import { sendApiError } from "./utils/apiError";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth";
 
 export const app = express();
 
@@ -16,6 +18,7 @@ app.set("trust proxy", 1);
 
 app.use(requestContext);
 app.use(cors(config.cors));
+app.use("/api/auth", toNodeHandler(auth));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

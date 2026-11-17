@@ -13,6 +13,11 @@ const envSchema = z.object({
 	JWT_SECRET: z.string(),
 	SERVICE_TOKEN_HASH: z.string().default(""),
 
+	BETTER_AUTH_SECRET: z.string().optional(),
+	BETTER_AUTH_URL: z.string().optional(),
+	GOOGLE_CLIENT_ID: z.string().optional(),
+	GOOGLE_CLIENT_SECRET: z.string().optional(),
+
 	RESEND_API_KEY: z.string().trim().min(1).optional(),
 	EMAIL_FROM: z.string().trim().min(1).optional(),
 
@@ -90,6 +95,10 @@ export const config = {
 	auth: {
 		jwtSecret: env.JWT_SECRET,
 		serviceTokenHash: env.SERVICE_TOKEN_HASH,
+		betterAuthSecret: env.BETTER_AUTH_SECRET || env.JWT_SECRET,
+		betterAuthUrl: env.BETTER_AUTH_URL ?? `http://localhost:${env.PORT}`,
+		googleClientId: env.GOOGLE_CLIENT_ID,
+		googleClientSecret: env.GOOGLE_CLIENT_SECRET,
 	},
 
 	cors: {

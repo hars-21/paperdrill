@@ -8,6 +8,8 @@ import { logger } from "../utils/logger";
 import { API_KEY_PREFIX, type PrincipalType } from "../types/principal";
 import type { Scope } from "../../generated/prisma/enums";
 import { sendApiError } from "../utils/apiError";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../lib/auth";
 
 interface TokenPayload {
 	id: string;
@@ -107,6 +109,27 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 	}
 
 	const cookies = cookie.parse(req.headers.cookie ?? "");
+	const hasBetterAuthCookie = Object.keys(cookies).some(
+		(name) => name.includes("better-auth") && name.includes("session_token"),
+	);
+
+	if (hasBetterAuthCookie) {
+		try {
+			const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+			if (session?.user) {
+				req.principal = {
+					type: "session",
+					userId: session.user.id,
+					emailVerified: session.user.emailVerified,
+				};
+				next();
+				return;
+			}
+		} catch (e) {
+			logger.warn("Better Auth session verification failed", { error: (e as Error).message });
+		}
+	}
+
 	const token = cookies.token;
 
 	if (!token) {

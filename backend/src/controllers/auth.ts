@@ -13,38 +13,11 @@ import { logger } from "../utils/logger";
 import { config } from "../config";
 import crypto from "crypto";
 import { isEmailDeliveryEnabled, sendVerificationEmail } from "../utils/emailClient";
-import { sendToEngine } from "../utils/engineClient";
-import { assetPrecision } from "../store/market";
-import { toBigInt } from "../utils/convert";
 import { ApiError, sendApiError } from "../utils/apiError";
 import { issueAccountTicket } from "../utils/websocket";
 import { getUserId } from "./user";
 import { ensureLeaderboardParticipant } from "../services/leaderboard";
-
-const INITIAL_BALANCE_ASSET = "USD";
-const INITIAL_BALANCE_AMOUNT = "10000";
-
-function initialBalance() {
-	const precision = assetPrecision.get(INITIAL_BALANCE_ASSET);
-
-	if (precision == null) {
-		throw new Error(`Missing precision for ${INITIAL_BALANCE_ASSET}`);
-	}
-
-	return toBigInt(INITIAL_BALANCE_AMOUNT, precision);
-}
-
-async function initializeBalance(userId: string, amount: bigint) {
-	const response = await sendToEngine("initialize_balance", {
-		userId,
-		asset: INITIAL_BALANCE_ASSET,
-		amount: amount.toString(),
-	});
-
-	if (!response.success) {
-		throw new Error(response.error ?? "Balance initialization failed");
-	}
-}
+import { initialBalance, initializeBalance } from "../services/account-bootstrap";
 
 export async function signup(req: Request, res: Response) {
 	const parsedBody = signupSchema.safeParse(req.body);
@@ -148,7 +121,7 @@ export async function signin(req: Request, res: Response) {
 			return;
 		}
 
-		let match = await bcrypt.compare(password, user.password);
+		const match = user.password ? await bcrypt.compare(password, user.password) : false;
 		if (!match) {
 			sendApiError(res, 401, "INVALID_CREDENTIALS", "Invalid email or password");
 			return;
