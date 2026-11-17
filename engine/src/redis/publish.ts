@@ -1,9 +1,7 @@
-import { cacheClient, publisher, streamProducer } from "./client";
-import type { PublishEventMessage, StreamEventMessage } from "../types/event";
+import { cacheClient, publisher } from "./client";
+import type { PublishEventMessage } from "../types/event";
 import type { Fill } from "../types/domain";
 import { logger } from "../util/logger";
-import { config } from "../config";
-import { bigintReplacer } from "../util";
 
 let localDepthId = 0;
 
@@ -14,25 +12,6 @@ async function safeIncr(key: string, fallbackFn: () => number): Promise<number> 
 	} catch {
 		return fallbackFn();
 	}
-}
-
-export async function streamEvent(message: StreamEventMessage) {
-	if (!streamProducer.isOpen) return;
-
-	await streamProducer.xAdd(
-		`stream:${message.event}`,
-		"*",
-		{
-			data: JSON.stringify(message, bigintReplacer),
-		},
-		{
-			TRIM: {
-				strategy: "MINID",
-				strategyModifier: "=",
-				threshold: Date.now() - config.streamRetentionMs,
-			},
-		},
-	);
 }
 
 export async function publishEvent(message: PublishEventMessage) {
@@ -69,8 +48,6 @@ export async function publishDepth({
 }
 
 export async function publishFill(fill: Fill) {
-	streamEvent({ event: "fill", fill });
-
 	const message: PublishEventMessage = {
 		event: "trade",
 		symbol: fill.symbol,

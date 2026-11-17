@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
 	ArrowUpRight,
 	ArrowDown10,
@@ -70,10 +71,22 @@ type BalanceDetail = {
 	locked: string;
 	total: string;
 	precision: number;
+	pricePrecision: number;
 	markPrice: string | null;
 	value: string | null;
 	allocation: number | null;
 	marketSymbol: string | null;
+	averageCost: string | null;
+	costBasis: string | null;
+	realizedPnl: string | null;
+	unrealizedPnl: string | null;
+	unrealizedPnlPercent: string | null;
+	totalPnl: string | null;
+	lastBuyPrice: string | null;
+	lastBuyAt: string | null;
+	lastSellPrice: string | null;
+	lastSellAt: string | null;
+	tradeCount: number | null;
 };
 
 const PAGE_SIZE = 10;
@@ -99,6 +112,37 @@ function orderStatusClass(status: OrderRecord["status"]) {
 
 function sideClass(side: "BUY" | "SELL") {
 	return side === "BUY" ? "text-green-text" : "text-red-text";
+}
+
+function numeric(value: string | number | null | undefined) {
+	if (value == null || value === "") return null;
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function signedMoney(value: string | number | null | undefined, precision = 2) {
+	const parsed = numeric(value);
+	if (parsed == null) return "—";
+	return `${parsed > 0 ? "+" : ""}${formatPrice(parsed, precision)}`;
+}
+
+function signedPercent(value: string | number | null | undefined) {
+	const parsed = numeric(value);
+	if (parsed == null) return "—";
+	return `${parsed > 0 ? "+" : ""}${parsed.toFixed(2)}%`;
+}
+
+function toneClass(value: string | number | null | undefined) {
+	const parsed = numeric(value);
+	if (parsed == null || parsed === 0) return "text-medium-emphasis";
+	return parsed > 0 ? "text-green-text" : "text-red-text";
+}
+
+function combinedPnl(realized: string | null, unrealized: string | null) {
+	const realizedValue = numeric(realized);
+	const unrealizedValue = numeric(unrealized);
+	if (realizedValue == null && unrealizedValue == null) return null;
+	return String((realizedValue ?? 0) + (unrealizedValue ?? 0));
 }
 
 function sortRows<T extends OrderRecord | UserTrade>(
@@ -624,6 +668,14 @@ export function DataPanel({ loading = false, symbol, showBalances = true }: Data
 		[markets],
 	);
 
+	const pricePrecisionForAsset = useCallback(
+		(asset: string) => {
+			const market = markets.find((item) => item.baseAsset === asset || item.quoteAsset === asset);
+			return market?.pricePrecision ?? 2;
+		},
+		[markets],
+	);
+
 	const balanceDetails = useMemo<BalanceDetail[]>(() => {
 		const positions = new Map(portfolio?.positions.map((position) => [position.asset, position]));
 		const portfolioEquity = Number(portfolio?.equity ?? 0);
@@ -631,19 +683,39 @@ export function DataPanel({ loading = false, symbol, showBalances = true }: Data
 			.filter(([, balance]) => Number(balance.available) > 0 || Number(balance.locked) > 0)
 			.map(([asset, balance]) => {
 				const position = positions.get(asset);
+				const isQuote = asset === portfolio?.quoteAsset;
 				const available = balance.available ?? "0";
 				const locked = balance.locked ?? "0";
-				const value = position?.value ?? null;
+				const total = String(Number(available) + Number(locked));
+				const value = isQuote ? total : (position?.value ?? null);
 				return {
 					asset,
 					available,
 					locked,
-					total: String(Number(available) + Number(locked)),
+					total,
 					precision: precisionForAsset(asset),
-					markPrice: position?.markPrice ?? null,
+					pricePrecision: pricePrecisionForAsset(asset),
+					markPrice: isQuote ? "1" : (position?.markPrice ?? null),
 					value,
-					allocation: value && portfolioEquity > 0 ? (Number(value) / portfolioEquity) * 100 : null,
+					allocation:
+						value && portfolioEquity > 0 ? (Number(value) / portfolioEquity) * 100 : null,
 					marketSymbol: markets.find((market) => market.baseAsset === asset)?.symbol ?? null,
+					averageCost: isQuote ? null : (position?.averageCost ?? null),
+					costBasis: isQuote ? null : (position?.costBasis ?? null),
+					realizedPnl: isQuote ? null : (position?.realizedPnl ?? null),
+					unrealizedPnl: isQuote ? null : (position?.unrealizedPnl ?? null),
+					unrealizedPnlPercent: isQuote ? null : (position?.unrealizedPnlPercent ?? null),
+					totalPnl: isQuote
+						? null
+						: combinedPnl(
+								position?.realizedPnl ?? null,
+								position?.unrealizedPnl ?? null,
+							),
+					lastBuyPrice: isQuote ? null : (position?.lastBuyPrice ?? null),
+					lastBuyAt: isQuote ? null : (position?.lastBuyAt ?? null),
+					lastSellPrice: isQuote ? null : (position?.lastSellPrice ?? null),
+					lastSellAt: isQuote ? null : (position?.lastSellAt ?? null),
+					tradeCount: isQuote ? null : (position?.tradeCount ?? null),
 				};
 			})
 			.sort((left, right) => {
@@ -651,7 +723,13 @@ export function DataPanel({ loading = false, symbol, showBalances = true }: Data
 				if (right.asset === portfolio?.quoteAsset) return 1;
 				return Number(right.value ?? 0) - Number(left.value ?? 0);
 			});
-	}, [balances, markets, portfolio, precisionForAsset]);
+	}, [
+		balances,
+		markets,
+		portfolio,
+		precisionForAsset,
+		pricePrecisionForAsset,
+	]);
 	const selectedBalance = balanceDetails.find((entry) => entry.asset === selectedAsset) ?? null;
 
 	const resetFilters = () => {
@@ -1493,8 +1571,18 @@ function AssetDetailsSheet({
 	onOpenChange: (open: boolean) => void;
 }) {
 	if (!detail) return null;
+
+	const isCash = detail.asset === quoteAsset;
 	const lockedShare =
 		Number(detail.total) > 0 ? (Number(detail.locked) / Number(detail.total)) * 100 : 0;
+	const averageCost = numeric(detail.averageCost);
+	const markPrice = numeric(detail.markPrice);
+	const perUnitPnl =
+		!isCash && averageCost != null && markPrice != null ? markPrice - averageCost : null;
+	const perUnitPercent =
+		perUnitPnl != null && averageCost ? (perUnitPnl / averageCost) * 100 : null;
+	const totalPnl = numeric(detail.totalPnl);
+	const unrealizedPercent = numeric(detail.unrealizedPnlPercent);
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -1506,22 +1594,54 @@ function AssetDetailsSheet({
 							<SheetTitle className="text-lg text-high-emphasis">
 								{assetNames[detail.asset] ?? detail.asset}
 							</SheetTitle>
-							<SheetDescription>{detail.asset} balance details</SheetDescription>
+							<SheetDescription>
+								{isCash ? "Cash balance" : "Position, cost basis and performance"}
+							</SheetDescription>
 						</div>
 					</div>
 				</SheetHeader>
 
 				<div className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
 					<div>
-						<p className="text-xs text-medium-emphasis">Total balance</p>
-						<p className="mt-2 text-3xl font-semibold tracking-tight text-high-emphasis tabular-nums">
-							{formatQty(detail.total, detail.precision)} {detail.asset}
+						<p className="text-xs text-medium-emphasis">
+							{isCash ? "Cash balance" : "Position value"}
 						</p>
-						<p className="mt-1 text-sm text-medium-emphasis tabular-nums">
+						<p className="mt-2 text-3xl font-semibold tracking-tight text-high-emphasis tabular-nums">
 							{detail.value
 								? `${formatPrice(detail.value)} ${quoteAsset}`
-								: "Current value unavailable"}
+								: `${formatQty(detail.total, detail.precision)} ${detail.asset}`}
 						</p>
+						<div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-medium-emphasis tabular-nums">
+							<span>
+								{formatQty(detail.total, detail.precision)} {detail.asset}
+							</span>
+							{detail.allocation != null ? (
+								<span>· {detail.allocation.toFixed(2)}% of portfolio</span>
+							) : null}
+						</div>
+						{totalPnl != null ? (
+							<div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+								<span
+									className={cn(
+										"text-sm font-semibold tabular-nums",
+										toneClass(totalPnl),
+									)}
+								>
+									{signedMoney(totalPnl)} {quoteAsset}
+								</span>
+								<span className="text-xs text-medium-emphasis">total PnL</span>
+								{unrealizedPercent != null ? (
+									<span
+										className={cn(
+											"text-xs font-medium tabular-nums",
+											toneClass(unrealizedPercent),
+										)}
+									>
+										({signedPercent(unrealizedPercent)} unrealised)
+									</span>
+								) : null}
+							</div>
+						) : null}
 					</div>
 
 					<div className="mt-6 grid grid-cols-2 overflow-hidden rounded-xl border border-border/60">
@@ -1536,27 +1656,116 @@ function AssetDetailsSheet({
 							<p className="mt-1.5 font-semibold text-high-emphasis tabular-nums">
 								{formatQty(detail.locked, detail.precision)}
 							</p>
+							<p className="mt-1 text-[11px] text-low-emphasis tabular-nums">
+								{lockedShare.toFixed(2)}% of balance
+							</p>
 						</div>
 					</div>
 
-					<div className="mt-6 divide-y divide-border/40 border-y border-border/40">
-						<DetailRow
-							label="Mark price"
-							value={
-								detail.markPrice ? `${formatPrice(detail.markPrice)} ${quoteAsset}` : "Unavailable"
-							}
-						/>
-						<DetailRow
-							label="Portfolio allocation"
-							value={detail.allocation == null ? "Unavailable" : `${detail.allocation.toFixed(2)}%`}
-						/>
-						<DetailRow label="Balance reserved" value={`${lockedShare.toFixed(2)}%`} />
-					</div>
+					{isCash ? (
+						<p className="mt-5 text-sm leading-relaxed text-medium-emphasis">
+							Cash funds your trades and has no cost basis. Average buy price and PnL apply
+							once you hold a traded asset.
+						</p>
+					) : (
+						<>
+							<SheetSection>Cost &amp; pricing</SheetSection>
+							<div className="divide-y divide-border/40 border-y border-border/40">
+								<DetailRow
+									label="Average buy price"
+									value={
+										detail.averageCost
+											? `${formatPrice(detail.averageCost, detail.pricePrecision)} ${quoteAsset}`
+											: "—"
+									}
+								/>
+								<DetailRow
+									label="Mark price"
+									value={
+										detail.markPrice
+											? `${formatPrice(detail.markPrice, detail.pricePrecision)} ${quoteAsset}`
+											: "Unavailable"
+									}
+								/>
+								<DetailRow
+									label="Cost basis"
+									value={
+										detail.costBasis
+											? `${formatPrice(detail.costBasis)} ${quoteAsset}`
+											: "—"
+									}
+								/>
+								<DetailRow
+									label={`Per ${detail.asset} PnL`}
+									value={
+										<span className={toneClass(perUnitPnl)}>
+											{signedMoney(perUnitPnl, detail.pricePrecision)} {quoteAsset}
+											{perUnitPercent != null
+												? ` (${signedPercent(perUnitPercent)})`
+												: ""}
+										</span>
+									}
+								/>
+							</div>
 
-					<p className="mt-5 text-sm leading-relaxed text-medium-emphasis">
-						Available funds can be traded immediately. Reserved funds are held by your open orders
-						and return when those orders fill or are cancelled.
-					</p>
+							<SheetSection>Profit &amp; loss</SheetSection>
+							<div className="divide-y divide-border/40 border-y border-border/40">
+								<DetailRow
+									label="Unrealised"
+									value={
+										<span className={toneClass(detail.unrealizedPnl)}>
+											{signedMoney(detail.unrealizedPnl)} {quoteAsset}
+											{detail.unrealizedPnlPercent
+												? ` (${signedPercent(detail.unrealizedPnlPercent)})`
+												: ""}
+										</span>
+									}
+								/>
+								<DetailRow
+									label="Realised"
+									value={
+										<span className={toneClass(detail.realizedPnl)}>
+											{signedMoney(detail.realizedPnl)} {quoteAsset}
+										</span>
+									}
+								/>
+								<DetailRow
+									label="Total PnL"
+									value={
+										<span className={cn("font-semibold", toneClass(totalPnl))}>
+											{signedMoney(totalPnl)} {quoteAsset}
+										</span>
+									}
+								/>
+							</div>
+
+							<SheetSection>Trading activity</SheetSection>
+							<div className="divide-y divide-border/40 border-y border-border/40">
+								<DetailRow
+									label="Trades"
+									value={detail.tradeCount == null ? "—" : String(detail.tradeCount)}
+								/>
+								<DetailRow
+									label="Last buy"
+									value={tradeSummary(
+										detail.lastBuyPrice,
+										detail.lastBuyAt,
+										detail.pricePrecision,
+										quoteAsset,
+									)}
+								/>
+								<DetailRow
+									label="Last sell"
+									value={tradeSummary(
+										detail.lastSellPrice,
+										detail.lastSellAt,
+										detail.pricePrecision,
+										quoteAsset,
+									)}
+								/>
+							</div>
+						</>
+					)}
 				</div>
 
 				<SheetFooter className="border-t border-border/40 p-5 sm:flex-row">
@@ -1570,8 +1779,11 @@ function AssetDetailsSheet({
 						</Link>
 					</Button>
 					<Button asChild variant="outline" className="h-10 flex-1">
-						<Link to="/portfolio" onClick={() => onOpenChange(false)}>
-							View portfolio
+						<Link
+							to={isCash ? "/portfolio" : `/portfolio/${detail.asset}`}
+							onClick={() => onOpenChange(false)}
+						>
+							{isCash ? "View portfolio" : "Full details"}
 						</Link>
 					</Button>
 				</SheetFooter>
@@ -1580,11 +1792,30 @@ function AssetDetailsSheet({
 	);
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function tradeSummary(
+	price: string | null,
+	at: string | null,
+	precision: number,
+	quoteAsset: string,
+) {
+	if (!price && !at) return "—";
+	const priceLabel = price ? `${formatPrice(price, precision)} ${quoteAsset}` : "—";
+	return at ? `${priceLabel} · ${formatDateTime(at)}` : priceLabel;
+}
+
+function SheetSection({ children }: { children: ReactNode }) {
+	return (
+		<p className="mb-2 mt-6 text-[11px] font-semibold uppercase tracking-wide text-low-emphasis">
+			{children}
+		</p>
+	);
+}
+
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className="flex items-center justify-between gap-4 py-3.5 text-sm">
 			<span className="text-medium-emphasis">{label}</span>
-			<span className="font-medium text-high-emphasis tabular-nums">{value}</span>
+			<span className="text-right font-medium text-high-emphasis tabular-nums">{value}</span>
 		</div>
 	);
 }

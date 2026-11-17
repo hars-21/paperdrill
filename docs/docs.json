@@ -106,7 +106,17 @@
 					},
 					{
 						"group": "Account",
-						"pages": ["GET /trades", "GET /balances", "GET /portfolio"]
+						"pages": [
+							"GET /trades",
+							"GET /balances",
+							"GET /balances/history",
+							"GET /balances/history/series",
+							"GET /portfolio",
+							"GET /portfolio/history",
+							"GET /portfolio/analytics",
+							"GET /portfolio/positions/{asset}",
+							"GET /portfolio/positions/{asset}/events"
+						]
 					}
 				]
 			}

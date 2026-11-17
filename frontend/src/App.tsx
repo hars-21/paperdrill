@@ -15,6 +15,8 @@ import { Protected, PublicOnly } from "./components/route-guards";
 import { HomePage } from "./pages/home";
 import { ApiKeysPage } from "./pages/api-keys";
 import { PortfolioPage } from "./pages/portfolio";
+import { PortfolioAssetPage } from "./pages/portfolio-asset";
+import { BalanceHistoryPage } from "./pages/balance-history";
 import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
 import { NotFoundPage } from "./pages/not-found";
@@ -50,6 +52,22 @@ export function App() {
 						element={
 							<Protected>
 								<PortfolioPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="portfolio/:asset"
+						element={
+							<Protected>
+								<PortfolioAssetPage />
+							</Protected>
+						}
+					/>
+					<Route
+						path="balance-history"
+						element={
+							<Protected>
+								<BalanceHistoryPage />
 							</Protected>
 						}
 					/>

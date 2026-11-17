@@ -58,6 +58,7 @@ migrate-reset:
 test-unit:
 	cd backend && set -a && . ../.env.test && set +a && bun test
 	cd engine && set -a && . ../.env.test && set +a && bun test
+	cd worker && set -a && . ../.env.test && set +a && bun test
 
 test-integration:
 	sh tests/run-integration.sh

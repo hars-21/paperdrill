@@ -1,15 +1,21 @@
 import type { Request, Response } from "express";
 import { prisma } from "../db";
-import { leaderboardQuerySchema } from "../schema/leaderboard";
-import { assetPrecision } from "../store/market";
+import {
+	leaderboardMeQuerySchema,
+	leaderboardQuerySchema,
+} from "../schema/leaderboard";
+import {
+	ensureLeaderboardParticipant,
+	getLeaderboardEntryForUser,
+	getLeaderboardMeta,
+	getLeaderboardPage,
+} from "../services/leaderboard";
+import { sendApiError } from "../utils/apiError";
 import { formatLeaderboardEntry } from "../utils/formatter";
-import { getUserId } from "./user";
-import { LEADERBOARD_REFRESH_MS } from "../services/leaderboard";
 import { logger } from "../utils/logger";
 import { sendValidationError } from "../utils/validation";
+import { getUserId } from "./user";
 import { config } from "../config";
-import { isLeaderboardStale } from "../utils/leaderboard";
-import { sendApiError } from "../utils/apiError";
 
 export async function getLeaderboard(req: Request, res: Response) {
 	const parsedQuery = leaderboardQuerySchema.safeParse(req.query);
@@ -19,47 +25,30 @@ export async function getLeaderboard(req: Request, res: Response) {
 		return;
 	}
 
-	const { limit = 25, offset = 0 } = parsedQuery.data;
+	const { limit = 25, offset = 0, range = "all" } = parsedQuery.data;
 
 	try {
-		const snapshot = await prisma.$transaction(
-			async (transaction) => {
-				const state = await transaction.leaderboardState.findUnique({ where: { id: 1 } });
-				if (!state) return null;
+		const page = getLeaderboardPage({ range, limit, offset });
 
-				const [entries, total] = await Promise.all([
-					transaction.leaderboardEntry.findMany({
-						orderBy: { position: "asc" },
-						skip: offset,
-						take: limit,
-						include: { user: { select: { name: true } } },
-					}),
-					transaction.leaderboardEntry.count(),
-				]);
-
-				return { state, entries, total };
-			},
-			{ isolationLevel: "RepeatableRead" },
-		);
-
-		if (!snapshot) {
+		if (!page.ready) {
 			sendApiError(res, 503, "LEADERBOARD_UNAVAILABLE", "Leaderboard is being calculated");
 			return;
 		}
 
-		const { state, entries, total } = snapshot;
-		const quotePrecision = assetPrecision.get(state.quoteAsset);
-		if (quotePrecision == null) throw new Error(`Missing precision for ${state.quoteAsset}`);
-
-		res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+		res.setHeader("Cache-Control", "no-store");
 		res.status(200).json({
-			asOf: state.asOf.toISOString(),
-			quoteAsset: state.quoteAsset,
-			stale: isLeaderboardStale(state.asOf, Date.now(), LEADERBOARD_REFRESH_MS),
-			entries: entries.map((entry) =>
-				formatLeaderboardEntry(entry, entry.user.name, quotePrecision),
+			asOf: page.asOf,
+			quoteAsset: page.quoteAsset,
+			range,
+			entries: page.entries.map((entry) =>
+				formatLeaderboardEntry(
+					entry.standing,
+					entry.name,
+					page.quotePrecision,
+					entry.history,
+				),
 			),
-			pagination: { limit, offset, total },
+			pagination: { limit, offset, total: page.total },
 		});
 	} catch (error) {
 		logger.error("Failed to fetch leaderboard", error);
@@ -68,7 +57,15 @@ export async function getLeaderboard(req: Request, res: Response) {
 }
 
 export async function getMyLeaderboardEntry(req: Request, res: Response) {
+	const parsedQuery = leaderboardMeQuerySchema.safeParse(req.query);
+
+	if (!parsedQuery.success) {
+		sendValidationError(res, parsedQuery.error);
+		return;
+	}
+
 	const userId = getUserId(req);
+	const range = parsedQuery.data.range ?? "all";
 
 	try {
 		const user = await prisma.user.findUnique({
@@ -85,18 +82,14 @@ export async function getMyLeaderboardEntry(req: Request, res: Response) {
 			return;
 		}
 
-		const { state, entry } = await prisma.$transaction(
-			async (transaction) => ({
-				state: await transaction.leaderboardState.findUnique({ where: { id: 1 } }),
-				entry: await transaction.leaderboardEntry.findUnique({
-					where: { userId },
-					include: { user: { select: { name: true } } },
-				}),
-			}),
-			{ isolationLevel: "RepeatableRead" },
-		);
+		let entry = getLeaderboardEntryForUser(userId, range);
 
-		if (!state || !entry) {
+		if (!entry) {
+			await ensureLeaderboardParticipant(userId);
+			entry = getLeaderboardEntryForUser(userId, range);
+		}
+
+		if (!entry) {
 			const trade = await prisma.fill.findFirst({
 				where: { OR: [{ buyerId: userId }, { sellerId: userId }] },
 				select: { id: true },
@@ -108,14 +101,19 @@ export async function getMyLeaderboardEntry(req: Request, res: Response) {
 			return;
 		}
 
-		const quotePrecision = assetPrecision.get(state.quoteAsset);
-		if (quotePrecision == null) throw new Error(`Missing precision for ${state.quoteAsset}`);
+		const meta = getLeaderboardMeta();
 
 		res.status(200).json({
 			eligible: true,
-			asOf: state.asOf.toISOString(),
-			quoteAsset: state.quoteAsset,
-			entry: formatLeaderboardEntry(entry, entry.user.name, quotePrecision),
+			asOf: meta.asOf,
+			quoteAsset: meta.quoteAsset,
+			range,
+			entry: formatLeaderboardEntry(
+				entry.standing,
+				entry.name,
+				meta.quotePrecision,
+				entry.history,
+			),
 		});
 	} catch (error) {
 		logger.error("Failed to fetch personal leaderboard entry", error);

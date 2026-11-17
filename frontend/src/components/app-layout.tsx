@@ -2,8 +2,11 @@ import { Outlet } from "react-router-dom";
 import { Navbar } from "./navbar";
 import { SeoHead } from "@/components/seo-head";
 import { SkipLink } from "@/components/ui/skip-link";
+import { useAccountStream } from "@/hooks/use-account-stream";
 
 export function AppLayout() {
+	useAccountStream();
+
 	return (
 		<div className="flex min-h-dvh max-h-dvh flex-col overflow-hidden bg-l0 font-sans antialiased">
 			<SeoHead />

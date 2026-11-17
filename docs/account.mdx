@@ -28,26 +28,116 @@ curl https://api.paperdrill.dev/v1/balances \
 
 Always refresh balances after order activity instead of calculating the authoritative balance only on the client.
 
+## Review balance history
+
+`GET /balances/history` returns every recorded balance movement newest first. Each entry includes the resulting `available`, `locked`, and `total` balances plus the signed `deltaAvailable`, `deltaLocked`, and `deltaTotal` that produced them.
+
+```bash
+curl "https://api.paperdrill.dev/v1/balances/history?asset=USD&reason=fill.settled&page=1&limit=20" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+| Parameter | Meaning                                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `asset`   | Optional asset filter.                                                                                               |
+| `reason`  | Optional reason filter: `initialized`, `deposited`, `credited`, `order.locked`, `order.released`, or `fill.settled`. |
+| `page`    | Page number, starting at 1.                                                                                          |
+| `limit`   | Entries per page, up to 100.                                                                                         |
+
+The response also returns `assets`, a per-asset summary, and `filtered`, which reports the filtered entry count and net change for the selected asset.
+
+## Chart balance history
+
+`GET /balances/history/series` returns a chart-ready trajectory. Pass `asset` for a single asset or omit it to value the whole account at current market prices. Supported ranges are `24h`, `7d`, `30d`, `90d`, and `all`; the default is `30d`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/balances/history/series?range=30d" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+When the total series includes a funded asset without a usable mark price, `partial` is `true` and the series excludes that asset from its valuation.
+
 ## Track portfolio performance
 
-`GET /portfolio` requires `ACCOUNT_READ`. It values positions in the platform quote asset and compares current equity with the account's PnL baseline.
+`GET /portfolio` requires `ACCOUNT_READ`. It values open positions in the platform quote asset and reports cash, weighted-average cost basis, realised PnL, and unrealised PnL.
 
 ```bash
 curl https://api.paperdrill.dev/v1/portfolio \
   --header "x-api-key: $PAPERDRILL_API_KEY"
 ```
 
-| Field                | Meaning                                          |
-| -------------------- | ------------------------------------------------ |
-| `equity`             | Current portfolio value                          |
-| `baselineEquity`     | Value used as the PnL starting point             |
-| `pnl` / `pnlPercent` | Change from the baseline                         |
-| `baselineAt`         | Time at which the baseline was recorded          |
-| `asOf`               | Oldest market-price timestamp used for valuation |
-| `partial`            | `true` when a position could not be fully priced |
-| `positions`          | Per-asset balances, mark price, and value        |
+| Field              | Meaning                                                               |
+| ------------------ | --------------------------------------------------------------------- |
+| `cash`             | Quote-asset available plus locked balance                             |
+| `positionsValue`   | Market value of all priced positions                                  |
+| `equity`           | `cash` plus `positionsValue`                                          |
+| `costBasis`        | Remaining cost of open positions at weighted-average cost             |
+| `realizedPnl`      | Profit or loss locked in by sells                                     |
+| `unrealizedPnl`    | Current position value minus remaining cost basis                     |
+| `netContributions` | Net deposits and credits; the PnL baseline                            |
+| `totalPnl`         | `equity` minus `netContributions`                                     |
+| `totalPnlPercent`  | `totalPnl` as a percentage of `netContributions`                      |
+| `baselineAt`       | Time the contribution baseline was last recorded                      |
+| `asOf`             | Oldest market-price timestamp used for valuation                      |
+| `source`           | `live`, `projection`, or `engine`                                     |
+| `partial`          | `true` when a funded asset could not be fully priced                  |
+| `positions`        | Per-asset balance, cost basis, mark price, PnL, and last buy/sell data |
 
-Treat `partial: true` as an incomplete valuation. Do not present it as the value of the entire portfolio without a warning.
+`baselineEquity`, `pnl`, and `pnlPercent` are retained as aliases for `netContributions`, `totalPnl`, and `totalPnlPercent`.
+
+### Weighted-average cost
+
+Every fill updates the position projection, so these values are available without recalculating trades yourself.
+
+- A buy adds the fill's quote amount to `costBasis` and increases quantity.
+- A sell removes cost proportionally: `costBasis × soldQty ÷ heldQty`. The difference between proceeds and removed cost is `realizedPnl`.
+- `averageCost` is `costBasis ÷ qty` for an open position.
+- `unrealizedPnl` is `value − costBasis`; `totalPnl` for the account is equity minus contributions.
+
+Cost basis and PnL are `null` while the projection has no cost data for a position, such as an asset received without a recorded fill. Treat `partial: true` as an incomplete valuation. Do not present it as the value of the entire portfolio without a warning.
+
+### Read history
+
+`GET /portfolio/history` returns stored snapshots for the equity chart. Supported ranges are `24h`, `7d`, `30d`, `90d`, and `all`; the default is `30d`.
+
+```bash
+curl "https://api.paperdrill.dev/v1/portfolio/history?range=30d" \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+Each point includes `cash`, `positionsValue`, `equity`, `realizedPnl`, `unrealizedPnl`, `netContributions`, `totalPnl`, and `partial`. History is written at most once per minute per user. The worker keeps one year of snapshots, thinning older rows to hourly, daily, and weekly buckets so `all` stays compact. A response reads at most 2000 stored rows and downsamples to roughly 120 chart points.
+
+### Read analytics
+
+`GET /portfolio/analytics` combines allocation, per-asset performance, and trading statistics.
+
+```bash
+curl https://api.paperdrill.dev/v1/portfolio/analytics \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+- `allocation` lists open positions by value with each asset's share of equity; `cashAllocationPercent` is cash's share.
+- `performance` ranks traded assets by `totalPnl`. Its entries include `costBasis`, `realizedPnl`, `unrealizedPnl`, `totalPnlPercent`, `tradeCount`, and `open`.
+- `bestAsset` and `worstAsset` are the first and last performance entries.
+- `trading` counts buys and sells, reports `winRate` across profitable sells, and totals realised PnL.
+- `change24h` compares the current total PnL with the earliest snapshot in the last 24 hours. Deposits and withdrawals are excluded, so the figure measures performance rather than a change in account size.
+
+Percentages are fixed two-decimal strings. Numeric percentages can be `null` when their denominator is zero or unknown.
+
+### Inspect one asset
+
+`GET /portfolio/positions/{asset}` returns one position with its PnL breakdown and trade statistics.
+
+```bash
+curl https://api.paperdrill.dev/v1/portfolio/positions/BTC \
+  --header "x-api-key: $PAPERDRILL_API_KEY"
+```
+
+The response wraps the `position`, account-level `portfolio` values, and `trading` counts (`fills`, `buys`, `sells`, first and last trade times). A `404` with `POSITION_NOT_FOUND` means the account has no recorded balance or trades for that asset.
+
+`GET /portfolio/positions/{asset}/events` returns the fill ledger behind the projection, newest first. Each event includes `price`, `qty`, `quoteAmount`, `costBasisBefore`, `costBasisAfter`, and `realizedPnl`, so you can reconstruct how average cost changed over time. Use `page` and `limit` (up to 100) to paginate.
+
+Live updates for the portfolio are pushed over the authenticated WebSocket channel. See [Subscribe to WebSocket streams](/websocket#private-account-updates).
 
 ## Reconcile with private trades
 

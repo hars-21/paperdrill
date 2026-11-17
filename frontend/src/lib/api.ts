@@ -3,14 +3,23 @@ import { config } from "./env";
 import type {
 	ApiKeyRecord,
 	ApiKeyScope,
+	BalanceHistoryRange,
+	BalanceHistoryResponse,
+	BalanceSeriesResponse,
 	Candle,
 	CreatedApiKey,
 	DailyCredit,
+	LeaderboardRange,
 	LeaderboardResponse,
 	Market,
 	MyLeaderboardResponse,
 	OrderRecord,
 	Portfolio,
+	PortfolioAnalytics,
+	PortfolioHistoryRange,
+	PortfolioHistoryResponse,
+	PortfolioPositionDetail,
+	PortfolioPositionEventsResponse,
 	Ticker,
 	UserBalance,
 	UserTrade,
@@ -163,20 +172,74 @@ export const api = {
 		return request<UserBalance>(`/balances${params}`);
 	},
 
+	getBalanceHistory(params?: {
+		asset?: string | null;
+		reason?: string | null;
+		page?: number;
+		limit?: number;
+	}) {
+		const query = new URLSearchParams();
+		if (params?.asset) query.set("asset", params.asset);
+		if (params?.reason) query.set("reason", params.reason);
+		if (params?.page) query.set("page", String(params.page));
+		if (params?.limit) query.set("limit", String(params.limit));
+		const qs = query.toString();
+		return request<BalanceHistoryResponse>(`/balances/history${qs ? `?${qs}` : ""}`);
+	},
+
+	getBalanceSeries(params?: {
+		asset?: string | null;
+		range?: BalanceHistoryRange;
+	}) {
+		const query = new URLSearchParams();
+		if (params?.asset) query.set("asset", params.asset);
+		if (params?.range) query.set("range", params.range);
+		const qs = query.toString();
+		return request<BalanceSeriesResponse>(`/balances/history/series${qs ? `?${qs}` : ""}`);
+	},
+
 	getPortfolio() {
 		return request<Portfolio>("/portfolio");
+	},
+
+	getPortfolioHistory(range: PortfolioHistoryRange = "30d") {
+		return request<PortfolioHistoryResponse>(`/portfolio/history?range=${range}`);
+	},
+
+	getPortfolioAnalytics() {
+		return request<PortfolioAnalytics>("/portfolio/analytics");
+	},
+
+	getPortfolioPosition(asset: string) {
+		return request<PortfolioPositionDetail>(
+			`/portfolio/positions/${encodeURIComponent(asset)}`,
+		);
+	},
+
+	getPortfolioPositionEvents(asset: string, page = 1, limit = 20) {
+		return request<PortfolioPositionEventsResponse>(
+			`/portfolio/positions/${encodeURIComponent(asset)}/events?page=${page}&limit=${limit}`,
+		);
+	},
+
+	getWebSocketTicket() {
+		return request<{ ticket: string; expiresAt: string }>("/auth/ws-ticket", {
+			method: "POST",
+		});
 	},
 
 	claimDailyCredit() {
 		return request<DailyCredit>("/users/me/daily-credit", { method: "POST" });
 	},
 
-	getLeaderboard(limit = 25, offset = 0) {
-		return request<LeaderboardResponse>(`/leaderboard?limit=${limit}&offset=${offset}`);
+	getLeaderboard(range: LeaderboardRange = "all", limit = 25, offset = 0) {
+		return request<LeaderboardResponse>(
+			`/leaderboard?range=${range}&limit=${limit}&offset=${offset}`,
+		);
 	},
 
-	getMyLeaderboardEntry() {
-		return request<MyLeaderboardResponse>("/leaderboard/me");
+	getMyLeaderboardEntry(range: LeaderboardRange = "all") {
+		return request<MyLeaderboardResponse>(`/leaderboard/me?range=${range}`);
 	},
 
 	getApiKeys() {

@@ -4,8 +4,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import {
 	claimDailyReward,
 	createDeposit,
-	getBalance,
-	getPortfolio,
 	getUserData,
 	updateUserEmail,
 } from "../controllers/user";
@@ -29,16 +27,6 @@ userRouter.get(
 	"/trades",
 	requireAccess({ scopes: ["ORDER_READ"], allowUnverified: true }),
 	asyncHandler(getTradeHistory),
-);
-userRouter.get(
-	"/balances",
-	requireAccess({ scopes: ["ACCOUNT_READ"], allowUnverified: true }),
-	asyncHandler(getBalance),
-);
-userRouter.get(
-	"/portfolio",
-	requireAccess({ scopes: ["ACCOUNT_READ"], allowUnverified: true }),
-	asyncHandler(getPortfolio),
 );
 userRouter.post("/deposits", requireAccess({ types: ["service"] }), asyncHandler(createDeposit));
 userRouter.post(

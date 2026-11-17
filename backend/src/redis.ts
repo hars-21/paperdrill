@@ -48,7 +48,13 @@ export async function pingRedis() {
 
 export async function disconnectRedis() {
 	await Promise.allSettled([
-		marketSubscriber.pUnsubscribe(["depth:*", "trade:*", "candle:*", "ticker:*"]),
+		marketSubscriber.pUnsubscribe([
+			"depth:*",
+			"trade:*",
+			"candle:*",
+			"ticker:*",
+			"account:*",
+		]),
 	]);
 
 	await Promise.allSettled([
