@@ -35,6 +35,10 @@ jobs:
         working-directory: engine
         run: bun install --frozen-lockfile
 
+      - name: Install worker dependencies
+        working-directory: worker
+        run: bun install --frozen-lockfile
+
       - name: Run unit tests
         run: make test-unit
 
