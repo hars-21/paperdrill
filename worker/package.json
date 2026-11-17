@@ -6,7 +6,9 @@
 	"scripts": {
 		"dev": "bun --watch run src/index.ts",
 		"build": "bun build --production --target=bun src/index.ts --outdir dist",
-		"start": "bun run dist/index.js"
+		"start": "bun run dist/index.js",
+		"test": "bun test",
+		"backfill:positions": "bun run src/backfill.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

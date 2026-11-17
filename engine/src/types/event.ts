@@ -19,16 +19,6 @@ export type PublishEventMessage =
 			timestamp: number;
 	  };
 
-export type StreamEventMessage =
-	| {
-			event: "order";
-			order: OrderRecord;
-	  }
-	| {
-			event: "fill";
-			fill: Fill;
-	  };
-
 export interface OrderEvent {
 	type: "order.created" | "order.filled" | "order.partially_filled" | "order.cancelled";
 	order: OrderRecord;
@@ -47,4 +37,36 @@ export interface DepthEvent {
 	qty: bigint;
 }
 
-export type EngineEvent = OrderEvent | FillEvent | DepthEvent;
+export type BalanceChangeReason =
+	| "initialized"
+	| "deposited"
+	| "credited"
+	| "order.locked"
+	| "order.released"
+	| "fill.settled";
+
+export interface BalanceChangedEvent {
+	type: "balance.changed";
+	userId: string;
+	asset: string;
+	available: bigint;
+	locked: bigint;
+	deltaAvailable: bigint;
+	deltaLocked: bigint;
+	reason: BalanceChangeReason;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: number;
+}
+
+export type EngineEvent = OrderEvent | FillEvent | DepthEvent | BalanceChangedEvent;
+
+export const ENGINE_EVENT_VERSION = 1;
+
+export interface EngineEventRecord {
+	id: string;
+	type: EngineEvent["type"];
+	version: number;
+	occurredAt: number;
+	event: EngineEvent;
+}

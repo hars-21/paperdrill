@@ -68,24 +68,28 @@ test("a real match reaches trade subscribers with formatted price and quantity",
 		await probe.subscribe("candle:ETH_USD");
 
 		const tradeMessage = probe.next<Record<string, unknown>>(
-			(message) =>
-				typeof message === "object" &&
-				message !== null &&
-				"event" in message &&
-				message.event === "trade" &&
-				"symbol" in message &&
-				message.symbol === "ETH_USD",
-			"ETH trade update",
+			(message) => {
+				if (typeof message !== "object" || message === null) return false;
+				const trade = message as { event?: string; symbol?: string; price?: string };
+				return (
+					trade.event === "trade" &&
+					trade.symbol === "ETH_USD" &&
+					trade.price === "321.00"
+				);
+			},
+			"ETH trade update for the new match",
 		);
 		const candleMessage = probe.next<Record<string, unknown>>(
-			(message) =>
-				typeof message === "object" &&
-				message !== null &&
-				"event" in message &&
-				message.event === "candle" &&
-				"symbol" in message &&
-				message.symbol === "ETH_USD",
-			"live ETH candle update",
+			(message) => {
+				if (typeof message !== "object" || message === null) return false;
+				const candle = message as { event?: string; symbol?: string; close?: string };
+				return (
+					candle.event === "candle" &&
+					candle.symbol === "ETH_USD" &&
+					candle.close === "321.00"
+				);
+			},
+			"live ETH candle update for the new match",
 		);
 
 		const sell = await seller.client.createOrder({
@@ -116,16 +120,16 @@ test("a real match reaches trade subscribers with formatted price and quantity",
 			maker: false,
 			timestamp: expect.any(Number),
 		});
-		expect(await candleMessage).toMatchObject({
+		const candle = await candleMessage;
+		expect(candle).toMatchObject({
 			event: "candle",
 			symbol: "ETH_USD",
-			open: "321.00",
-			high: "321.00",
-			low: "321.00",
 			close: "321.00",
-			volume: "0.250",
 			time: expect.any(Number),
 		});
+		// The worker publishes the whole current-minute candle, so earlier
+		// trades in the same minute remain in open/high/low and volume.
+		expect(Number(candle.volume)).toBeGreaterThanOrEqual(0.25);
 		sellOrderId = undefined;
 	} finally {
 		if (sellOrderId && seller) {

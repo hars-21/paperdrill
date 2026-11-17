@@ -85,6 +85,12 @@ export const ROUTE_SEO: Record<string, PageSeo> = {
 		path: "/portfolio",
 		noIndex: true,
 	},
+	"/balance-history": {
+		title: `Balance History | ${SITE.name}`,
+		description: "Trace every credit, reservation, release, and settlement on your account.",
+		path: "/balance-history",
+		noIndex: true,
+	},
 	"/activity": {
 		title: `Orders & Trades | ${SITE.name}`,
 		description: "Review your open orders, order history, and completed trades.",

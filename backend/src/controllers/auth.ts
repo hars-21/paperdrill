@@ -17,6 +17,9 @@ import { sendToEngine } from "../utils/engineClient";
 import { assetPrecision } from "../store/market";
 import { toBigInt } from "../utils/convert";
 import { ApiError, sendApiError } from "../utils/apiError";
+import { issueAccountTicket } from "../utils/websocket";
+import { getUserId } from "./user";
+import { ensureLeaderboardParticipant } from "../services/leaderboard";
 
 const INITIAL_BALANCE_ASSET = "USD";
 const INITIAL_BALANCE_AMOUNT = "10000";
@@ -173,6 +176,13 @@ export async function signout(_req: Request, res: Response) {
 		.json({ success: true, message: "Signed out successfully" });
 }
 
+export async function createWebSocketTicket(req: Request, res: Response) {
+	const userId = getUserId(req);
+	const ticket = await issueAccountTicket(userId);
+
+	res.status(201).json(ticket);
+}
+
 export async function verifyEmail(req: Request, res: Response) {
 	const parsedQuery = verifyEmailSchema.safeParse(req.query);
 
@@ -214,6 +224,8 @@ export async function verifyEmail(req: Request, res: Response) {
 			where: { id: verification.userId },
 			data: { emailVerified: true },
 		});
+
+		void ensureLeaderboardParticipant(verification.userId);
 
 		res.status(200).json({ message: "Email verified successfully" });
 	} catch (e) {

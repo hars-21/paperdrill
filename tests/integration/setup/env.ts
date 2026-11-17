@@ -26,4 +26,5 @@ export const env = {
 	databaseUrl: databaseUrl.toString(),
 	redisUrl: redisUrl.toString(),
 	incomingStream: required("INCOMING_STREAM"),
+	eventStream: required("EVENT_STREAM"),
 };

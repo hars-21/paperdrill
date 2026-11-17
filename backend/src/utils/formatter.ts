@@ -1,6 +1,6 @@
 import { marketStore, assetPrecision } from "../store/market";
 import { fromBigInt } from "./convert";
-import type { PortfolioPosition } from "./portfolio";
+import type { LeaderboardHistoryPoint, LeaderboardStanding } from "./leaderboard";
 
 function fmt(val: unknown, prec: number): string | number | null {
 	if (val == null) return null;
@@ -158,63 +158,59 @@ export function formatBalance(balance: Record<string, Record<string, unknown>>) 
 	return formatted;
 }
 
-export function formatPortfolio(
-	portfolio: {
-		quoteAsset: string;
-		quotePrecision: number;
-		equity: bigint;
-		positions: PortfolioPosition[];
-		partial?: boolean;
-	},
-	baseline: bigint,
-	baselineAt: Date,
-) {
-	const pnl = portfolio.equity - baseline;
-	const pnlPercent = baseline === 0n ? 0n : (pnl * 10000n) / baseline;
-	const timestamps = portfolio.positions
-		.map((position) => position.markTimestamp)
-		.filter((timestamp): timestamp is number => timestamp != null);
+export function formatBalanceHistoryEntry(entry: {
+	id: string;
+	asset: string;
+	available: bigint;
+	locked: bigint;
+	deltaAvailable: bigint;
+	deltaLocked: bigint;
+	reason: string;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: Date;
+}) {
+	const precision = assetPrecision.get(entry.asset) ?? 0;
 
 	return {
-		quoteAsset: portfolio.quoteAsset,
-		equity: fmt(portfolio.equity, portfolio.quotePrecision),
-		baselineEquity: fmt(baseline, portfolio.quotePrecision),
-		pnl: fmt(pnl, portfolio.quotePrecision),
-		pnlPercent: fmt(pnlPercent, 2),
-		baselineAt: baselineAt.toISOString(),
-		asOf: new Date(timestamps.length > 0 ? Math.min(...timestamps) : Date.now()).toISOString(),
-		partial: portfolio.partial ?? false,
-		positions: portfolio.positions.map((position) => ({
-			asset: position.asset,
-			available: fmt(position.available, position.precision),
-			locked: fmt(position.locked, position.precision),
-			total: fmt(position.total, position.precision),
-			markPrice: fmt(position.markPrice, portfolio.quotePrecision),
-			value: fmt(position.value, portfolio.quotePrecision),
-		})),
+		id: entry.id,
+		asset: entry.asset,
+		available: fmt(entry.available, precision),
+		locked: fmt(entry.locked, precision),
+		total: fmt(entry.available + entry.locked, precision),
+		deltaAvailable: fmt(entry.deltaAvailable, precision),
+		deltaLocked: fmt(entry.deltaLocked, precision),
+		deltaTotal: fmt(entry.deltaAvailable + entry.deltaLocked, precision),
+		reason: entry.reason,
+		referenceId: entry.referenceId,
+		symbol: entry.symbol,
+		occurredAt: entry.occurredAt.toISOString(),
 	};
 }
 
 export function formatLeaderboardEntry(
-	entry: {
-		position: number;
-		rank: number;
-		baseline: bigint;
-		equity: bigint;
-		pnl: bigint;
-	},
+	entry: LeaderboardStanding,
 	name: string,
 	quotePrecision: number,
+	history: LeaderboardHistoryPoint[],
 ) {
-	const pnlPercent = entry.baseline === 0n ? 0n : (entry.pnl * 10000n) / entry.baseline;
-
 	return {
+		userId: entry.userId,
 		position: entry.position,
 		rank: entry.rank,
 		name,
+		avatarUrl: null,
 		equity: fmt(entry.equity, quotePrecision),
+		netContributions: fmt(entry.netContributions, quotePrecision),
 		pnl: fmt(entry.pnl, quotePrecision),
-		pnlPercent: fmt(pnlPercent, 2),
+		pnlPercent: fmt(entry.returnBps, 2),
+		totalPnl: fmt(entry.totalPnl, quotePrecision),
+		totalPnlPercent: fmt(entry.totalReturnBps, 2),
+		history: history.map((point) => ({
+			at: new Date(point.at).toISOString(),
+			equity: fmt(point.equity, quotePrecision),
+			netContributions: fmt(point.netContributions, quotePrecision),
+		})),
 	};
 }
 

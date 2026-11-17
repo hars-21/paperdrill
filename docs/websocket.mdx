@@ -1,9 +1,9 @@
 ---
 title: "Subscribe to WebSocket streams"
-description: "Consume live public trades, depth changes, tickers, and one-minute candles."
+description: "Consume live public market data and authenticated account snapshots."
 ---
 
-PaperDrill's public WebSocket streams market updates without authentication.
+PaperDrill's public WebSocket streams market updates without authentication. Signed-in users can also receive private portfolio snapshots over the same connection.
 
 ```text
 wss://api.paperdrill.dev
@@ -17,8 +17,97 @@ wss://api.paperdrill.dev
 | `depth:SYMBOL`  | Changed order-book levels only                   |
 | `ticker:SYMBOL` | Updated rolling 24-hour statistics               |
 | `candle:SYMBOL` | Current one-minute candle, updated on each trade |
+| `leaderboard`   | Live standings changed; refetch the leaderboard  |
 
 Use the exact symbol returned by `GET /markets`.
+
+## Private account updates
+
+Portfolio snapshots are pushed on `account:<userId>`. The channel is private, so the connection must present a single-use ticket instead of your session cookie.
+
+1. Call `POST /v1/auth/ws-ticket` from your signed-in frontend session.
+2. Read `ticket` from the `201` response. It expires after 60 seconds and works once.
+3. Connect to `wss://api.paperdrill.dev/?ticket=TICKET`.
+
+```js
+const response = await fetch("https://api.paperdrill.dev/v1/auth/ws-ticket", {
+	method: "POST",
+	credentials: "include",
+});
+const { ticket } = await response.json();
+const socket = new WebSocket(`wss://api.paperdrill.dev/?ticket=${ticket}`);
+```
+
+The server consumes the ticket, subscribes the socket to your `account:<userId>` channel, and sends an acknowledgement:
+
+```json
+{ "type": "subscribed", "channel": "account:user_123" }
+```
+
+You do not need to send `SUBSCRIBE` for your own account channel. Asking for a different user's private channel returns:
+
+```json
+{ "error": "SUBSCRIPTION_FORBIDDEN", "channel": "account:user_456" }
+```
+
+Tickets cannot be reused. Mint a new ticket for every connection attempt, including reconnects.
+
+### Snapshot shape
+
+```json
+{
+	"userId": "user_123",
+	"at": 1789812000000,
+	"quoteAsset": "USD",
+	"quotePrecision": 2,
+	"cash": "974850",
+	"positionsValue": "251500",
+	"equity": "1226350",
+	"costBasis": "248000",
+	"realizedPnl": "3400",
+	"unrealizedPnl": "3500",
+	"netContributions": "1200000",
+	"totalPnl": "26350",
+	"partial": false,
+	"positions": [
+		{
+			"asset": "SOL",
+			"symbol": "SOL_USD",
+			"qtyPrecision": 2,
+			"qty": "200",
+			"available": "200",
+			"locked": "0",
+			"costBasis": "248000",
+			"averageCost": "124000",
+			"markPrice": "125750",
+			"value": "251500",
+			"realizedPnl": "3400",
+			"unrealizedPnl": "3500",
+			"lastBuyPrice": "124000",
+			"lastBuyQty": "200",
+			"lastBuyAt": 1789808400000,
+			"lastSellPrice": null,
+			"lastSellQty": null,
+			"lastSellAt": null,
+			"tradeCount": 1
+		}
+	]
+}
+```
+
+Snapshot numbers are raw integers scaled by precision, not decimal strings. Divide money fields by `10 ** quotePrecision` and quantity fields by `10 ** qtyPrecision`. `at`, `lastBuyAt`, and `lastSellAt` are Unix milliseconds.
+
+Snapshots are sent after fills and balance changes with a short debounce, then at most every five minutes while positions are open. Fetch `GET /portfolio` once for initial state, then apply snapshots as replacements.
+
+## Leaderboard updates
+
+The public `leaderboard` channel announces that live standings changed. Subscribe without a ticket. Messages are lightweight invalidation signals, not full standings:
+
+```json
+{ "channel": "leaderboard", "asOf": "2026-03-01T12:00:00.000Z" }
+```
+
+Refetch `GET /leaderboard` when a message arrives. The server debounces bursts, so clients should debounce refetches too. Rankings are computed from the same live account snapshots; there is no polling interval to mirror.
 
 ## Subscribe
 
@@ -94,4 +183,4 @@ function connect() {
 connect();
 ```
 
-Fetch a fresh REST snapshot after reconnecting before trusting a local order book.
+Fetch a fresh REST snapshot after reconnecting before trusting a local order book. For the private account channel, mint a new ticket before each reconnect, then refetch `GET /portfolio` if the gap is long enough that the last snapshot may be stale.

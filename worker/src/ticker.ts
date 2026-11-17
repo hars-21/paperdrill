@@ -72,8 +72,7 @@ function recomputeHighLow(state: TickerState) {
 	state.low = low;
 }
 
-export function deriveTicker(data: Trade) {
-	const { symbol, price, qty, timestamp } = data;
+export function deriveTicker(data: Trade) {	const { symbol, price, qty, timestamp } = data;
 
 	let state = tickers.get(symbol);
 
@@ -114,6 +113,10 @@ export function deriveTicker(data: Trade) {
 
 	state.dirty = true;
 	schedulePublish(state);
+}
+
+export function getLastPrice(symbol: string) {
+	return tickers.get(symbol)?.lastPrice ?? null;
 }
 
 function schedulePublish(state: TickerState) {

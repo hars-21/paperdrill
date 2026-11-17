@@ -5,11 +5,32 @@ import { config } from "./config";
 import { logger } from "./logger";
 import { flushCandles } from "./candle";
 import { warmUpTickers } from "./ticker";
-import { flushBatch, queueFill, queueOrder, loadServiceUserIds } from "./persistence";
-import type { StreamFill, StreamOrder } from "./types";
+import {
+	flushBatch,
+	queueBalance,
+	queueFill,
+	queueOrder,
+	queuePositionFill,
+	loadServiceUserIds,
+	loadPositionState,
+} from "./persistence";
+import { loadMarkets } from "./markets";
+import {
+	applyAccountBalance,
+	flushAccountSnapshots,
+	loadAccounts,
+	markAccountDirty,
+	startAccountSnapshots,
+} from "./accounts";
+import type { EngineEventRecord } from "./types";
 import { startHealth, stopHealth } from "./health";
+import {
+	startPortfolioRetention,
+	stopPortfolioRetention,
+} from "./portfolioRetention";
 
 const abortController = new AbortController();
+const CURSOR_KEY = "worker:event:last_id";
 
 await connectRedis().catch((err) => {
 	logger.error("Redis connection error", err);
@@ -26,13 +47,29 @@ await loadServiceUserIds().catch((err) => {
 	process.exit(1);
 });
 
+await loadMarkets().catch((err) => {
+	logger.error("Failed to load markets", err);
+	process.exit(1);
+});
+
+await loadPositionState().catch((err) => {
+	logger.error("Failed to load positions", err);
+	process.exit(1);
+});
+
+await loadAccounts().catch((err) => {
+	logger.error("Failed to load accounts", err);
+	process.exit(1);
+});
+
 await warmUpTickers();
 await startHealth();
+startAccountSnapshots();
+startPortfolioRetention();
 
-logger.info("Worker started, listening for stream events");
+logger.info("Worker started, listening for engine events");
 
-let lastFillId = (await cacheClient.get("worker:fill:last_id")) ?? "0-0";
-let lastOrderId = (await cacheClient.get("worker:order:last_id")) ?? "0-0";
+let lastEventId = (await cacheClient.get(CURSOR_KEY)) ?? "0-0";
 
 const candleFlushInterval = setTimeout(
 	() => {
@@ -62,8 +99,7 @@ function flushAndCheckpoint() {
 	if (flushPromise) return flushPromise;
 
 	flushPromise = (async () => {
-		const fillCursor = lastFillId;
-		const orderCursor = lastOrderId;
+		const cursor = lastEventId;
 
 		try {
 			await flushBatch();
@@ -72,18 +108,38 @@ function flushAndCheckpoint() {
 		}
 
 		try {
-			await Promise.all([
-				cacheClient.set("worker:fill:last_id", fillCursor),
-				cacheClient.set("worker:order:last_id", orderCursor),
-			]);
+			await cacheClient.set(CURSOR_KEY, cursor);
 		} catch (err) {
-			logger.error("Failed to checkpoint stream cursors", err);
+			logger.error("Failed to checkpoint stream cursor", err);
 		}
 	})().finally(() => {
 		flushPromise = null;
 	});
 
 	return flushPromise;
+}
+
+function dispatch(record: EngineEventRecord, streamId: string) {
+	switch (record.event.type) {
+		case "order.created":
+		case "order.filled":
+		case "order.partially_filled":
+		case "order.cancelled":
+			queueOrder(record.event.order);
+			return;
+		case "fill.created":
+			queuePositionFill(record.event.fill, streamId);
+			queueFill(record.event.fill);
+			markAccountDirty(record.event.fill.buyerId);
+			markAccountDirty(record.event.fill.sellerId);
+			return;
+		case "balance.changed":
+			queueBalance(record.id, record.event);
+			applyAccountBalance(record.event);
+			return;
+		default:
+			return;
+	}
 }
 
 function wait(ms: number) {
@@ -98,49 +154,34 @@ async function main() {
 
 		try {
 			const streams = await streamConsumer.xRead(
-				[
-					{ key: "stream:fill", id: lastFillId },
-					{ key: "stream:order", id: lastOrderId },
-				],
+				[{ key: config.eventStream, id: lastEventId }],
 				{ BLOCK: 5000, COUNT: 500 },
 			);
 			if (signal.aborted) break;
 			if (!streams) continue;
 
-			const orderEvents: { id: string; order: StreamOrder }[] = [];
-			const fillEvents: { id: string; fill: StreamFill }[] = [];
-
 			for (const stream of streams) {
 				for (const message of stream.messages) {
+					let record: EngineEventRecord;
+
 					try {
-						const raw = JSON.parse(message.message.data);
-
-						if (stream.name === "stream:fill" && raw.event === "fill") {
-							fillEvents.push({ id: message.id, fill: raw.fill });
-						} else if (stream.name === "stream:order" && raw.event === "order") {
-							orderEvents.push({ id: message.id, order: raw.order });
-						}
+						record = JSON.parse(message.message.data) as EngineEventRecord;
 					} catch (err) {
-						logger.error("Failed to parse stream message", err);
+						logger.error("Failed to parse engine event", err);
+						lastEventId = message.id;
+						continue;
 					}
-				}
-			}
 
-			for (const event of orderEvents) {
-				try {
-					queueOrder(event.order);
-					lastOrderId = event.id;
-				} catch (err) {
-					logger.error("Failed to queue order event", err);
-				}
-			}
-
-			for (const event of fillEvents) {
-				try {
-					queueFill(event.fill);
-					lastFillId = event.id;
-				} catch (err) {
-					logger.error("Failed to queue fill event", err);
+					try {
+						dispatch(record, message.id);
+						lastEventId = message.id;
+					} catch (err) {
+						logger.error("Failed to queue engine event", {
+							eventId: record.id,
+							type: record.type,
+							error: err,
+						});
+					}
 				}
 			}
 		} catch (err) {
@@ -164,11 +205,13 @@ async function gracefulShutdown(signal: string) {
 	abortController.abort();
 	clearTimeout(candleFlushInterval);
 	clearInterval(batchInterval);
+	stopPortfolioRetention();
 	await stopHealth();
 
 	try {
 		await flushCandles();
 		await flushAndCheckpoint();
+		await flushAccountSnapshots();
 	} catch (err) {
 		logger.error("Error during shutdown flush", err);
 	}

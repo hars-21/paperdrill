@@ -33,6 +33,64 @@ export interface PersistedDailyCredit {
 	status: "PENDING" | "APPLIED";
 }
 
+export interface PersistedBalance {
+	userId: string;
+	asset: string;
+	available: string;
+	locked: string;
+}
+
+export interface PersistedBalanceHistory {
+	id: string;
+	userId: string;
+	asset: string;
+	available: string;
+	locked: string;
+	deltaAvailable: string;
+	deltaLocked: string;
+	reason: string;
+	referenceId: string | null;
+	symbol: string | null;
+}
+
+export interface PersistedPosition {
+	userId: string;
+	asset: string;
+	qty: string;
+	costBasis: string;
+	realizedPnl: string;
+	lastBuyPrice: string | null;
+	lastBuyQty: string | null;
+	lastSellPrice: string | null;
+	lastSellQty: string | null;
+	tradeCount: number;
+}
+
+export interface PersistedPositionEvent {
+	fillId: string;
+	userId: string;
+	asset: string;
+	side: "BUY" | "SELL";
+	price: string;
+	qty: string;
+	quoteAmount: string;
+	costBasisBefore: string;
+	costBasisAfter: string;
+	realizedPnl: string;
+}
+
+export interface PersistedPortfolioSnapshot {
+	userId: string;
+	quoteAsset: string;
+	cash: string;
+	positionsValue: string;
+	equity: string;
+	realizedPnl: string;
+	unrealizedPnl: string;
+	netContributions: string;
+	partial: boolean;
+}
+
 export class TestDatabase {
 	private readonly pool = new Pool({ connectionString: env.databaseUrl });
 
@@ -83,5 +141,88 @@ export class TestDatabase {
 			[userId],
 		);
 		return result.rows[0]?.pnlBaseline;
+	}
+
+	async balance(userId: string, asset: string): Promise<PersistedBalance | undefined> {
+		const result = await this.pool.query<PersistedBalance>(
+			`SELECT "userId", asset, available::text, locked::text
+			 FROM "Balance" WHERE "userId" = $1 AND asset = $2`,
+			[userId, asset],
+		);
+		return result.rows[0];
+	}
+
+	async balanceHistory(id: string): Promise<PersistedBalanceHistory | undefined> {
+		const result = await this.pool.query<PersistedBalanceHistory>(
+			`SELECT id, "userId", asset, available::text, locked::text,
+			        "deltaAvailable"::text, "deltaLocked"::text, reason, "referenceId", symbol
+			 FROM "BalanceHistory" WHERE id = $1`,
+			[id],
+		);
+		return result.rows[0];
+	}
+
+	async balanceHistoryCount(id: string): Promise<number> {
+		const result = await this.pool.query<{ count: string }>(
+			`SELECT COUNT(*)::text AS count FROM "BalanceHistory" WHERE id = $1`,
+			[id],
+		);
+		return Number(result.rows[0]?.count ?? 0);
+	}
+
+	async balanceHistoryByReference(referenceId: string): Promise<PersistedBalanceHistory[]> {
+		const result = await this.pool.query<PersistedBalanceHistory>(
+			`SELECT id, "userId", asset, available::text, locked::text,
+			        "deltaAvailable"::text, "deltaLocked"::text, reason, "referenceId", symbol
+			 FROM "BalanceHistory" WHERE "referenceId" = $1 ORDER BY "occurredAt"`,
+			[referenceId],
+		);
+		return result.rows;
+	}
+
+	async position(userId: string, asset: string): Promise<PersistedPosition | undefined> {
+		const result = await this.pool.query<PersistedPosition>(
+			`SELECT "userId", asset, qty::text, "costBasis"::text, "realizedPnl"::text,
+			        "lastBuyPrice"::text, "lastBuyQty"::text, "lastSellPrice"::text,
+			        "lastSellQty"::text, "tradeCount"
+			 FROM "Position" WHERE "userId" = $1 AND asset = $2`,
+			[userId, asset],
+		);
+		return result.rows[0];
+	}
+
+	async positionEvent(
+		fillId: string,
+		userId: string,
+	): Promise<PersistedPositionEvent | undefined> {
+		const result = await this.pool.query<PersistedPositionEvent>(
+			`SELECT "fillId", "userId", asset, side, price::text, qty::text,
+			        "quoteAmount"::text, "costBasisBefore"::text, "costBasisAfter"::text,
+			        "realizedPnl"::text
+			 FROM "PositionEvent" WHERE "fillId" = $1 AND "userId" = $2`,
+			[fillId, userId],
+		);
+		return result.rows[0];
+	}
+
+	async positionEventCount(fillId: string, userId: string): Promise<number> {
+		const result = await this.pool.query<{ count: string }>(
+			`SELECT COUNT(*)::text AS count FROM "PositionEvent"
+			 WHERE "fillId" = $1 AND "userId" = $2`,
+			[fillId, userId],
+		);
+		return Number(result.rows[0]?.count ?? 0);
+	}
+
+	async portfolioSnapshot(userId: string): Promise<PersistedPortfolioSnapshot | undefined> {
+		const result = await this.pool.query<PersistedPortfolioSnapshot>(
+			`SELECT "userId", "quoteAsset", cash::text, "positionsValue"::text,
+			        equity::text, "realizedPnl"::text, "unrealizedPnl"::text,
+			        "netContributions"::text, partial
+			 FROM "PortfolioSnapshot" WHERE "userId" = $1
+			 ORDER BY at DESC LIMIT 1`,
+			[userId],
+		);
+		return result.rows[0];
 	}
 }

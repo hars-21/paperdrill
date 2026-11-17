@@ -12,8 +12,11 @@ export class WebSocketProbe {
 		});
 	}
 
-	static async connect(): Promise<WebSocketProbe> {
-		const socket = new WebSocket(env.wsUrl);
+	static async connect(ticket?: string): Promise<WebSocketProbe> {
+		const url = ticket
+			? `${env.wsUrl}?ticket=${encodeURIComponent(ticket)}`
+			: env.wsUrl;
+		const socket = new WebSocket(url);
 		const probe = new WebSocketProbe(socket);
 
 		await new Promise<void>((resolve, reject) => {

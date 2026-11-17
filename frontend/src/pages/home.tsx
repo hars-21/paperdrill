@@ -218,14 +218,21 @@ function AccountSnapshot({
 	loading: boolean;
 	openOrders: number | null;
 }) {
-	const pnl = Number(portfolio?.pnl ?? 0);
-	const quotePosition = portfolio?.positions.find(
-		(position) => position.asset === portfolio.quoteAsset,
-	);
+	const pnl = portfolio?.pnl == null ? null : Number(portfolio.pnl);
 	const equity = Number(portfolio?.equity ?? 0);
 	const positions = (portfolio?.positions ?? [])
 		.filter((position) => Number(position.value) > 0)
 		.sort((left, right) => Number(right.value) - Number(left.value));
+	const allocationRows = portfolio
+		? [
+				{
+					asset: portfolio.quoteAsset,
+					value: portfolio.cash,
+					cash: true,
+				},
+				...positions.map((position) => ({ ...position, cash: false })),
+			].filter((row) => Number(row.value) > 0)
+		: [];
 
 	return (
 		<section
@@ -262,7 +269,7 @@ function AccountSnapshot({
 								? `${formatPrice(portfolio.equity)} ${portfolio.quoteAsset}`
 								: "Unavailable"}
 						</p>
-						{portfolio ? (
+						{portfolio && pnl != null ? (
 							<div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
 								<span
 									className={cn(
@@ -270,7 +277,8 @@ function AccountSnapshot({
 										pnl >= 0 ? "text-green-text" : "text-red-text",
 									)}
 								>
-									{pnl > 0 ? "+" : ""}{formatPrice(portfolio.pnl)} {portfolio.quoteAsset}
+									{pnl > 0 ? "+" : ""}
+									{formatPrice(portfolio.pnl)} {portfolio.quoteAsset}
 								</span>
 								<span
 									className={cn(
@@ -278,7 +286,8 @@ function AccountSnapshot({
 										pnl >= 0 ? "text-green-text" : "text-red-text",
 									)}
 								>
-									{pnl > 0 ? "+" : ""}{portfolio.pnlPercent}%
+									{pnl > 0 ? "+" : ""}
+									{portfolio.pnlPercent}%
 								</span>
 							</div>
 						) : null}
@@ -313,7 +322,8 @@ function AccountSnapshot({
 							<div className="flex items-center justify-between gap-3">
 								<p className="text-xs font-medium text-high-emphasis">Capital split</p>
 								<p className="text-xs text-medium-emphasis">
-									{positions.length} {positions.length === 1 ? "funded asset" : "funded assets"}
+									{allocationRows.length}{" "}
+									{allocationRows.length === 1 ? "allocation" : "allocations"}
 								</p>
 							</div>
 							<div
@@ -321,30 +331,31 @@ function AccountSnapshot({
 								role="img"
 								aria-label="Current portfolio allocation"
 							>
-								{positions.map((position) => (
+								{allocationRows.map((row) => (
 									<span
-										key={position.asset}
+										key={row.asset}
 										style={{
-											width: `${equity > 0 ? (Number(position.value) / equity) * 100 : 0}%`,
-											backgroundColor: getAssetColor(position.asset),
+											width: `${equity > 0 ? (Number(row.value) / equity) * 100 : 0}%`,
+											backgroundColor: getAssetColor(row.asset) ?? "#71717A",
 										}}
 									/>
 								))}
 							</div>
 							<div className="mt-4 space-y-2.5">
-								{positions.slice(0, 4).map((position) => (
-									<div key={position.asset} className="flex items-center gap-3">
+								{allocationRows.slice(0, 5).map((row) => (
+									<div key={row.asset} className="flex items-center gap-3">
 										<span
 											className="size-2 shrink-0 rounded-full"
 											style={{
-												backgroundColor: getAssetColor(position.asset),
+												backgroundColor: getAssetColor(row.asset) ?? "#71717A",
 											}}
 										/>
 										<span className="min-w-0 flex-1 truncate text-xs font-medium text-high-emphasis">
-											{position.asset}
+											{row.asset}
+											{row.cash ? " cash" : ""}
 										</span>
 										<span className="text-xs text-medium-emphasis tabular-nums">
-											{equity > 0 ? ((Number(position.value) / equity) * 100).toFixed(1) : "0.0"}%
+											{equity > 0 ? ((Number(row.value) / equity) * 100).toFixed(1) : "0.0"}%
 										</span>
 									</div>
 								))}
@@ -353,11 +364,9 @@ function AccountSnapshot({
 
 						<div className="mt-auto grid grid-cols-2 gap-4 border-t border-border/40 pt-5">
 							<div>
-								<p className="text-xs text-medium-emphasis">Available cash</p>
+								<p className="text-xs text-medium-emphasis">Cash</p>
 								<p className="mt-1.5 text-sm font-semibold text-high-emphasis tabular-nums">
-									{quotePosition && portfolio
-										? `${formatPrice(quotePosition.available)} ${portfolio.quoteAsset}`
-										: "-"}
+									{portfolio ? `${formatPrice(portfolio.cash)} ${portfolio.quoteAsset}` : "-"}
 								</p>
 							</div>
 							<div className="text-right">

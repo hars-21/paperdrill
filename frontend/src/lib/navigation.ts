@@ -3,6 +3,7 @@ import { getLastTradePath } from "@/lib/ux-preferences";
 export type NavigationId =
 	| "home"
 	| "portfolio"
+	| "balance-history"
 	| "activity"
 	| "profile"
 	| "markets"
@@ -32,6 +33,7 @@ export function getPrimaryNavigation(tradePath = getLastTradePath()) {
 export const accountNavigation = [
 	{ id: "home", label: "Home", href: "/home", end: true },
 	{ id: "portfolio", label: "Portfolio", href: "/portfolio", end: true },
+	{ id: "balance-history", label: "Balance history", href: "/balance-history", end: true },
 	{ id: "activity", label: "Orders & trades", href: "/activity", end: true },
 	{ id: "api-keys", label: "API keys", href: "/settings/api-keys", end: true },
 	{ id: "profile", label: "Profile", href: "/settings/profile", end: true },

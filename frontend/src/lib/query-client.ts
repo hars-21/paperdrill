@@ -19,6 +19,31 @@ export const accountQueryKeys = {
 	balances: (userId: string, asset?: string) => ["account", userId, "balances", asset ?? "all"],
 	balancesPrefix: (userId: string) => ["account", userId, "balances"],
 	portfolio: (userId: string) => ["account", userId, "portfolio"],
+	portfolioHistory: (userId: string, range: string) => [
+		"account",
+		userId,
+		"portfolio",
+		"history",
+		range,
+	],
+	portfolioAnalytics: (userId: string) => ["account", userId, "portfolio", "analytics"],
+	portfolioPositionPrefix: (userId: string) => ["account", userId, "portfolio", "positions"],
+	portfolioPosition: (userId: string, asset: string) => [
+		"account",
+		userId,
+		"portfolio",
+		"positions",
+		asset,
+	],
+	portfolioPositionEvents: (userId: string, asset: string, page: number) => [
+		"account",
+		userId,
+		"portfolio",
+		"positions",
+		asset,
+		"events",
+		page,
+	],
 	openOrders: (userId: string) => ["account", userId, "open-orders"],
 	ordersPrefix: (userId: string) => ["account", userId, "orders"],
 	orders: (userId: string, params: Record<string, unknown>) => [
@@ -29,12 +54,28 @@ export const accountQueryKeys = {
 	],
 	tradesPrefix: (userId: string) => ["account", userId, "trades"],
 	trades: (userId: string, limit: number) => ["account", userId, "trades", { limit }],
+	balanceHistoryPrefix: (userId: string) => ["account", userId, "balance-history"],
+	balanceHistory: (userId: string, params: Record<string, unknown>) => [
+		"account",
+		userId,
+		"balance-history",
+		"list",
+		params,
+	],
+	balanceSeries: (userId: string, params: Record<string, unknown>) => [
+		"account",
+		userId,
+		"balance-history",
+		"series",
+		params,
+	],
 };
 
 export function invalidateAccountQueries(client: QueryClient, userId: string) {
 	return Promise.all([
 		client.invalidateQueries({ queryKey: accountQueryKeys.balancesPrefix(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.portfolio(userId) }),
+		client.invalidateQueries({ queryKey: accountQueryKeys.balanceHistoryPrefix(userId) }),
 	]);
 }
 
@@ -45,5 +86,6 @@ export function invalidateTradingQueries(client: QueryClient, userId: string) {
 		client.invalidateQueries({ queryKey: accountQueryKeys.openOrders(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.ordersPrefix(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.tradesPrefix(userId) }),
+		client.invalidateQueries({ queryKey: accountQueryKeys.balanceHistoryPrefix(userId) }),
 	]);
 }

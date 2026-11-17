@@ -38,7 +38,7 @@ PaperDrill is a competitive trading platform built around credit markets, a real
 | `docs`     | Mintlify site for product guides and API documentation                      |
 | `backend`  | Express REST/WebSocket API, authentication, validation, and market metadata |
 | `engine`   | In-memory balances, order books, matching, and periodic snapshots           |
-| `worker`   | Persists orders/fills and derives candles and tickers                       |
+| `worker`   | Persists orders/fills/balances and derives candles and tickers              |
 | `bot`      | Optional market makers for the supported markets                            |
 | PostgreSQL | Accounts, markets, orders, fills, candles, credits, and leaderboard data    |
 | Redis      | Commands, responses, event streams, pub/sub, and runtime checkpoints        |

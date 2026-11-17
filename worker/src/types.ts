@@ -47,3 +47,45 @@ export interface StreamOrder {
 	averagePrice: string | null;
 	createdAt: number;
 }
+
+export type BalanceChangeReason =
+	| "initialized"
+	| "deposited"
+	| "credited"
+	| "order.locked"
+	| "order.released"
+	| "fill.settled";
+
+export interface StreamOrderEvent {
+	type: "order.created" | "order.filled" | "order.partially_filled" | "order.cancelled";
+	order: StreamOrder;
+}
+
+export interface StreamFillEvent {
+	type: "fill.created";
+	fill: StreamFill;
+}
+
+export interface StreamBalanceEvent {
+	type: "balance.changed";
+	userId: string;
+	asset: string;
+	available: string;
+	locked: string;
+	deltaAvailable: string;
+	deltaLocked: string;
+	reason: BalanceChangeReason;
+	referenceId: string | null;
+	symbol: string | null;
+	occurredAt: number;
+}
+
+export type StreamEvent = StreamOrderEvent | StreamFillEvent | StreamBalanceEvent;
+
+export interface EngineEventRecord {
+	id: string;
+	type: StreamEvent["type"];
+	version: number;
+	occurredAt: number;
+	event: StreamEvent;
+}

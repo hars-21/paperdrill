@@ -57,8 +57,12 @@ model User {
   orders        Order[]
   buyFills      Fill[]    @relation("FillBuyer")
   sellFills     Fill[]    @relation("FillSeller")
-  leaderboardEntry LeaderboardEntry?
   dailyCredits  DailyCredit[]
+  balances      Balance[]
+  balanceHistory BalanceHistory[]
+  positions     Position[]
+  positionEvents PositionEvent[]
+  portfolioSnapshots PortfolioSnapshot[]
 }
 
 model DailyCredit {
@@ -75,23 +79,6 @@ model DailyCredit {
 
   @@unique([userId, creditDate])
   @@index([status, createdAt])
-}
-
-model LeaderboardEntry {
-  userId   String @id
-  position Int    @unique
-  rank     Int
-  baseline BigInt
-  equity   BigInt
-  pnl      BigInt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model LeaderboardState {
-  id         Int      @id
-  quoteAsset String
-  asOf       DateTime
 }
 
 model ApiKey {
@@ -148,6 +135,39 @@ model Fill {
   @@index([sellerId])
 }
 
+model Balance {
+  userId        String
+  asset         String
+  available     BigInt
+  locked        BigInt
+  updatedAt     DateTime
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, asset])
+  @@index([asset])
+}
+
+model BalanceHistory {
+  id             String   @id
+  userId         String
+  asset          String
+  available      BigInt
+  locked         BigInt
+  deltaAvailable BigInt
+  deltaLocked    BigInt
+  reason         String
+  referenceId    String?
+  symbol         String?
+  occurredAt     DateTime
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, asset, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([referenceId])
+}
+
 model Market {
   id                String  @id @default(uuid())
   name              String
@@ -159,6 +179,74 @@ model Market {
 
   orders Order[]
   fills  Fill[]
+}
+
+model Position {
+  userId        String
+  asset         String
+  qty           BigInt
+  costBasis     BigInt
+  realizedPnl   BigInt   @default(0)
+  lastBuyPrice  BigInt?
+  lastBuyQty    BigInt?
+  lastBuyAt     DateTime?
+  lastSellPrice BigInt?
+  lastSellQty   BigInt?
+  lastSellAt    DateTime?
+  tradeCount    Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, asset])
+  @@index([asset])
+}
+
+model PositionEvent {
+  id              String   @id @default(uuid())
+  fillId          String
+  userId          String
+  asset           String
+  symbol          String
+  side            String
+  price           BigInt
+  qty             BigInt
+  quoteAmount     BigInt
+  costBasisBefore BigInt
+  costBasisAfter  BigInt
+  realizedPnl     BigInt
+  occurredAt      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fillId, userId])
+  @@index([userId, asset, occurredAt])
+  @@index([userId, occurredAt])
+}
+
+model PortfolioSnapshot {
+  id               String   @id @default(uuid())
+  userId           String
+  at               DateTime
+  quoteAsset       String
+  cash             BigInt
+  positionsValue   BigInt
+  equity           BigInt
+  realizedPnl      BigInt
+  unrealizedPnl    BigInt
+  netContributions BigInt
+  partial          Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, at])
+  @@index([at])
+}
+
+model ProjectionCursor {
+  name        String   @id
+  lastEventId String
+  updatedAt   DateTime @updatedAt
 }
 
 model Candle {
