@@ -2,7 +2,10 @@ export type UserData = {
 	id: string;
 	email: string;
 	name: string;
+	username: string | null;
 	emailVerified: boolean;
+	starterClaimed: boolean;
+	needsOnboarding: boolean;
 };
 
 export type OrderResult = {

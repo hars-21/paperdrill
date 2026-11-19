@@ -39,7 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { usePortfolio } from "@/hooks/use-portfolio";
 import { useLastTradePath } from "@/hooks/use-ux-preferences";
-import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { accountNavigation, getPrimaryNavigation } from "@/lib/navigation";
 import { useTheme } from "@/lib/theme-provider";
 import type { Portfolio } from "@/types";
@@ -95,7 +95,7 @@ function getBalanceSnapshot(portfolio: Portfolio | null): BalanceSnapshot {
 
 export function Navbar() {
 	const { theme, toggleTheme } = useTheme();
-	const { user, verified, loading: authLoading, setUser } = useAuth();
+	const { user, verified, loading: authLoading, refreshUser } = useAuth();
 	const { portfolio, loading: portfolioLoading } = usePortfolio({ enabled: Boolean(user) });
 	const [loggingOut, setLoggingOut] = useState(false);
 	const location = useLocation();
@@ -109,11 +109,11 @@ export function Navbar() {
 		if (loggingOut) return;
 		setLoggingOut(true);
 		try {
-			await api.signout();
+			await authClient.signOut();
 		} catch (error) {
 			console.error("Signout failed:", error);
 		} finally {
-			setUser(null);
+			await refreshUser();
 			toast.success("Logged out successfully");
 			navigate("/", { replace: true });
 			setLoggingOut(false);

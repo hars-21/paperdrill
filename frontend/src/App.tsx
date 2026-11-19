@@ -11,7 +11,7 @@ import { TermsPage } from "./pages/terms";
 import { PrivacyPage } from "./pages/privacy";
 import { AppLayout } from "./components/app-layout";
 import { RootLayout } from "./components/root-layout";
-import { Protected, PublicOnly } from "./components/route-guards";
+import { OnboardingOnly, Protected, PublicOnly } from "./components/route-guards";
 import { HomePage } from "./pages/home";
 import { ApiKeysPage } from "./pages/api-keys";
 import { PortfolioPage } from "./pages/portfolio";
@@ -21,6 +21,7 @@ import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
 import { NotFoundPage } from "./pages/not-found";
 import { RouteBehavior } from "./components/route-behavior";
+import { OnboardingPage } from "./pages/onboarding";
 import { getLastTradePath } from "./lib/ux-preferences";
 
 function TradeRedirect() {
@@ -118,6 +119,14 @@ export function App() {
 						}
 					/>
 					<Route path="verify-email" element={<VerifyEmailPage />} />
+					<Route
+						path="onboarding"
+						element={
+							<OnboardingOnly>
+								<OnboardingPage />
+							</OnboardingOnly>
+						}
+					/>
 					<Route path="*" element={<NotFoundPage />} />
 				</Route>
 			</Routes>

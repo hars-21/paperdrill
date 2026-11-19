@@ -96,48 +96,22 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-	getCurrentUser() {
+	getMe() {
 		return request<UserData>("/users/me");
 	},
 
-	signin(email: string, password: string) {
-		return request<UserData>("/auth/login", {
+	completeOnboarding(data: { name: string; username: string }) {
+		return request<UserData>("/users/me/onboarding", {
 			method: "POST",
-			body: JSON.stringify({ email, password }),
+			body: JSON.stringify(data),
 		});
 	},
 
-	signup(email: string, name: string, password: string) {
-		return request<UserData & { message: string }>("/auth/signup", {
-			method: "POST",
-			body: JSON.stringify({ email, name, password }),
-		});
-	},
-
-	verifyEmail(token: string) {
-		return request<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
-			method: "POST",
-		});
-	},
-
-	resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
-		return request<{ success: boolean; message: string }>("/auth/resend-verification-email", {
-			method: "POST",
-			body: JSON.stringify({ email }),
-		});
-	},
-
-	updateEmail(email: string) {
-		return request<UserData & { message: string }>("/users/me/email", {
-			method: "PATCH",
-			body: JSON.stringify({ email }),
-		});
-	},
-
-	signout() {
-		return request<{ success: boolean; message: string }>("/auth/logout", {
-			method: "POST",
-		});
+	claimStarterCredit() {
+		return request<{ user: UserData; claimed: boolean; asset: string; amount: string }>(
+			"/users/me/starter-credit",
+			{ method: "POST" },
+		);
 	},
 
 	getMarkets() {
@@ -223,7 +197,7 @@ export const api = {
 	},
 
 	getWebSocketTicket() {
-		return request<{ ticket: string; expiresAt: string }>("/auth/ws-ticket", {
+		return request<{ ticket: string; expiresIn?: number; expiresAt?: string }>("/auth/ws-ticket", {
 			method: "POST",
 		});
 	},

@@ -2,98 +2,135 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAnalytics } from "@/lib/analytics";
 import { api, isUnauthorized } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { accountQueryKeys, invalidateAccountQueries } from "@/lib/query-client";
+import type { UserData } from "@/types/api";
 import { toast } from "sonner";
 
-type User = {
-	id: string;
-	email: string;
-	name: string;
-	emailVerified: boolean;
-};
-
-type AuthContext = {
-	user: User | null;
+type AuthContextValue = {
+	user: UserData | null;
 	loading: boolean;
 	authenticated: boolean;
 	verified: boolean;
+	needsOnboarding: boolean;
 	refreshUser: () => Promise<void>;
-	setUser: (user: User | null) => void;
 };
 
-export const AuthContext = createContext<AuthContext | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-	const [user, setUser] = useState<User | null>(null);
-	const [loading, setLoading] = useState(true);
+	const { data: session, isPending: sessionPending } = authClient.useSession();
+	const [user, setUser] = useState<UserData | null>(null);
+	const [profileLoading, setProfileLoading] = useState(false);
+	const [profileResolved, setProfileResolved] = useState(false);
 	const queryClient = useQueryClient();
 	const posthog = useAnalytics();
 	const previousUserId = useRef<string | null>(null);
-	const setCurrentUser = useCallback(
-		(nextUser: User | null) => {
-			setUser(nextUser);
-			if (nextUser) {
-				posthog.identify(nextUser.id, { email_verified: nextUser.emailVerified });
-			} else {
-				posthog.reset();
-			}
-		},
-		[posthog],
-	);
-	const dailyCredit = useMutation({
-		mutationFn: (_userId: string) => api.claimDailyCredit(),
-		onSuccess: async (credit, userId) => {
-			if (credit.credited) {
-				posthog.capture("daily_credit_claimed", { asset: credit.asset, amount: credit.amount });
-				toast.success(`Daily credit: +${credit.amount} ${credit.asset}`);
-			}
-			await invalidateAccountQueries(queryClient, userId);
-		},
-		onError: (error) => console.warn("Daily credit could not be claimed:", error),
-	});
+	const shownDailyCreditDate = useRef<string | null>(null);
 
-	const refreshUser = useCallback(async () => {
-		try {
-			const user = await api.getCurrentUser();
-			setCurrentUser(user);
-		} catch (err) {
-			if (isUnauthorized(err)) {
-				setCurrentUser(null);
+	const { mutate: claimDailyCredit } = useMutation({
+		mutationFn: () => api.claimDailyCredit(),
+		onSuccess: (credit, _vars, _ctx) => {
+			if (user?.id) void invalidateAccountQueries(queryClient, user.id);
+			if (!credit.credited || credit.creditDate === shownDailyCreditDate.current) {
 				return;
 			}
 
-			console.error("Failed to fetch current user:", err);
+			shownDailyCreditDate.current = credit.creditDate;
+			toast.success(`Daily credit claimed: +${credit.amount} ${credit.asset}`);
+		},
+		onError: () => {
+			// Daily credit is best-effort on session hydration.
+		},
+	});
+
+	const refreshUser = useCallback(async () => {
+		if (!session?.user) {
+			setUser(null);
+			setProfileResolved(true);
+			return;
+		}
+
+		setProfileLoading(true);
+		try {
+			const data = await api.getMe();
+			setUser(data);
+		} catch (error) {
+			if (isUnauthorized(error)) {
+				setUser(null);
+			}
 		} finally {
-			setLoading(false);
+			setProfileLoading(false);
+			setProfileResolved(true);
 		}
-	}, [setCurrentUser]);
+	}, [session?.user]);
 
 	useEffect(() => {
-		refreshUser();
-	}, [refreshUser]);
+		let cancelled = false;
+
+		const sync = async () => {
+			if (sessionPending) return;
+			if (!session?.user) {
+				if (!cancelled) {
+					setUser(null);
+					setProfileResolved(true);
+				}
+				return;
+			}
+			await refreshUser();
+		};
+
+		void sync();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [refreshUser, session?.user, sessionPending]);
 
 	useEffect(() => {
-		const previous = previousUserId.current;
-		if (previous && previous !== user?.id) {
-			queryClient.removeQueries({ queryKey: accountQueryKeys.all(previous) });
+		const nextUserId = user?.id ?? null;
+
+		if (nextUserId) {
+			posthog.identify(nextUserId, {
+				email: user?.email,
+				emailVerified: user?.emailVerified,
+				username: user?.username ?? undefined,
+			});
+		} else if (previousUserId.current) {
+			shownDailyCreditDate.current = null;
+			queryClient.removeQueries({ queryKey: ["account", previousUserId.current] });
+			posthog.reset();
 		}
-		previousUserId.current = user?.id ?? null;
-	}, [queryClient, user?.id]);
+
+		previousUserId.current = nextUserId;
+	}, [posthog, queryClient, user?.email, user?.emailVerified, user?.id, user?.username]);
 
 	useEffect(() => {
-		if (!user?.emailVerified) return;
-		dailyCredit.mutate(user.id);
-	}, [user?.id, user?.emailVerified]);
+		if (user?.id && user.emailVerified && !user.needsOnboarding && user.starterClaimed) {
+			claimDailyCredit();
+		}
+	}, [claimDailyCredit, user?.emailVerified, user?.id, user?.needsOnboarding, user?.starterClaimed]);
+
+	const loading = sessionPending || (Boolean(session?.user) && (!profileResolved || (profileLoading && !user)));
 
 	return (
-		<AuthContext.Provider value={{ user, loading, authenticated: !!user, verified: !!user?.emailVerified, refreshUser, setUser: setCurrentUser }}>
+		<AuthContext.Provider
+			value={{
+				user,
+				loading,
+				authenticated: Boolean(session?.user),
+				verified: Boolean(user?.emailVerified ?? session?.user?.emailVerified),
+				needsOnboarding: Boolean(user?.needsOnboarding),
+				refreshUser,
+			}}
+		>
 			{children}
 		</AuthContext.Provider>
 	);
 };
 
-export const useAuth = () => {
-	const context = useContext(AuthContext);
-	if (!context) throw new Error("useAuth must be used within AuthProvider");
-	return context;
-};
+export function useAuth() {
+	const ctx = useContext(AuthContext);
+	if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+	return ctx;
+}

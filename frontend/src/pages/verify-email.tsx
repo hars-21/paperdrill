@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useAnalytics } from "@/lib/analytics";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { config } from "@/lib/env";
 import { getSafeReturnTo, type ReturnLocationState } from "@/lib/redirect";
 import { toast } from "sonner";
 
@@ -14,8 +13,7 @@ type Status = "waiting" | "verifying" | "success" | "error";
 export function VerifyEmailPage() {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get("token");
-	const { user, verified, loading, refreshUser, setUser } = useAuth();
-	const posthog = useAnalytics();
+	const { user, verified, authenticated, loading, needsOnboarding, refreshUser } = useAuth();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const locationState = location.state as ReturnLocationState | null;
@@ -24,19 +22,11 @@ export function VerifyEmailPage() {
 	const [status, setStatus] = useState<Status>(token ? "verifying" : "waiting");
 	const [verificationError, setVerificationError] = useState<string | null>(null);
 	const [resending, setResending] = useState(false);
-	const [editingEmail, setEditingEmail] = useState(false);
-	const [email, setEmail] = useState("");
-	const [updatingEmail, setUpdatingEmail] = useState(false);
-	const [emailError, setEmailError] = useState<string | null>(null);
 	const [resendAt, setResendAt] = useState<number | null>(() =>
 		emailWasJustSent ? Date.now() + 30_000 : null,
 	);
 	const [countdown, setCountdown] = useState(emailWasJustSent ? 30 : 0);
-	const verificationComplete = verified || status === "success";
-
-	useEffect(() => {
-		if (!editingEmail) setEmail(user?.email ?? "");
-	}, [editingEmail, user?.email]);
+	const attemptedToken = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!resendAt) return;
@@ -53,81 +43,75 @@ export function VerifyEmailPage() {
 	}, [resendAt]);
 
 	useEffect(() => {
-		if (!token || loading || verified) return;
+		if (!token || loading || verified || attemptedToken.current === token) return;
+		attemptedToken.current = token;
 		let active = true;
 
-		api
-			.verifyEmail(token)
-			.then((result) => {
+		const verify = async () => {
+			try {
+				const response = await fetch(
+					`${config.apiBaseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(returnTo)}`,
+					{ credentials: "include" },
+				);
+
+				if (!response.ok) {
+					let message = "This verification link is invalid or has expired.";
+					try {
+						const data = (await response.json()) as { message?: string; error?: { message?: string } };
+						message = data.error?.message ?? data.message ?? message;
+					} catch {
+						// ignore parse errors
+					}
+					throw new Error(message);
+				}
+
 				if (!active) return;
-				refreshUser();
-				posthog.capture("email_verified");
+				await authClient.getSession();
+				await refreshUser();
 				setStatus("success");
-				toast.success(result.message);
-			})
-			.catch((error) => {
+				toast.success("Email verified successfully");
+			} catch (error) {
 				if (!active) return;
 				setStatus("error");
-				setVerificationError(
-					error instanceof Error ? error.message : "Email verification failed.",
-				);
-			});
+				setVerificationError(error instanceof Error ? error.message : "Email verification failed.");
+			}
+		};
+
+		void verify();
 
 		return () => {
 			active = false;
 		};
-	}, [token, loading, verified, posthog, refreshUser]);
+	}, [loading, refreshUser, returnTo, token, verified]);
 
 	useEffect(() => {
 		if (!verified) return;
-		const timer = window.setTimeout(() => navigate(returnTo, { replace: true }), 1000);
+		const destination = needsOnboarding ? "/onboarding" : returnTo;
+		const timer = window.setTimeout(
+			() => navigate(destination, { replace: true, state: { returnTo } }),
+			800,
+		);
 		return () => window.clearTimeout(timer);
-	}, [verified, navigate, returnTo]);
+	}, [needsOnboarding, navigate, returnTo, verified]);
 
 	const handleResend = async () => {
-		if (!user || resending || resendAt) return;
+		const email = user?.email;
+		if (!email || resending || resendAt) return;
 		setResending(true);
 		try {
-			const result = await api.resendVerificationEmail(user.email);
+			const callbackURL = new URL("/verify-email", window.location.origin).toString();
+			const result = await authClient.sendVerificationEmail({ email, callbackURL });
+			if (result.error) throw new Error(result.error.message ?? "Failed to resend verification email");
+
 			setResendAt(Date.now() + 30_000);
 			setCountdown(30);
 			setStatus("waiting");
 			setVerificationError(null);
-			navigate("/verify-email", { replace: true, state: { returnTo } });
-			toast.success(result.message);
+			toast.success("Verification email sent");
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to resend verification email");
 		} finally {
 			setResending(false);
-		}
-	};
-
-	const handleEmailUpdate = async (event: React.SubmitEvent) => {
-		event.preventDefault();
-		if (!user || updatingEmail) return;
-		setEmailError(null);
-		const nextEmail = email.trim();
-		if (nextEmail === user.email) {
-			setEditingEmail(false);
-			return;
-		}
-
-		setUpdatingEmail(true);
-		try {
-			const { message, ...updatedUser } = await api.updateEmail(nextEmail);
-			setUser(updatedUser);
-			setEditingEmail(false);
-			setResendAt(Date.now() + 30_000);
-			setCountdown(30);
-			setStatus("waiting");
-			setVerificationError(null);
-			navigate("/verify-email", { replace: true, state: { returnTo } });
-			posthog.capture("verification_email_updated");
-			toast.success(message);
-		} catch (error) {
-			setEmailError(error instanceof Error ? error.message : "Failed to update email.");
-		} finally {
-			setUpdatingEmail(false);
 		}
 	};
 
@@ -142,27 +126,26 @@ export function VerifyEmailPage() {
 						Verifying your email
 					</h1>
 					<p className="mt-2 text-sm leading-6 text-medium-emphasis">
-						Checking your verification link. This should only take a moment.
+						Checking your verification status. This should only take a moment.
 					</p>
 				</div>
 			</AuthShell>
 		);
 	}
 
+	const verificationComplete = verified || status === "success";
 	const heading = verificationComplete
 		? "Email verified"
 		: status === "error"
 			? "Verification failed"
 			: "Check your inbox";
 	const description = verificationComplete
-		? user
-			? "Your email is verified. Returning you to PaperDrill."
-			: "Your email is verified. Sign in to continue."
+		? "Your email is verified. Continuing to PaperDrill."
 		: status === "error"
 			? verificationError ?? "This verification link is invalid or has expired."
-			: user
-				? "Open the verification email we sent and confirm your address to continue."
-				: "Sign in to request a new verification email.";
+			: authenticated && user
+				? `Open the verification email we sent to ${user.email} to continue.`
+				: "Sign in to verify your email and continue.";
 
 	return (
 		<AuthShell>
@@ -176,103 +159,31 @@ export function VerifyEmailPage() {
 					</p>
 				</header>
 
-				{user && !verificationComplete ? (
-					<div className="mt-8">
-						<div className="flex items-center justify-between gap-4 border-y border-border/50 py-4">
-							<div className="min-w-0">
-								<p className="text-xs text-medium-emphasis">Verification email</p>
-								<p className="mt-1 truncate text-sm font-medium text-high-emphasis">{user.email}</p>
-							</div>
-							{!editingEmail ? (
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									className="shrink-0"
-									onClick={() => setEditingEmail(true)}
-								>
-									Change
-								</Button>
-							) : null}
-						</div>
-
-						{editingEmail ? (
-							<form onSubmit={handleEmailUpdate} className="mt-6 space-y-4">
-								<div className="space-y-2">
-									<label htmlFor="verification-email" className="text-sm font-medium text-high-emphasis">
-										Email address
-									</label>
-									<Input
-										id="verification-email"
-										type="email"
-										name="email"
-										value={email}
-										onChange={(event) => {
-											setEmail(event.target.value);
-											setEmailError(null);
-										}}
-										autoComplete="email"
-										spellCheck={false}
-										aria-invalid={Boolean(emailError)}
-										aria-describedby={emailError ? "verification-email-error" : undefined}
-										className="h-11 rounded-lg bg-l1 px-3.5 shadow-none"
-										required
-									/>
-								</div>
-
-								{emailError ? (
-									<p
-										id="verification-email-error"
-										role="alert"
-										className="rounded-lg border border-red-text/20 bg-red-bg/20 px-3 py-2.5 text-sm text-red-text"
-									>
-										{emailError}
-									</p>
-								) : null}
-
-								<div className="flex flex-col-reverse gap-2 sm:flex-row">
-									<Button
-										type="button"
-										variant="outline"
-										className="h-10 sm:flex-1"
-										disabled={updatingEmail}
-										onClick={() => {
-											setEmail(user.email);
-											setEditingEmail(false);
-										}}
-									>
-										Cancel
-									</Button>
-									<Button type="submit" className="h-10 sm:flex-1" disabled={updatingEmail}>
-										{updatingEmail ? "Updating…" : "Update and resend"}
-									</Button>
-								</div>
-							</form>
-						) : (
-							<div className="mt-6">
-								<p className="text-sm text-medium-emphasis">
-									Didn&apos;t receive it? Check your spam folder or send another email.
-								</p>
-								<Button
-									className="mt-4 h-11 w-full"
-									onClick={handleResend}
-									disabled={resending || resendAt !== null}
-								>
-									{resending
-										? "Sending…"
-										: countdown > 0
-											? `Resend in ${countdown}s`
-											: "Resend email"}
-								</Button>
-							</div>
-						)}
+				{authenticated && user && !verificationComplete ? (
+					<div className="mt-8 space-y-4">
+						<p className="text-sm text-medium-emphasis">
+							Didn&apos;t receive it? Check your spam folder or send another email.
+						</p>
+						<Button
+							className="h-11 w-full"
+							onClick={() => void handleResend()}
+							disabled={resending || resendAt !== null}
+						>
+							{resending ? "Sending…" : countdown > 0 ? `Resend in ${countdown}s` : "Resend email"}
+						</Button>
 					</div>
 				) : null}
 
-				{!user && !verified ? (
+				{!authenticated && !verificationComplete ? (
 					<Button asChild size="lg" className="mt-8 h-11 w-full">
-						<Link to="/login" state={{ returnTo }}>Sign in</Link>
+						<Link to="/login" state={{ returnTo }}>
+							Sign in
+						</Link>
 					</Button>
+				) : null}
+
+				{verificationComplete ? (
+					<p className="mt-8 text-sm text-medium-emphasis">Redirecting…</p>
 				) : null}
 			</div>
 		</AuthShell>
