@@ -16,7 +16,7 @@ import {
 	formatPortfolioView,
 } from "../utils/portfolioFormat";
 import { sendValidationError } from "../utils/validation";
-import { getUserId } from "./user";
+import { getUserId } from "../utils/principal";
 
 const RANGE_MS = {
 	"24h": 24 * 60 * 60 * 1000,

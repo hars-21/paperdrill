@@ -5,7 +5,7 @@ import { sendValidationError } from "../utils/validation";
 import { marketStore } from "../store/market";
 import { toBigInt } from "../utils/convert";
 import { formatOrder, formatOrders, formatCancel } from "../utils/formatter";
-import { getUserId } from "./user";
+import { getUserId } from "../utils/principal";
 import { prisma } from "../db";
 import { logger } from "../utils/logger";
 import { sendApiError, sendEngineError } from "../utils/apiError";
