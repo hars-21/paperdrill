@@ -41,31 +41,37 @@ enum DailyCreditStatus {
   APPLIED
 }
 
+enum CreditClaimKind {
+  STARTER
+  DAILY
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
   emailVerified Boolean   @default(false)
   name          String
+  username      String?   @unique
   image         String?
-  password      String?
   type          UserType  @default(USER)
   pnlBaseline   BigInt?
   pnlBaselineAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  apikeys       ApiKey[]
-  orders        Order[]
-  buyFills      Fill[]    @relation("FillBuyer")
-  sellFills     Fill[]    @relation("FillSeller")
-  dailyCredits  DailyCredit[]
-  balances      Balance[]
-  balanceHistory BalanceHistory[]
-  positions     Position[]
-  positionEvents PositionEvent[]
+  apikeys            ApiKey[]
+  orders             Order[]
+  buyFills           Fill[]              @relation("FillBuyer")
+  sellFills          Fill[]              @relation("FillSeller")
+  dailyCredits       DailyCredit[]
+  creditClaims       CreditClaim[]
+  balances           Balance[]
+  balanceHistory     BalanceHistory[]
+  positions          Position[]
+  positionEvents     PositionEvent[]
   portfolioSnapshots PortfolioSnapshot[]
-  sessions      Session[]
-  accounts      Account[]
+  sessions           Session[]
+  accounts           Account[]
 }
 
 model Session {
@@ -129,6 +135,21 @@ model DailyCredit {
 
   @@unique([userId, creditDate])
   @@index([status, createdAt])
+}
+
+model CreditClaim {
+  id        String          @id @default(uuid())
+  userId    String
+  kind      CreditClaimKind
+  periodKey String          @default("")
+  asset     String
+  amount    BigInt
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, periodKey])
+  @@index([userId, createdAt])
 }
 
 model ApiKey {
@@ -312,13 +333,4 @@ model Candle {
 	@@index([time])
 }
 
-model VerificationToken {
-  id        String    @id @default(uuid())
-  userId    String
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([userId])
-}
+// Legacy custom verification tokens removed in favor of Better Auth `Verification`.
