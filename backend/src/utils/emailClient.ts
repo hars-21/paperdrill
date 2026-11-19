@@ -9,10 +9,9 @@ export function isEmailDeliveryEnabled() {
 	return resend !== null && config.resend.from !== undefined;
 }
 
-export async function sendVerificationEmail(name: string, email: string, token: string) {
+export async function sendVerificationEmail(name: string, email: string, verificationUrl: string) {
 	if (!resend || !config.resend.from) return false;
 
-	const verificationUrl = `${config.app.url}/verify-email?token=${token}`;
 	const html = emailVerificationTemplate(name, verificationUrl);
 	const { error } = await resend.emails.send({
 		from: config.resend.from,

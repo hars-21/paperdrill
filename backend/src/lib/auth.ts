@@ -2,7 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { config } from "../config";
 import { prisma } from "../db";
-import { bootstrapOAuthUser, verifyGoogleLinkedUser } from "../services/account-bootstrap";
+import { ensureGoogleUserVerified } from "../services/account-bootstrap";
+import { sendVerificationEmail } from "../utils/emailClient";
 
 const googleProvider =
 	config.auth.googleClientId && config.auth.googleClientSecret
@@ -21,13 +22,26 @@ export const auth = betterAuth({
 	basePath: "/api/auth",
 	trustedOrigins: config.cors.origin,
 	database: prismaAdapter(prisma, { provider: "postgresql" }),
-	emailAndPassword: { enabled: false },
+	emailAndPassword: {
+		enabled: true,
+		requireEmailVerification: false,
+		minPasswordLength: 8,
+	},
+	emailVerification: {
+		sendOnSignUp: true,
+		autoSignInAfterVerification: true,
+		sendVerificationEmail: async ({ user, token }) => {
+			const url = `${config.app.url}/verify-email?token=${encodeURIComponent(token)}`;
+			await sendVerificationEmail(user.name, user.email, url);
+		},
+	},
 	account: {
 		accountLinking: { enabled: true },
 	},
 	socialProviders: googleProvider,
 	session: {
 		expiresIn: 7 * 24 * 60 * 60,
+		updateAge: 24 * 60 * 60,
 	},
 	advanced: {
 		database: { generateId: "uuid" },
@@ -39,18 +53,11 @@ export const auth = betterAuth({
 		},
 	},
 	databaseHooks: {
-		user: {
-			create: {
-				after: async (user) => {
-					await bootstrapOAuthUser(user.id);
-				},
-			},
-		},
 		account: {
 			create: {
 				after: async (account) => {
 					if (account.providerId === "google") {
-						await verifyGoogleLinkedUser(account.userId);
+						await ensureGoogleUserVerified(account.userId);
 					}
 				},
 			},
