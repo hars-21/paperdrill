@@ -47,7 +47,7 @@ export async function claimDailyCredit(userId: string, now = new Date()) {
 		throw new ApiError(403, "EMAIL_NOT_VERIFIED", "Verify your email to claim daily credit");
 	}
 	if (user.pnlBaseline == null) {
-		throw new ApiError(503, "DAILY_CREDIT_UNAVAILABLE", "PnL baseline is not configured");
+		throw new ApiError(409, "ONBOARDING_REQUIRED", "Claim your starter balance before claiming daily credit");
 	}
 
 	const precision = assetPrecision.get(DAILY_CREDIT_ASSET);

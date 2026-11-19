@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { signinSchema, signupSchema, updateEmailSchema } from "../src/schema/auth";
+import { usernameSchema } from "../src/schema/onboarding";
 import {
 	balanceHistoryQuerySchema,
 	balanceHistorySeriesQuerySchema,
@@ -8,24 +8,10 @@ import {
 } from "../src/schema/exchange";
 import { leaderboardQuerySchema } from "../src/schema/leaderboard";
 
-test("account credentials reject malformed or missing identity fields", () => {
-	const invalidSignups = [
-		{ email: "not-an-email", name: "alice", password: "secret123" },
-		{ email: "alice@test.com", name: " ", password: "secret123" },
-		{ email: "alice@test.com", name: "alice", password: "" },
-		{ email: "alice@test.com", name: "a".repeat(41), password: "secret123" },
-	];
-
-	for (const input of invalidSignups) {
-		expect(signupSchema.safeParse(input).success).toBe(false);
-	}
-
-	expect(signinSchema.safeParse({ email: "alice@test.com", password: "" }).success).toBe(false);
-});
-
-test("email correction accepts only a valid email", () => {
-	expect(updateEmailSchema.safeParse({ email: "correct@example.com" }).success).toBe(true);
-	expect(updateEmailSchema.safeParse({ email: "wrong-email" }).success).toBe(false);
+test("username validation accepts canonical leaderboard handles", () => {
+	expect(usernameSchema.safeParse("trader_01").success).toBe(true);
+	expect(usernameSchema.safeParse("ab").success).toBe(false);
+	expect(usernameSchema.safeParse("bad-name").success).toBe(false);
 });
 
 test("leaderboard pagination applies public query limits", () => {

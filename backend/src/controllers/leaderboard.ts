@@ -14,8 +14,7 @@ import { sendApiError } from "../utils/apiError";
 import { formatLeaderboardEntry } from "../utils/formatter";
 import { logger } from "../utils/logger";
 import { sendValidationError } from "../utils/validation";
-import { getUserId } from "./user";
-import { config } from "../config";
+import { getUserId } from "../utils/principal";
 
 export async function getLeaderboard(req: Request, res: Response) {
 	const parsedQuery = leaderboardQuerySchema.safeParse(req.query);
@@ -73,7 +72,6 @@ export async function getMyLeaderboardEntry(req: Request, res: Response) {
 			select: { emailVerified: true },
 		});
 		if (!user) {
-			res.clearCookie("token", config.cookie);
 			sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 			return;
 		}

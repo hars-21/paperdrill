@@ -3,12 +3,12 @@ import { requireAccess } from "../middleware/auth";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
 	claimDailyReward,
+	claimStarterCredit,
+	completeOnboarding,
 	createDeposit,
+	getTradeHistory,
 	getUserData,
-	updateUserEmail,
 } from "../controllers/user";
-import { getTradeHistory } from "../controllers/user";
-import { authLimiter } from "../middleware/rateLimit";
 
 export const userRouter = Router();
 
@@ -17,11 +17,15 @@ userRouter.get(
 	requireAccess({ types: ["session"], allowUnverified: true }),
 	asyncHandler(getUserData),
 );
-userRouter.patch(
-	"/users/me/email",
-	authLimiter,
+userRouter.post(
+	"/users/me/onboarding",
 	requireAccess({ types: ["session"], allowUnverified: true }),
-	asyncHandler(updateUserEmail),
+	asyncHandler(completeOnboarding),
+);
+userRouter.post(
+	"/users/me/starter-credit",
+	requireAccess({ types: ["session"], allowUnverified: true }),
+	asyncHandler(claimStarterCredit),
 );
 userRouter.get(
 	"/trades",
