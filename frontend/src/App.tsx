@@ -21,6 +21,7 @@ import { PortfolioAssetPage } from "./pages/portfolio-asset";
 import { BalanceHistoryPage } from "./pages/balance-history";
 import { ActivityPage } from "./pages/activity";
 import { LeaderboardPage } from "./pages/leaderboard";
+import { RewardsPage } from "./pages/rewards";
 import { NotFoundPage } from "./pages/not-found";
 import { RouteBehavior } from "./components/route-behavior";
 import { OnboardingPage } from "./pages/onboarding";
@@ -102,6 +103,14 @@ export function App() {
 					<Route path="profile" element={<Navigate to="/settings/profile" replace />} />
 					<Route path="markets" element={<MarketsPage />} />
 					<Route path="leaderboard" element={<LeaderboardPage />} />
+					<Route
+						path="rewards"
+						element={
+							<Protected>
+								<RewardsPage />
+							</Protected>
+						}
+					/>
 					<Route path="trade" element={<TradeRedirect />} />
 					<Route path="trade/:symbol" element={<TradePage />} />
 					<Route

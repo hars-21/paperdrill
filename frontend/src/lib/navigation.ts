@@ -5,6 +5,7 @@ export type NavigationId =
 	| "portfolio"
 	| "balance-history"
 	| "activity"
+	| "rewards"
 	| "profile"
 	| "markets"
 	| "trading"
@@ -35,6 +36,7 @@ export const accountNavigation = [
 	{ id: "portfolio", label: "Portfolio", href: "/portfolio", end: true },
 	{ id: "balance-history", label: "Balance history", href: "/balance-history", end: true },
 	{ id: "activity", label: "Orders & trades", href: "/activity", end: true },
+	{ id: "rewards", label: "Rewards", href: "/rewards", end: true },
 	{ id: "api-keys", label: "API keys", href: "/settings/api-keys", end: true },
 	{ id: "profile", label: "Profile", href: "/settings/profile", end: true },
 ] satisfies NavigationItem[];

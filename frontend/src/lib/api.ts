@@ -20,6 +20,8 @@ import type {
 	PortfolioHistoryResponse,
 	PortfolioPositionDetail,
 	PortfolioPositionEventsResponse,
+	RewardsSummary,
+	StarterCreditClaim,
 	Ticker,
 	UserBalance,
 	UserTrade,
@@ -108,10 +110,11 @@ export const api = {
 	},
 
 	claimStarterCredit() {
-		return request<{ user: UserData; claimed: boolean; asset: string; amount: string }>(
-			"/users/me/starter-credit",
-			{ method: "POST" },
-		);
+		return request<StarterCreditClaim>("/rewards/initial/claim", { method: "POST" });
+	},
+
+	getRewards() {
+		return request<RewardsSummary>("/rewards");
 	},
 
 	getMarkets() {
@@ -203,7 +206,7 @@ export const api = {
 	},
 
 	claimDailyCredit() {
-		return request<DailyCredit>("/users/me/daily-credit", { method: "POST" });
+		return request<DailyCredit>("/rewards/daily/claim", { method: "POST" });
 	},
 
 	getLeaderboard(range: LeaderboardRange = "all", limit = 25, offset = 0) {

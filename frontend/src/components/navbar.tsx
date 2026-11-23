@@ -8,6 +8,7 @@ import {
 	ChartCandlestick,
 	ChevronDown,
 	Database,
+	Gift,
 	House,
 	KeyRound,
 	Landmark,
@@ -50,6 +51,7 @@ const accountIcons = {
 	portfolio: WalletCards,
 	"balance-history": Landmark,
 	activity: Database,
+	rewards: Gift,
 	"api-keys": KeyRound,
 	profile: UserRound,
 };
@@ -59,6 +61,7 @@ const accountDescriptions = {
 	portfolio: "Balances and performance",
 	"balance-history": "Every balance movement",
 	activity: "Open orders and trade history",
+	rewards: "Daily credits and claim history",
 	"api-keys": "Connect your trading bot",
 	profile: "Profile and account settings",
 };
