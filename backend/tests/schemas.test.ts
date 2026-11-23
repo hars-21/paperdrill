@@ -7,6 +7,7 @@ import {
 	orderQuerySchema,
 } from "../src/schema/exchange";
 import { leaderboardQuerySchema } from "../src/schema/leaderboard";
+import { rewardClaimParamsSchema } from "../src/schema/rewards";
 
 test("username validation accepts canonical leaderboard handles", () => {
 	expect(usernameSchema.safeParse("trader_01").success).toBe(true);
@@ -20,6 +21,13 @@ test("leaderboard pagination applies public query limits", () => {
 	expect(leaderboardQuerySchema.safeParse({ offset: "-1" }).success).toBe(false);
 	expect(leaderboardQuerySchema.safeParse({ range: "7d" }).success).toBe(true);
 	expect(leaderboardQuerySchema.safeParse({ range: "90d" }).success).toBe(false);
+});
+
+test("reward claims only accept supported reward kinds", () => {
+	expect(rewardClaimParamsSchema.safeParse({ kind: "initial" }).success).toBe(true);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "daily" }).success).toBe(true);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "weekly" }).success).toBe(false);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "STARTER" }).success).toBe(false);
 });
 
 test("order input accepts the two supported order shapes", () => {
