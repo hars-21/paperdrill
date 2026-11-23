@@ -1,14 +1,11 @@
 import { Router } from "express";
-import { requireAccess } from "../middleware/auth";
-import { asyncHandler } from "../utils/asyncHandler";
 import {
 	claimDailyReward,
-	claimStarterCredit,
-	completeOnboarding,
-	createDeposit,
-	getTradeHistory,
-	getUserData,
-} from "../controllers/user";
+	claimInitialReward,
+} from "../controllers/rewards";
+import { completeOnboarding, createDeposit, getTradeHistory, getUserData } from "../controllers/user";
+import { requireAccess } from "../middleware/auth";
+import { asyncHandler } from "../utils/asyncHandler";
 
 export const userRouter = Router();
 
@@ -25,7 +22,7 @@ userRouter.post(
 userRouter.post(
 	"/users/me/starter-credit",
 	requireAccess({ types: ["session"], allowUnverified: true }),
-	asyncHandler(claimStarterCredit),
+	asyncHandler(claimInitialReward),
 );
 userRouter.get(
 	"/trades",

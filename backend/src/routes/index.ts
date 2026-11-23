@@ -7,6 +7,7 @@ import { keyRouter } from "./key";
 import { leaderboardRouter } from "./leaderboard";
 import { balanceRouter } from "./balance";
 import { portfolioRouter } from "./portfolio";
+import { rewardsRouter } from "./rewards";
 
 export const appRouter = Router();
 
@@ -18,3 +19,4 @@ appRouter.use("/orders", orderRouter);
 appRouter.use("/markets", marketRouter);
 appRouter.use("/keys", keyRouter);
 appRouter.use("/leaderboard", leaderboardRouter);
+appRouter.use("/rewards", rewardsRouter);
