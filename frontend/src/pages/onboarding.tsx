@@ -44,14 +44,15 @@ export function OnboardingPage() {
 		setIsLoading(true);
 		try {
 			await api.completeOnboarding({ name: trimmedName, username: normalizedUsername });
+			let starterAmount: string | null = null;
 			if (!user.starterClaimed) {
 				const result = await api.claimStarterCredit();
-				if (result.claimed) {
-					toast.success(`Starter balance claimed: +${result.amount} ${result.asset}`);
-				}
+				if (result.claimed) starterAmount = `${result.amount} ${result.asset}`;
 			}
 			await refreshUser();
-			toast.success("You're all set");
+			toast.success(
+				starterAmount ? `Profile ready. ${starterAmount} was added to your balance.` : "Profile ready.",
+			);
 			navigate(returnTo, { replace: true });
 		} catch (error) {
 			if (error instanceof ApiError) {
@@ -68,9 +69,15 @@ export function OnboardingPage() {
 		<AuthShell>
 			<div>
 				<header>
-					<h1 className="text-3xl font-semibold tracking-tight text-high-emphasis">Set up your account</h1>
+					<p className="text-xs font-medium tracking-[0.18em] text-low-emphasis uppercase">
+						One last step
+					</p>
+					<h1 className="mt-3 text-3xl font-semibold tracking-tight text-high-emphasis">
+						Set up your trader profile
+					</h1>
 					<p className="mt-2 text-sm leading-6 text-medium-emphasis">
-						Choose a username and claim your starter balance to begin trading.
+						Choose how you appear on PaperDrill. Your display name can change later; your username is
+						your permanent handle.
 					</p>
 				</header>
 
@@ -92,7 +99,8 @@ export function OnboardingPage() {
 								required
 							/>
 							<FieldDescription className="text-xs">
-								Shown on your profile and public rankings.
+								Shown on your profile, leaderboard, and trade history. We don&apos;t ask for your legal
+								name.
 							</FieldDescription>
 						</Field>
 
@@ -122,11 +130,11 @@ export function OnboardingPage() {
 							</FieldDescription>
 						</Field>
 
-						<div className="rounded-lg border border-border/60 bg-l1 px-4 py-3">
+						<div className="border-t border-border/50 pt-5">
 							<p className="text-sm font-medium text-high-emphasis">Starter balance</p>
-							<p className="mt-1 text-sm text-medium-emphasis">
-								Claim <span className="font-medium text-high-emphasis">10,000 USD</span> in paper credits to
-								start trading.
+							<p className="mt-1 text-sm leading-6 text-medium-emphasis">
+								10,000 USD in paper credits will be added when you finish setup. Daily credits can be
+								claimed later from Rewards.
 							</p>
 						</div>
 
@@ -138,7 +146,7 @@ export function OnboardingPage() {
 						</FieldError>
 
 						<Button type="submit" size="lg" className="h-11 w-full" disabled={isLoading || !user}>
-							{isLoading ? "Finishing setup…" : "Save and claim starter balance"}
+							{isLoading ? "Finishing setup…" : "Create profile and add balance"}
 						</Button>
 					</FieldGroup>
 				</form>

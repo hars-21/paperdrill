@@ -1,11 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAnalytics } from "@/lib/analytics";
 import { api, isUnauthorized } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { accountQueryKeys, invalidateAccountQueries } from "@/lib/query-client";
+import { accountQueryKeys } from "@/lib/query-client";
 import type { UserData } from "@/types/api";
-import { toast } from "sonner";
 
 type AuthContextValue = {
 	user: UserData | null;
@@ -26,23 +25,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const queryClient = useQueryClient();
 	const posthog = useAnalytics();
 	const previousUserId = useRef<string | null>(null);
-	const shownDailyCreditDate = useRef<string | null>(null);
-
-	const { mutate: claimDailyCredit } = useMutation({
-		mutationFn: () => api.claimDailyCredit(),
-		onSuccess: (credit, _vars, _ctx) => {
-			if (user?.id) void invalidateAccountQueries(queryClient, user.id);
-			if (!credit.credited || credit.creditDate === shownDailyCreditDate.current) {
-				return;
-			}
-
-			shownDailyCreditDate.current = credit.creditDate;
-			toast.success(`Daily credit claimed: +${credit.amount} ${credit.asset}`);
-		},
-		onError: () => {
-			// Daily credit is best-effort on session hydration.
-		},
-	});
 
 	const refreshUser = useCallback(async () => {
 		if (!session?.user) {
@@ -97,19 +79,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 				username: user?.username ?? undefined,
 			});
 		} else if (previousUserId.current) {
-			shownDailyCreditDate.current = null;
-			queryClient.removeQueries({ queryKey: ["account", previousUserId.current] });
+			queryClient.removeQueries({ queryKey: accountQueryKeys.all(previousUserId.current) });
 			posthog.reset();
 		}
 
 		previousUserId.current = nextUserId;
 	}, [posthog, queryClient, user?.email, user?.emailVerified, user?.id, user?.username]);
-
-	useEffect(() => {
-		if (user?.id && user.emailVerified && !user.needsOnboarding && user.starterClaimed) {
-			claimDailyCredit();
-		}
-	}, [claimDailyCredit, user?.emailVerified, user?.id, user?.needsOnboarding, user?.starterClaimed]);
 
 	const loading = sessionPending || (Boolean(session?.user) && (!profileResolved || (profileLoading && !user)));
 

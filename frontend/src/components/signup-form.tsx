@@ -9,8 +9,18 @@ import { useAnalytics } from "@/lib/analytics";
 import { getSafeReturnTo } from "@/lib/redirect";
 import { toast } from "sonner";
 
+function temporaryNameFromEmail(email: string) {
+	const localPart = email.trim().split("@")[0] ?? "";
+	const cleaned = localPart
+		.replace(/[._-]+/g, " ")
+		.replace(/[^a-zA-Z0-9 ]/g, "")
+		.trim()
+		.replace(/\s+/g, " ");
+
+	return cleaned.replace(/\b\w/g, (character) => character.toUpperCase()).slice(0, 40) || "Trader";
+}
+
 export function SignupForm() {
-	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -32,9 +42,10 @@ export function SignupForm() {
 
 		setIsLoading(true);
 		try {
+			const emailAddress = email.trim();
 			const result = await authClient.signUp.email({
-				name: name.trim(),
-				email: email.trim(),
+				name: temporaryNameFromEmail(emailAddress),
+				email: emailAddress,
 				password,
 			});
 
@@ -78,7 +89,7 @@ export function SignupForm() {
 			<header>
 				<h1 className="text-3xl font-semibold tracking-tight text-high-emphasis">Create your account</h1>
 				<p className="mt-2 text-sm leading-6 text-medium-emphasis">
-					Start trading with credits and build a measurable record.
+					Start with your email, then choose the name and username others will see.
 				</p>
 			</header>
 
@@ -105,25 +116,6 @@ export function SignupForm() {
 
 				<form onSubmit={handleSubmit}>
 					<FieldGroup className="gap-5">
-						<Field className="gap-2">
-							<FieldLabel htmlFor="name">Full name</FieldLabel>
-							<Input
-								id="name"
-								type="text"
-								placeholder="Aarav Mehta"
-								name="name"
-								value={name}
-								onChange={(event) => {
-									setName(event.target.value);
-									setFormError(null);
-								}}
-								maxLength={40}
-								autoComplete="name"
-								className="h-11 rounded-lg bg-l1 px-3.5 shadow-none"
-								required
-							/>
-						</Field>
-
 						<Field className="gap-2">
 							<FieldLabel htmlFor="signup-email">Email address</FieldLabel>
 							<Input
