@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { SignupPage } from "./pages/signup";
+import { ForgotPasswordPage } from "./pages/forgot-password";
+import { ResetPasswordPage } from "./pages/reset-password";
 import { VerifyEmailPage } from "./pages/verify-email";
 import { ProfilePage } from "./pages/profile";
 import { TradePage } from "./pages/trade";
@@ -118,6 +120,8 @@ export function App() {
 							</PublicOnly>
 						}
 					/>
+					<Route path="forgot-password" element={<ForgotPasswordPage />} />
+					<Route path="reset-password" element={<ResetPasswordPage />} />
 					<Route path="verify-email" element={<VerifyEmailPage />} />
 					<Route
 						path="onboarding"

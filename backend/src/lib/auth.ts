@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { config } from "../config";
 import { prisma } from "../db";
 import { ensureGoogleUserVerified } from "../services/account-bootstrap";
-import { sendVerificationEmail } from "../utils/emailClient";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../utils/emailClient";
 
 const googleProvider =
 	config.auth.googleClientId && config.auth.googleClientSecret
@@ -26,6 +26,9 @@ export const auth = betterAuth({
 		enabled: true,
 		requireEmailVerification: false,
 		minPasswordLength: 8,
+		sendResetPassword: async ({ user, url }) => {
+			await sendPasswordResetEmail(user.name, user.email, url);
+		},
 	},
 	emailVerification: {
 		sendOnSignUp: true,
