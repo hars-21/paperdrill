@@ -1,9 +1,9 @@
 import "dotenv/config";
-import bcrypt from "bcrypt";
 import crypto from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import {
+	CreditClaimKind,
 	DailyCreditStatus,
 	OrderType,
 	Scope,
@@ -38,7 +38,6 @@ const DAILY_CREDIT_AMOUNT = 10_000n;
 const baseline = INITIAL_DEPOSIT + DAILY_CREDIT_AMOUNT;
 const creditDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 const demoEmail = "demo@paperdrill.local";
-const demoPassword = process.env.DEMO_USER_PASSWORD ?? "paperdrill-demo";
 
 const markets = [
 	{
@@ -272,7 +271,7 @@ async function clearDatabase() {
 		await transaction.balanceHistory.deleteMany();
 		await transaction.balance.deleteMany();
 		await transaction.projectionCursor.deleteMany();
-		await transaction.verificationToken.deleteMany();
+		await transaction.creditClaim.deleteMany();
 		await transaction.dailyCredit.deleteMany();
 		await transaction.apiKey.deleteMany();
 		await transaction.fill.deleteMany();
@@ -291,19 +290,16 @@ async function seed() {
 		data: markets.map(({ lastPrice, startPrice, volatility, baseVolume, ...market }) => market),
 	});
 
-	const [userPassword, servicePassword] = await Promise.all([
-		bcrypt.hash(demoPassword, 10),
-		bcrypt.hash(crypto.randomUUID(), 10),
-	]);
 	const userRows = traders.map(([name], index) => {
 		const createdAt = new Date(now.getTime() - (48 - index) * DAY_MS);
+		const username = name.toLowerCase().replaceAll(" ", "_").replace(/[^a-z0-9_]/g, "");
 
 		return {
 			id: crypto.randomUUID(),
 			name,
+			username,
 			email: name === "Kian Rao" ? demoEmail : emailFor(name),
 			emailVerified: true,
-			password: userPassword,
 			type: UserType.USER,
 			pnlBaseline: baseline,
 			pnlBaselineAt: createdAt,
@@ -316,7 +312,6 @@ async function seed() {
 		name: `${market.baseAsset} Market Maker`,
 		email: `${market.baseAsset.toLowerCase()}.service@paperdrill.local`,
 		emailVerified: true,
-		password: servicePassword,
 		type: UserType.SERVICE,
 		pnlBaseline: null,
 		pnlBaselineAt: null,
@@ -355,6 +350,15 @@ async function seed() {
 		status: DailyCreditStatus.APPLIED,
 		createdAt: now,
 		appliedAt: now,
+	}));
+	const starterClaimRows = userRows.map((user) => ({
+		id: crypto.randomUUID(),
+		userId: user.id,
+		kind: CreditClaimKind.STARTER,
+		periodKey: "",
+		asset: QUOTE_ASSET,
+		amount: baseline,
+		createdAt: user.createdAt,
 	}));
 	const creditByUser = new Map<string, (typeof creditRows)[number]>(
 		creditRows.map((credit) => [credit.userId, credit]),
@@ -432,6 +436,7 @@ async function seed() {
 	await prisma.position.createMany({ data: positions });
 	await prisma.balanceHistory.createMany({ data: balanceHistory });
 	await prisma.dailyCredit.createMany({ data: creditRows });
+	await prisma.creditClaim.createMany({ data: starterClaimRows });
 	await insertBatches(snapshots, (data) => prisma.portfolioSnapshot.createMany({ data }));
 
 	const candles = markets.flatMap((market, index) => buildCandles(market, index));
@@ -515,7 +520,7 @@ async function seed() {
 		positions: positions.length,
 		snapshots: snapshots.length,
 	});
-	console.log(`Login: ${demoEmail} / ${demoPassword}`);
+	console.log(`Demo user: ${demoEmail}`);
 }
 
 seed()

@@ -54,6 +54,7 @@ export const accountQueryKeys = {
 	],
 	tradesPrefix: (userId: string) => ["account", userId, "trades"],
 	trades: (userId: string, limit: number) => ["account", userId, "trades", { limit }],
+	rewards: (userId: string) => ["account", userId, "rewards"],
 	balanceHistoryPrefix: (userId: string) => ["account", userId, "balance-history"],
 	balanceHistory: (userId: string, params: Record<string, unknown>) => [
 		"account",
@@ -76,6 +77,7 @@ export function invalidateAccountQueries(client: QueryClient, userId: string) {
 		client.invalidateQueries({ queryKey: accountQueryKeys.balancesPrefix(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.portfolio(userId) }),
 		client.invalidateQueries({ queryKey: accountQueryKeys.balanceHistoryPrefix(userId) }),
+		client.invalidateQueries({ queryKey: accountQueryKeys.rewards(userId) }),
 	]);
 }
 

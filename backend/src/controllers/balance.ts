@@ -14,7 +14,7 @@ import { getReferencePrices } from "../utils/referencePrice";
 import { formatBalance, formatBalanceHistoryEntry } from "../utils/formatter";
 import type { ReferencePrice } from "../utils/portfolio";
 import { sendToEngine } from "../utils/engineClient";
-import { getUserId } from "./user";
+import { getUserId } from "../utils/principal";
 
 const RANGE_MS = {
 	"24h": 24 * 60 * 60 * 1000,

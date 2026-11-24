@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { ApiClient, waitForSystemReady } from "../helpers/api";
 import { createTestUser } from "../helpers/users";
+import { waitFor } from "../helpers/wait-for";
 import { TestDatabase } from "../setup/database";
 
 const database = new TestDatabase();
@@ -20,7 +21,15 @@ test("daily credit is concurrent-safe and does not count as profit", async () =>
 		status: 200,
 		data: { USD: { available: "10100.00", locked: "0.00" } },
 	});
-	expect(await user.client.getPortfolio()).toMatchObject({
+	const portfolio = await waitFor(
+		() => user.client.getPortfolio(),
+		(response) =>
+			response.status === 200 &&
+			response.data.equity === "10100.00" &&
+			response.data.pnl === "0.00",
+		{ description: "daily credit portfolio projection", timeoutMs: 10_000 },
+	);
+	expect(portfolio).toMatchObject({
 		status: 200,
 		data: {
 			quoteAsset: "USD",

@@ -103,6 +103,42 @@ export interface DailyCredit {
 	nextEligibleAt: string;
 }
 
+export interface StarterCreditClaim {
+	claimed: boolean;
+	asset: string;
+	amount: string;
+}
+
+export type RewardKind = "initial" | "daily";
+
+export interface RewardsHistoryItem {
+	id: string;
+	kind: "INITIAL" | "DAILY";
+	asset: string;
+	amount: string;
+	createdAt: string;
+}
+
+export interface RewardsSummary {
+	initial: {
+		asset: string;
+		amount: string;
+		claimed: boolean;
+		available: boolean;
+		claimedAt: string | null;
+	};
+	daily: {
+		asset: string;
+		amount: string;
+		eligible: boolean;
+		claimedToday: boolean;
+		pending: boolean;
+		creditDate: string;
+		nextEligibleAt: string;
+	};
+	history: RewardsHistoryItem[];
+}
+
 export type PortfolioSource = "live" | "projection" | "engine";
 
 export interface PortfolioPosition {

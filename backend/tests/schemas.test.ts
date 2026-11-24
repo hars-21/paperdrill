@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { signinSchema, signupSchema, updateEmailSchema } from "../src/schema/auth";
+import { usernameSchema } from "../src/schema/onboarding";
 import {
 	balanceHistoryQuerySchema,
 	balanceHistorySeriesQuerySchema,
@@ -7,25 +7,12 @@ import {
 	orderQuerySchema,
 } from "../src/schema/exchange";
 import { leaderboardQuerySchema } from "../src/schema/leaderboard";
+import { rewardClaimParamsSchema } from "../src/schema/rewards";
 
-test("account credentials reject malformed or missing identity fields", () => {
-	const invalidSignups = [
-		{ email: "not-an-email", name: "alice", password: "secret123" },
-		{ email: "alice@test.com", name: " ", password: "secret123" },
-		{ email: "alice@test.com", name: "alice", password: "" },
-		{ email: "alice@test.com", name: "a".repeat(41), password: "secret123" },
-	];
-
-	for (const input of invalidSignups) {
-		expect(signupSchema.safeParse(input).success).toBe(false);
-	}
-
-	expect(signinSchema.safeParse({ email: "alice@test.com", password: "" }).success).toBe(false);
-});
-
-test("email correction accepts only a valid email", () => {
-	expect(updateEmailSchema.safeParse({ email: "correct@example.com" }).success).toBe(true);
-	expect(updateEmailSchema.safeParse({ email: "wrong-email" }).success).toBe(false);
+test("username validation accepts canonical leaderboard handles", () => {
+	expect(usernameSchema.safeParse("trader_01").success).toBe(true);
+	expect(usernameSchema.safeParse("ab").success).toBe(false);
+	expect(usernameSchema.safeParse("bad-name").success).toBe(false);
 });
 
 test("leaderboard pagination applies public query limits", () => {
@@ -34,6 +21,13 @@ test("leaderboard pagination applies public query limits", () => {
 	expect(leaderboardQuerySchema.safeParse({ offset: "-1" }).success).toBe(false);
 	expect(leaderboardQuerySchema.safeParse({ range: "7d" }).success).toBe(true);
 	expect(leaderboardQuerySchema.safeParse({ range: "90d" }).success).toBe(false);
+});
+
+test("reward claims only accept supported reward kinds", () => {
+	expect(rewardClaimParamsSchema.safeParse({ kind: "initial" }).success).toBe(true);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "daily" }).success).toBe(true);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "weekly" }).success).toBe(false);
+	expect(rewardClaimParamsSchema.safeParse({ kind: "STARTER" }).success).toBe(false);
 });
 
 test("order input accepts the two supported order shapes", () => {

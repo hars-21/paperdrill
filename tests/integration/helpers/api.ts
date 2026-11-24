@@ -16,6 +16,22 @@ export interface ErrorResponse {
 	requestId: string;
 }
 
+export interface AuthUser {
+	id: string;
+	email: string;
+	emailVerified: boolean;
+}
+
+interface SignUpResponse {
+	token: string | null;
+	user: AuthUser;
+}
+
+interface CompleteOnboardingInput {
+	name: string;
+	username: string;
+}
+
 export interface OrderInput {
 	type: "LIMIT" | "MARKET";
 	side: "BUY" | "SELL";
@@ -129,18 +145,38 @@ export class ApiClient {
 		if (this.cookie) headers.set("cookie", this.cookie);
 
 		const response = await fetch(`${env.apiBaseUrl}${path}`, { ...init, headers });
-		const setCookie = response.headers.get("set-cookie");
-		if (setCookie) this.cookie = setCookie.split(";", 1)[0];
+		const responseHeaders = response.headers as Headers & { getSetCookie?: () => string[] };
+		const setCookies =
+			typeof responseHeaders.getSetCookie === "function"
+				? responseHeaders.getSetCookie()
+				: [responseHeaders.get("set-cookie")].filter((value): value is string => value !== null);
+		if (setCookies.length > 0) {
+			this.cookie = setCookies.map((value) => value.split(";", 1)[0]).join("; ");
+		}
 
 		const data = (await response.json()) as T;
 		return { status: response.status, data, headers: response.headers };
 	}
 
 	signup(email: string, name: string, password: string) {
-		return this.request<{ id: string; email: string; emailVerified: boolean }>("/v1/auth/signup", {
+		return this.request<SignUpResponse>("/api/auth/sign-up/email", {
 			method: "POST",
 			body: JSON.stringify({ email, name, password }),
 		});
+	}
+
+	completeOnboarding(input: CompleteOnboardingInput) {
+		return this.request<AuthUser>("/v1/users/me/onboarding", {
+			method: "POST",
+			body: JSON.stringify(input),
+		});
+	}
+
+	claimInitialCredit() {
+		return this.request<{ claimed: boolean; asset: string; amount: string }>(
+			"/v1/rewards/initial/claim",
+			{ method: "POST" },
+		);
 	}
 
 	getBalances() {
@@ -160,7 +196,7 @@ export class ApiClient {
 	}
 
 	claimDailyCredit() {
-		return this.request<DailyCreditResponse>("/v1/users/me/daily-credit", { method: "POST" });
+		return this.request<DailyCreditResponse>("/v1/rewards/daily/claim", { method: "POST" });
 	}
 
 	createOrder(input: OrderInput) {

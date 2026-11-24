@@ -5,7 +5,7 @@ import { createKeySchema } from "../schema/apiKey";
 import { sendValidationError } from "../utils/validation";
 import { hashSecret } from "../middleware/auth";
 import { API_KEY_PREFIX } from "../types/principal";
-import { getUserId } from "./user";
+import { getUserId } from "../utils/principal";
 import { logger } from "../utils/logger";
 import { sendApiError } from "../utils/apiError";
 

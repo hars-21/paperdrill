@@ -18,6 +18,8 @@ tags:
     description: Read balances, portfolio performance, and private trade history.
   - name: Leaderboard
     description: Live public standings and your personal ranking.
+  - name: Rewards
+    description: Starter and daily simulated-fund credit status and claims for signed-in users.
 paths:
   /markets:
     get:
@@ -736,6 +738,78 @@ paths:
           $ref: "#/components/responses/LeaderboardUnavailable"
         default:
           $ref: "#/components/responses/RequestError"
+  /rewards:
+    get:
+      operationId: getRewards
+      summary: Get your rewards
+      description: |
+        Returns your starter and daily simulated-fund credit status and your 20 most recent credits.
+        Requires a signed-in session. No API key scope applies.
+      tags: [Rewards]
+      security:
+        - SessionAuth: []
+      responses:
+        "200":
+          description: Rewards returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardsSummary"
+        "401":
+          description: A signed-in session is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        default:
+          $ref: "#/components/responses/RequestError"
+  /rewards/{kind}/claim:
+    post:
+      operationId: claimReward
+      summary: Claim a reward
+      description: |
+        Claims either the one-time starter credit (`initial`) or the current UTC day's credit (`daily`).
+        Requires a signed-in session. No API key scope applies.
+      tags: [Rewards]
+      security:
+        - SessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RewardKindPath"
+      responses:
+        "200":
+          description: Claim processed. The response reports when the reward was already applied.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/InitialRewardClaim"
+                  - $ref: "#/components/schemas/DailyRewardClaim"
+        "401":
+          description: A signed-in session is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: The account is not eligible for this reward.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Setup is incomplete or the reward cannot be claimed yet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: The credit is temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        default:
+          $ref: "#/components/responses/RequestError"
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -773,6 +847,13 @@ components:
       schema:
         type: string
       example: BTC
+    RewardKindPath:
+      name: kind
+      in: path
+      required: true
+      description: Reward to claim.
+      schema:
+        $ref: "#/components/schemas/RewardKind"
   schemas:
     DecimalString:
       type: string
@@ -1087,6 +1168,115 @@ components:
       type: object
       additionalProperties:
         $ref: "#/components/schemas/Balance"
+    RewardKind:
+      type: string
+      enum: [initial, daily]
+    InitialRewardState:
+      type: object
+      required: [asset, amount, claimed, available, claimedAt]
+      properties:
+        asset:
+          type: string
+          example: USD
+        amount:
+          $ref: "#/components/schemas/DecimalString"
+        claimed:
+          type: boolean
+        available:
+          type: boolean
+        claimedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    DailyRewardState:
+      type: object
+      required:
+        - asset
+        - amount
+        - eligible
+        - claimedToday
+        - pending
+        - creditDate
+        - nextEligibleAt
+      properties:
+        asset:
+          type: string
+          example: USD
+        amount:
+          $ref: "#/components/schemas/DecimalString"
+        eligible:
+          type: boolean
+        claimedToday:
+          type: boolean
+        pending:
+          type: boolean
+        creditDate:
+          type: string
+          format: date
+          description: UTC date for the claim window.
+        nextEligibleAt:
+          type: string
+          format: date-time
+    RewardsHistoryItem:
+      type: object
+      required: [id, kind, asset, amount, createdAt]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [INITIAL, DAILY]
+        asset:
+          type: string
+          example: USD
+        amount:
+          $ref: "#/components/schemas/DecimalString"
+        createdAt:
+          type: string
+          format: date-time
+    RewardsSummary:
+      type: object
+      required: [initial, daily, history]
+      properties:
+        initial:
+          $ref: "#/components/schemas/InitialRewardState"
+        daily:
+          $ref: "#/components/schemas/DailyRewardState"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardsHistoryItem"
+    InitialRewardClaim:
+      type: object
+      required: [claimed, asset, amount]
+      properties:
+        claimed:
+          type: boolean
+          description: False when the starter credit was already applied.
+        asset:
+          type: string
+          example: USD
+        amount:
+          $ref: "#/components/schemas/DecimalString"
+    DailyRewardClaim:
+      type: object
+      required: [credited, asset, amount, creditDate, nextEligibleAt]
+      properties:
+        credited:
+          type: boolean
+          description: False when today's credit was already applied.
+        asset:
+          type: string
+          example: USD
+        amount:
+          $ref: "#/components/schemas/DecimalString"
+        creditDate:
+          type: string
+          format: date
+        nextEligibleAt:
+          type: string
+          format: date-time
     BalanceChangeReason:
       type: string
       enum:

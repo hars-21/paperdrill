@@ -1,26 +1,19 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { config } from "../config";
 import cookie from "cookie";
 import crypto from "crypto";
+import { fromNodeHeaders } from "better-auth/node";
+import { config } from "../config";
 import { prisma } from "../db";
 import { logger } from "../utils/logger";
 import { API_KEY_PREFIX, type PrincipalType } from "../types/principal";
 import type { Scope } from "../../generated/prisma/enums";
 import { sendApiError } from "../utils/apiError";
-
-interface TokenPayload {
-	id: string;
-}
+import { auth } from "../lib/auth";
 
 interface AccessOptions {
 	types?: PrincipalType[];
 	scopes?: Scope[];
 	allowUnverified?: boolean;
-}
-
-export function createToken(payload: TokenPayload): string {
-	return jwt.sign(payload, config.auth.jwtSecret, { expiresIn: "7d" });
 }
 
 export function hashSecret(raw: string): string {
@@ -50,11 +43,11 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 		if (isServiceToken(credential)) {
 			const serviceEmail = req.header("x-service-email");
 			const service = await prisma.user.findUnique({
-				where: { type: "SERVICE", email: serviceEmail },
-				select: { id: true },
+				where: { email: serviceEmail },
+				select: { id: true, type: true },
 			});
 
-			if (!service) {
+			if (!service || service.type !== "SERVICE") {
 				sendApiError(res, 401, "INVALID_API_KEY", "Invalid service credentials");
 				return;
 			}
@@ -107,26 +100,26 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 	}
 
 	const cookies = cookie.parse(req.headers.cookie ?? "");
-	const token = cookies.token;
+	const hasSessionCookie = Object.keys(cookies).some(
+		(name) => name.includes("better-auth") || name.includes("session"),
+	);
 
-	if (!token) {
-		next();
-		return;
-	}
-
-	try {
-		const payload = jwt.verify(token, config.auth.jwtSecret);
-		if (typeof payload === "string" || typeof payload.id !== "string") {
-			throw new Error("Invalid token payload");
+	if (hasSessionCookie) {
+		try {
+			const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+			if (session?.user) {
+				req.principal = {
+					type: "session",
+					userId: session.user.id,
+					emailVerified: session.user.emailVerified,
+				};
+			}
+		} catch (e) {
+			logger.warn("Session verification failed", { error: (e as Error).message });
 		}
-
-		req.principal = { type: "session", userId: payload.id };
-		next();
-	} catch (e) {
-		logger.warn("Auth token verification failed", { error: (e as Error).message });
-		res.clearCookie("token", config.cookie);
-		next();
 	}
+
+	next();
 }
 
 export function requireAccess({ types, scopes, allowUnverified = false }: AccessOptions) {
@@ -153,7 +146,6 @@ export function requireAccess({ types, scopes, allowUnverified = false }: Access
 				});
 
 				if (!user) {
-					if (principal.type === "session") res.clearCookie("token", config.cookie);
 					sendApiError(res, 401, "AUTHENTICATION_REQUIRED", "Authentication required");
 					return;
 				}

@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Page, PageContent } from "@/components/ui/page";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 
 function getInitials(name: string) {
 	return name
@@ -70,7 +70,7 @@ function AccessRow({
 }
 
 export function ProfilePage() {
-	const { user, verified, setUser } = useAuth();
+	const { user, verified, refreshUser } = useAuth();
 	const navigate = useNavigate();
 	const [copied, setCopied] = useState(false);
 	const [loggingOut, setLoggingOut] = useState(false);
@@ -91,13 +91,13 @@ export function ProfilePage() {
 		if (loggingOut) return;
 		setLoggingOut(true);
 		try {
-			await api.signout();
+			await authClient.signOut();
 		} catch (error) {
 			console.error("Signout failed:", error);
 		} finally {
-			setUser(null);
+			await refreshUser();
 			toast.success("Logged out successfully");
-			navigate("/");
+			navigate("/", { replace: true });
 		}
 	};
 
@@ -122,10 +122,8 @@ export function ProfilePage() {
 									{getInitials(user.name)}
 								</AvatarFallback>
 							</Avatar>
-							<h2 className="mt-5 text-xl font-semibold tracking-tight text-high-emphasis">
-								{user.name}
-							</h2>
-							<p className="mt-1 break-all text-sm text-medium-emphasis">{user.email}</p>
+							<h2 className="mt-5 text-xl font-semibold tracking-tight text-high-emphasis">{user.name}</h2>
+							<p className="mt-1 break-all text-sm text-medium-emphasis">@{user.username ?? "username"}</p>
 
 							<div className="mt-6 border-t border-border/50 pt-4 lg:mt-auto">
 								<p className={verified ? "text-xs font-medium text-green-text" : "text-xs font-medium text-medium-emphasis"}>
@@ -153,7 +151,12 @@ export function ProfilePage() {
 								<DetailRow
 									label="Display name"
 									value={user.name}
-									description="Shown on public rankings and across your account."
+									description="Shown on your profile and public rankings."
+								/>
+								<DetailRow
+									label="Username"
+									value={user.username ? `@${user.username}` : "Not set"}
+									description="Your public handle on the leaderboard. Usernames cannot be changed."
 								/>
 								<DetailRow
 									label="Email address"
@@ -177,7 +180,7 @@ export function ProfilePage() {
 									description="Your unique identifier across account and API records."
 									mono
 									action={
-										<Button type="button" variant="ghost" size="sm" onClick={copyUserId}>
+										<Button type="button" variant="ghost" size="sm" onClick={() => void copyUserId()}>
 											{copied ? "Copied" : "Copy"}
 										</Button>
 									}
