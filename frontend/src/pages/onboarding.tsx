@@ -6,14 +6,14 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError } from "@/lib/api";
-import { getSafeReturnTo } from "@/lib/redirect";
+import { getSafeReturnToFromLocation } from "@/lib/redirect";
 import { toast } from "sonner";
 
 export function OnboardingPage() {
 	const { user, refreshUser } = useAuth();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const returnTo = getSafeReturnTo(location.state);
+	const returnTo = getSafeReturnToFromLocation(location);
 	const [name, setName] = useState(user?.name ?? "");
 	const [username, setUsername] = useState(user?.username ?? "");
 	const [isLoading, setIsLoading] = useState(false);

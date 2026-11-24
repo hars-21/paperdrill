@@ -56,10 +56,11 @@ export function LoginForm() {
 		setFormError(null);
 		setIsGoogleLoading(true);
 		try {
-			const callbackURL = new URL(returnTo, window.location.origin).toString();
+			const callbackURL = new URL("/onboarding", window.location.origin);
+			callbackURL.searchParams.set("returnTo", returnTo);
 			await authClient.signIn.social({
 				provider: "google",
-				callbackURL,
+				callbackURL: callbackURL.toString(),
 				errorCallbackURL: `${window.location.origin}/login`,
 			});
 		} catch (err) {

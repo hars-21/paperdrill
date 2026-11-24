@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/auth-client";
 import { config } from "@/lib/env";
-import { getSafeReturnTo, type ReturnLocationState } from "@/lib/redirect";
+import { getSafeReturnToFromLocation, type ReturnLocationState } from "@/lib/redirect";
 import { toast } from "sonner";
 
 type Status = "waiting" | "verifying" | "success" | "error";
@@ -18,7 +18,7 @@ export function VerifyEmailPage() {
 	const location = useLocation();
 	const locationState = location.state as ReturnLocationState | null;
 	const emailWasJustSent = Boolean(locationState?.emailSent);
-	const returnTo = getSafeReturnTo(location.state);
+	const returnTo = getSafeReturnToFromLocation(location);
 	const [status, setStatus] = useState<Status>(token ? "verifying" : "waiting");
 	const [verificationError, setVerificationError] = useState<string | null>(null);
 	const [resending, setResending] = useState(false);

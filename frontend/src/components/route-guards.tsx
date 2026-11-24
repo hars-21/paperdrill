@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Loader from "@/components/ui/loader";
-import { getSafeReturnTo } from "@/lib/redirect";
+import { getSafeReturnTo, getSafeReturnToFromLocation } from "@/lib/redirect";
 
 export function Protected({ children }: { children: ReactNode }) {
 	const { authenticated, verified, needsOnboarding, loading } = useAuth();
@@ -33,7 +33,7 @@ export function PublicOnly({ children }: { children: ReactNode }) {
 export function OnboardingOnly({ children }: { children: ReactNode }) {
 	const { authenticated, verified, needsOnboarding, loading } = useAuth();
 	const location = useLocation();
-	const returnTo = getSafeReturnTo(location.state);
+	const returnTo = getSafeReturnToFromLocation(location);
 
 	if (loading) return <Loader />;
 	if (!authenticated) return <Navigate to="/login" replace state={{ returnTo }} />;
