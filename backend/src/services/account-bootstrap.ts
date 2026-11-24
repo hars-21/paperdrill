@@ -4,7 +4,7 @@ import { toBigInt } from "../utils/convert";
 import { sendToEngine } from "../utils/engineClient";
 
 export const STARTER_BALANCE_ASSET = "USD";
-export const STARTER_BALANCE_AMOUNT = "10000";
+export const STARTER_BALANCE_AMOUNT = "10000.00";
 
 export function starterBalanceAmount(): bigint {
 	const precision = assetPrecision.get(STARTER_BALANCE_ASSET);

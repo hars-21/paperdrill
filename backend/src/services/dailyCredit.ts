@@ -7,7 +7,7 @@ import { fromBigInt, toBigInt } from "../utils/convert";
 import { sendToEngine } from "../utils/engineClient";
 
 export const DAILY_CREDIT_ASSET = "USD";
-export const DAILY_CREDIT_AMOUNT = "100";
+export const DAILY_CREDIT_AMOUNT = "100.00";
 
 export function utcCreditDate(now = new Date()) {
 	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
