@@ -1,5 +1,6 @@
 import { beforeAll, expect, test } from "bun:test";
 import { publicApi, waitForSystemReady } from "../helpers/api";
+import { createTestUser } from "../helpers/users";
 
 beforeAll(waitForSystemReady);
 
@@ -17,12 +18,13 @@ test("root exposes the public API contract", async () => {
 });
 
 test("validation failures use the public JSON error contract", async () => {
-	const response = await publicApi.request<{
+	const { client } = await createTestUser("validation-contract");
+	const response = await client.request<{
 		error: { code: string; message: string; details: Array<{ field: string }> };
 		requestId: string;
-	}>("/v1/auth/login", {
+	}>("/v1/users/me/onboarding", {
 		method: "POST",
-		body: JSON.stringify({ email: "not-an-email", password: "" }),
+		body: JSON.stringify({ name: "", username: "BAD-NAME" }),
 	});
 
 	expect(response.status).toBe(400);
@@ -33,8 +35,8 @@ test("validation failures use the public JSON error contract", async () => {
 	});
 	expect(response.data.error.details).toEqual(
 		expect.arrayContaining([
-			expect.objectContaining({ field: "email" }),
-			expect.objectContaining({ field: "password" }),
+			expect.objectContaining({ field: "name" }),
+			expect.objectContaining({ field: "username" }),
 		]),
 	);
 });
@@ -74,20 +76,19 @@ test("malformed API keys are rejected before protected handlers run", async () =
 	});
 });
 
-test("invalid session cookies are cleared and cannot authorize a request", async () => {
+test("invalid session cookies cannot authorize a request", async () => {
 	const response = await publicApi.request<Record<string, unknown>>("/v1/balances", {
-		headers: { cookie: "token=invalid-token" },
+		headers: { cookie: "better-auth.session_token=invalid-token" },
 	});
 
 	expect(response).toMatchObject({
 		status: 401,
 		data: { error: { code: "AUTHENTICATION_REQUIRED", message: "Authentication required" } },
 	});
-	expect(response.headers.get("set-cookie")).toContain("token=");
 });
 
 test("malformed JSON and unknown routes return JSON errors", async () => {
-	const malformed = await publicApi.request<Record<string, unknown>>("/v1/auth/login", {
+	const malformed = await publicApi.request<Record<string, unknown>>("/v1/rewards/initial/claim", {
 		method: "POST",
 		body: "{not-json",
 	});
@@ -104,7 +105,7 @@ test("malformed JSON and unknown routes return JSON errors", async () => {
 });
 
 test("browser clients receive credentialed CORS preflight headers", async () => {
-	const response = await fetch(`${process.env.API_BASE_URL}/v1/auth/login`, {
+	const response = await fetch(`${process.env.API_BASE_URL}/v1/rewards/initial/claim`, {
 		method: "OPTIONS",
 		headers: {
 			origin: "http://localhost:3000",

@@ -143,6 +143,13 @@ export class TestDatabase {
 		return result.rows[0]?.pnlBaseline;
 	}
 
+	async markEmailVerified(userId: string) {
+		await this.pool.query(
+			`UPDATE "User" SET "emailVerified" = true, "updatedAt" = NOW() WHERE id = $1`,
+			[userId],
+		);
+	}
+
 	async balance(userId: string, asset: string): Promise<PersistedBalance | undefined> {
 		const result = await this.pool.query<PersistedBalance>(
 			`SELECT "userId", asset, available::text, locked::text
