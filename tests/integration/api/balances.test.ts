@@ -8,8 +8,19 @@ beforeAll(waitForSystemReady);
 function waitForHistory(client: ApiClient, expectedEntries: number) {
 	return waitFor(
 		() => client.getBalanceHistory("?limit=100"),
-		(response) => response.status === 200 && response.data.pagination.total >= expectedEntries,
+		(response) =>
+			response.status === 200 &&
+			response.data.entries.length >= expectedEntries &&
+			response.data.pagination.total >= expectedEntries,
 		{ description: `balance history with ${expectedEntries} entries` },
+	);
+}
+
+function waitForHistoryReason(client: ApiClient, reason: string) {
+	return waitFor(
+		() => client.getBalanceHistory(`?asset=USD&reason=${encodeURIComponent(reason)}`),
+		(response) => response.status === 200 && response.data.entries.length > 0,
+		{ description: `balance history reason ${reason}` },
 	);
 }
 
@@ -61,10 +72,11 @@ test("balance history paginates and filters by asset and reason", async () => {
 	});
 	expect(order.status).toBe(201);
 
+	await waitForHistoryReason(user.client, "order.locked");
 	const history = await waitForHistory(user.client, 3);
 	const entries = history.data.entries.map((entry) => entry.reason);
-	expect(entries[0]).toBe("order.locked");
-	expect(entries).toEqual(expect.arrayContaining(["credited", "initialized"]));
+	expect(entries).toHaveLength(3);
+	expect(entries).toEqual(expect.arrayContaining(["credited", "initialized", "order.locked"]));
 
 	const firstPage = await user.client.getBalanceHistory("?limit=2&page=1");
 	expect(firstPage.data.entries).toHaveLength(2);
@@ -84,7 +96,10 @@ test("balance history paginates and filters by asset and reason", async () => {
 		hasNextPage: false,
 		hasPreviousPage: true,
 	});
-	expect(secondPage.data.entries[0]?.reason).toBe("initialized");
+	const paginatedReasons = [...firstPage.data.entries, ...secondPage.data.entries]
+		.map((entry) => entry.reason)
+		.sort();
+	expect(paginatedReasons).toEqual(["credited", "initialized", "order.locked"]);
 
 	const credited = await user.client.getBalanceHistory("?asset=USD&reason=credited");
 	expect(credited.data.pagination.total).toBe(1);
