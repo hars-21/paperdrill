@@ -160,7 +160,7 @@ export class ApiClient {
 	}
 
 	claimDailyCredit() {
-		return this.request<DailyCreditResponse>("/v1/users/me/daily-credit", { method: "POST" });
+		return this.request<DailyCreditResponse>("/v1/rewards/daily/claim", { method: "POST" });
 	}
 
 	createOrder(input: OrderInput) {
