@@ -15,7 +15,11 @@ import { connectDB, disconnectDB } from "./db";
 import { bigintReplacer, redisTtlSecondsFromMs } from "./util";
 import { initMarkets } from "./modules/market";
 import { registerEventHandlers } from "./core/events";
-import { flushEvents } from "./core/eventLog";
+import {
+	flushEvents,
+	startEventStreamTrim,
+	stopEventStreamTrim,
+} from "./core/eventLog";
 import { startHealth, stopHealth } from "./health";
 
 const abortController = new AbortController();
@@ -140,6 +144,7 @@ async function start() {
 	await initMarkets();
 	await loadSnapshot();
 	registerEventHandlers();
+	startEventStreamTrim();
 	await startHealth();
 	logger.info("Engine started", {
 		incomingStream: config.incomingStream,
@@ -165,6 +170,7 @@ async function gracefulShutdown(signal: string) {
 	abortController.abort();
 	await stopHealth();
 	await flushEvents();
+	stopEventStreamTrim();
 	await disconnectRedis();
 	await disconnectDB();
 	await flushSentry();

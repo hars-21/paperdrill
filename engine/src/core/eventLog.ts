@@ -33,9 +33,9 @@ async function writeEvent(record: EngineEventRecord) {
 		},
 		{
 			TRIM: {
-				strategy: "MINID",
-				strategyModifier: "=",
-				threshold: Date.now() - config.eventStreamRetentionMs,
+				strategy: "MAXLEN",
+				strategyModifier: "~",
+				threshold: config.eventStreamMaxLen,
 			},
 		},
 	);
@@ -53,4 +53,32 @@ export function appendEvent(event: EngineEvent): EngineEventRecord {
 
 export function flushEvents() {
 	return writeChain;
+}
+
+let trimTimer: ReturnType<typeof setInterval> | undefined;
+
+export function startEventStreamTrim() {
+	if (trimTimer) return;
+
+	trimTimer = setInterval(() => {
+		void Promise.all([
+			streamProducer.xTrim(config.eventStream, "MAXLEN", config.eventStreamMaxLen, {
+				strategyModifier: "~",
+				LIMIT: 10_000,
+			}),
+			streamProducer.xTrim(
+				config.eventStream,
+				"MINID",
+				Date.now() - config.eventStreamRetentionMs,
+				{ strategyModifier: "~", LIMIT: 10_000 },
+			),
+		]).catch((err) => logger.error("Failed to trim event stream", err));
+	}, config.eventStreamTrimIntervalMs);
+	trimTimer.unref();
+}
+
+export function stopEventStreamTrim() {
+	if (!trimTimer) return;
+	clearInterval(trimTimer);
+	trimTimer = undefined;
 }
