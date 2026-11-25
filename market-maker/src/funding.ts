@@ -48,19 +48,22 @@ export async function ensureFunds(deps: FundingDeps): Promise<{ base: boolean; q
 	const anchor = toNumber(deps.anchorScaled, market.pricePrecision);
 	const notionalTarget = market.maxOrderNotional * market.levelsPerSide;
 
+	const baseBalance = state.balance(userId, market.baseAsset);
+	const quoteBalance = state.balance(userId, market.quoteAsset);
+
 	const [base, quote] = await Promise.all([
 		topUp(
 			deps,
 			market.baseAsset,
 			notionalTarget / anchor,
-			toNumber(state.balance(userId, market.baseAsset).available, market.qtyPrecision),
+			toNumber(baseBalance.available + baseBalance.locked, market.qtyPrecision),
 			market.qtyPrecision,
 		),
 		topUp(
 			deps,
 			market.quoteAsset,
 			notionalTarget,
-			toNumber(state.balance(userId, market.quoteAsset).available, market.pricePrecision),
+			toNumber(quoteBalance.available + quoteBalance.locked, market.pricePrecision),
 			market.pricePrecision,
 		),
 	]);
