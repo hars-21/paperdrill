@@ -9,7 +9,7 @@ export const envSchema = z.object({
 	LOG_LEVEL: z.enum(["debug", "info"]),
 	SNAPSHOT_INTERVAL: z.coerce.number().default(3_600_000),
 	EVENT_STREAM: z.string().default("stream:engine-events"),
-	EVENT_STREAM_RETENTION_MS: z.coerce.number().positive().default(7 * 24 * 60 * 60 * 1000),
+	EVENT_STREAM_RETENTION_MS: z.coerce.number().positive().default(60 * 60 * 1000),
 	RECENT_TRADES_LIMIT: z.coerce.number().positive().default(50),
 	STREAM_READ_BATCH_SIZE: z.coerce.number().positive().default(200),
 	RESPONSE_BATCH_SIZE: z.coerce.number().positive().default(50),
