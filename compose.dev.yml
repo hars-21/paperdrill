@@ -66,6 +66,23 @@ services:
     ports:
       - "6380:6379"
 
+  market-maker:
+    build:
+      context: ./market-maker
+      target: dev
+    env_file: ./.env.dev
+    profiles: ["market-maker"]
+    restart: on-failure:5
+    environment:
+      MARKETS: '[{"symbol":"BTC_USD","serviceEmail":"btc.service@paperdrill.dev"},{"symbol":"SOL_USD","serviceEmail":"sol.service@paperdrill.dev"},{"symbol":"ETH_USD","serviceEmail":"eth.service@paperdrill.dev"}]'
+    depends_on:
+      redis:
+        condition: service_healthy
+      engine:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+
   btc-bot:
     <<: *dev-bot
     environment:

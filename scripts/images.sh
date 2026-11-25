@@ -7,7 +7,7 @@ action="${1:-}"
 tag="${2:-}"
 registry="ghcr.io/hars-21"
 platform="linux/amd64"
-services=(backend engine worker bot)
+services=(backend engine worker bot market-maker)
 
 if [[ "$action" != "build" && "$action" != "push" ]]; then
 	echo "Usage: scripts/images.sh <build|push> <image-version>" >&2
@@ -33,4 +33,4 @@ for service in "${services[@]}"; do
 	fi
 done
 
-echo "$action complete for $registry/paperdrill-{backend,engine,worker,bot}:$tag"
+echo "$action complete for $registry/paperdrill-{backend,engine,worker,bot,market-maker}:$tag"

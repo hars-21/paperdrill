@@ -29,6 +29,8 @@ jobs:
             target: runner
           - service: bot
             target: ""
+          - service: market-maker
+            target: runner
     steps:
       - name: Resolve image version
         id: version
