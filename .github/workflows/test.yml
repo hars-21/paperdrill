@@ -39,6 +39,10 @@ jobs:
         working-directory: worker
         run: bun install --frozen-lockfile
 
+      - name: Install market-maker dependencies
+        working-directory: market-maker
+        run: bun install --frozen-lockfile
+
       - name: Run unit tests
         run: make test-unit
 
