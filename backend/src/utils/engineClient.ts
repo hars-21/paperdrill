@@ -14,6 +14,34 @@ import { ingestAccountSnapshot } from "../services/leaderboard";
 
 export const engineAbortController = new AbortController();
 
+let streamTrimTimer: ReturnType<typeof setInterval> | undefined;
+
+export function startIncomingStreamTrim() {
+	if (streamTrimTimer) return;
+
+	streamTrimTimer = setInterval(() => {
+		void Promise.all([
+			publisher.xTrim(config.engine.incomingStream, "MAXLEN", config.redis.maxLen, {
+				strategyModifier: "~",
+				LIMIT: 10_000,
+			}),
+			publisher.xTrim(
+				config.engine.incomingStream,
+				"MINID",
+				Date.now() - config.redis.retentionMs,
+				{ strategyModifier: "~", LIMIT: 10_000 },
+			),
+		]).catch((err) => logger.error("Failed to trim incoming stream", err));
+	}, config.redis.trimIntervalMs);
+	streamTrimTimer.unref();
+}
+
+export function stopIncomingStreamTrim() {
+	if (!streamTrimTimer) return;
+	clearInterval(streamTrimTimer);
+	streamTrimTimer = undefined;
+}
+
 export async function sendToEngine(
 	type: EngineCommandType,
 	payload: Record<string, unknown>,
@@ -33,9 +61,9 @@ export async function sendToEngine(
 			},
 			{
 				TRIM: {
-					strategy: "MINID",
-					strategyModifier: "=",
-					threshold: Date.now() - config.redis.retentionMs,
+					strategy: "MAXLEN",
+					strategyModifier: "~",
+					threshold: config.redis.maxLen,
 				},
 			},
 		);

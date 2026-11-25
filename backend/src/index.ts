@@ -4,6 +4,8 @@ import {
 	engineAbortController,
 	listenForEngineresponses,
 	listenForOrderbookDepth,
+	startIncomingStreamTrim,
+	stopIncomingStreamTrim,
 } from "./utils/engineClient";
 import { config } from "./config";
 import { createAppServer } from "./server";
@@ -24,6 +26,8 @@ async function main() {
 			logger.error("Error connecting to Redis", err);
 			process.exit(1);
 		});
+
+	startIncomingStreamTrim();
 
 	// Seed existing history without blocking startup; the leaderboard API
 	// reports "not ready" until the first pass completes.
@@ -46,6 +50,7 @@ async function gracefulShutdown(signal: string) {
 
 	engineAbortController.abort();
 	stopLeaderboard();
+	stopIncomingStreamTrim();
 
 	try {
 		await new Promise<void>((resolve) => httpServer.close(() => resolve()));
