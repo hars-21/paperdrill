@@ -62,7 +62,10 @@ services:
   redis:
     <<: *prod-runtime
     image: redis:7.2
-    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction --tcp-keepalive 60 --appendfsync everysec --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb
+    # Streams and cursors are durable state, not caches. Keep noeviction and
+    # leave rewrite headroom between maxmemory and the container limit.
+    mem_limit: 768m
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy noeviction --tcp-keepalive 60 --appendfsync everysec --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb
     volumes:
       - redis-data:/data
 
