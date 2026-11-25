@@ -1,4 +1,4 @@
-import { config } from "./config";
+const debugEnabled = process.env.LOG_LEVEL === "debug";
 
 function fields(extra?: Record<string, unknown>) {
 	if (!extra) return "";
@@ -10,7 +10,7 @@ export const logger = {
 		console.log(`[market-maker] ${message}${fields(extra)}`);
 	},
 	debug(message: string, extra?: Record<string, unknown>) {
-		if (config.logLevel === "debug") console.log(`[market-maker] ${message}${fields(extra)}`);
+		if (debugEnabled) console.log(`[market-maker] ${message}${fields(extra)}`);
 	},
 	error(message: string, error?: unknown, extra?: Record<string, unknown>) {
 		const detail = error instanceof Error ? error.message : error ? String(error) : undefined;

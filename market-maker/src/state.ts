@@ -56,6 +56,12 @@ export class MakerState {
 		return this.balances.get(balanceKey(userId, asset)) ?? { available: 0n, locked: 0n };
 	}
 
+	credit(userId: string, asset: string, amount: bigint): void {
+		const key = balanceKey(userId, asset);
+		const current = this.balances.get(key) ?? { available: 0n, locked: 0n };
+		this.balances.set(key, { ...current, available: current.available + amount });
+	}
+
 	get orderCount(): number {
 		return this.orders.size;
 	}
