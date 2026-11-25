@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { applyBps, divRound, fromScaled, scaledFromNumber, toScaled } from "../src/decimal";
+import { applyBps, divRound, fromScaled, scaledDown, scaledFromNumber, toScaled } from "../src/decimal";
 
 test("decimal strings scale with market precision", () => {
 	expect(toScaled("67500.25", 2)).toBe(6_750_025n);
@@ -17,6 +17,7 @@ test("numbers scale with round-half-away-from-zero", () => {
 	expect(scaledFromNumber(1.2345, 2)).toBe(123n);
 	expect(scaledFromNumber(1.235, 2)).toBe(124n);
 	expect(scaledFromNumber(0.00001, 4)).toBe(0n);
+	expect(scaledDown(0.001481, 4)).toBe(14n);
 });
 
 test("division rounds half away from zero", () => {

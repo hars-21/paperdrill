@@ -28,6 +28,11 @@ export function scaledFromNumber(value: number, precision: number): bigint {
 	return BigInt(Math.round(value * Number(scaleFactor(precision))));
 }
 
+export function scaledDown(value: number, precision: number): bigint {
+	if (!Number.isFinite(value)) throw new Error(`Cannot scale non-finite value: ${value}`);
+	return BigInt(Math.floor(value * Number(scaleFactor(precision))));
+}
+
 export function divRound(numerator: bigint, denominator: bigint): bigint {
 	if (denominator === 0n) throw new Error("Division by zero");
 
