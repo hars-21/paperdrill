@@ -12,7 +12,7 @@ import { logger } from "./util/logger";
 import { snapshot, loadSnapshot } from "./util/snapshot";
 import { dispatch } from "./core/dispatcher";
 import { connectDB, disconnectDB } from "./db";
-import { bigintReplacer } from "./util";
+import { bigintReplacer, redisTtlSecondsFromMs } from "./util";
 import { initMarkets } from "./modules/market";
 import { registerEventHandlers } from "./core/events";
 import { flushEvents } from "./core/eventLog";
@@ -21,7 +21,11 @@ import { startHealth, stopHealth } from "./health";
 const abortController = new AbortController();
 
 async function sendResponse(responseQueue: string, response: EngineResponse) {
-	await streamProducer.lPush(responseQueue, JSON.stringify(response, bigintReplacer));
+	await streamProducer
+		.multi()
+		.lPush(responseQueue, JSON.stringify(response, bigintReplacer))
+		.expire(responseQueue, redisTtlSecondsFromMs(config.responseQueueTtlMs))
+		.exec();
 }
 
 type PendingResponse = { queue: string; payload: EngineResponse };
